@@ -49,7 +49,11 @@ def main():
 	userids = []
 	getidsurl = "https://api.twitch.tv/helix/users?" 
 	getidsurl += "&".join(f"login={i}" for i in conf["twitch"]["channels"])
-	print(getidsurl)
+
+	response = requests.get(getidsurl, headers=headers)
+	
+	for i in response.json()["data"]:
+		print(i)
 
 	# GET https://api.twitch.tv/helix/videos: get videos using the IDs
 
