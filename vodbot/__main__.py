@@ -1,4 +1,6 @@
 from . import util
+from .channel import Channel
+from .video import Video
 
 import json
 import os
@@ -32,21 +34,33 @@ def main():
 	getidsurl += "&".join(f"login={i}" for i in CHANNELS)
 
 	response = requests.get(getidsurl, headers=headers)
+	if response.status_code != 200:
+		util.exit_prog(5, "Failed to get user id's from ")
 	
-	channelids = []
+	channels = []
 	for i in response.json()["data"]:
-		channelids.append(i["id"])
-
+		channels.append(Channel(i))
 
 	# GET https://api.twitch.tv/helix/videos: get videos using the IDs
-	vodids = []
-	for i in channelids:
-		getvideourl = f"https://api.twitch.tv/helix/videos?user_id={i}"
+	vods = []
+	for i in channels:
+		getvideourl = f"https://api.twitch.tv/helix/videos?user_id={i.id}&first=100"
 		response = requests.get(getvideourl, headers=headers)
+		# Some basic checks
+		if response.status_code == 200:
+			try:
+				response = response.json()
+			except ValueError:
+				util.exit_prog(9, f"Could not parse response json for {i.login}'s videos.")
+			
+			# Add VODs to list to download later.
+			for vod in response["data"]:
+				if vod["thumbnail_url"] != "": # Live VODs don't have thumbnails
+					vods.append(Video(vod))
+	
 
-		print(json.dumps(response.json(), indent=4))
-
-	#print(accesstokenrequest.json())
+	# Check what VODs we do and don't have.
+	pass
 
 
 if __name__ == "__main__":
