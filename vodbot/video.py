@@ -23,4 +23,4 @@ class Video:
 		}
 		
 		with open(filename, "w") as f:
-			json.dump(jsondict, f)
+			json.dump(jsondict, f, sort_keys=True, indent=4)

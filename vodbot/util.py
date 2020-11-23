@@ -16,7 +16,7 @@ def make_conf(filename):
 		"twitch": {
 			"client-id":defaultclientid,
 			"client-secret":defaultclientsecret,
-			"channels":["notquiteapex","juicibox","batkigu"]
+			"channels":["notquiteapex","juicibit","batkigu"]
 		}
 	}
 

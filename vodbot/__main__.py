@@ -95,8 +95,7 @@ def main():
 			vodstodownload.append(vod1)
 
 	for vod in vodstodownload:
-		filename = str(voddir / vod.user_name / f"{vod.created_at}_{vod.id}.mp4.temp")
-		filename = filename.replace(":", ".")
+		filename = str(voddir / vod.user_name / f"{vod.created_at}_{vod.id}.mp4.temp".replace(":", ";"))
 		streamlinkcmd = [
 			"streamlink",
 			"--hls-segment-threads", str(10),
