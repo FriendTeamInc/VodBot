@@ -1,6 +1,6 @@
 import os
 import sys
-import toml
+import json
 import requests
 from pathlib import Path
 
@@ -8,11 +8,11 @@ defaultclientid = "TWITCH.CLIENT-ID"
 defaultclientsecret = "TWITCH.CLIENT-SECRET"
 
 def make_dir(directory):
-	os.mkdir(str(directory))
+	os.makedirs(str(directory / "vods"))
 
 
-def make_conf(directory):
-	basetoml = {
+def make_conf(filename):
+	basejson = {
 		"twitch": {
 			"client-id":defaultclientid,
 			"client-secret":defaultclientsecret,
@@ -20,19 +20,20 @@ def make_conf(directory):
 		}
 	}
 
-	filedata = toml.dumps(basetoml)
+	filedata = json.dumps(basejson, indent=4, sort_keys=True)
 
-	with open(str(directory / "conf.toml"), "w") as f:
+	with open(str(filename), "w") as f:
 		f.write(filedata)
 
 
-def load_conf(directory):
+def load_conf(filename):
 	conf = None
 	try:
-		conf = toml.load(str(Path.home() / ".vodbot" / "conf.toml"))
+		with open(str(filename)) as f:
+			conf = json.load(f)
 	except FileNotFoundError:
-		make_conf(directory)
-		exit_prog(2, f"Config not found. New one has been made at \"{directory}\".")
+		make_conf(filename)
+		exit_prog(2, f"Config not found. New one has been made at \"{str(filename)}\".")
 	
 	CLIENT_ID = conf["twitch"]["client-id"]
 	CLIENT_SECRET = conf["twitch"]["client-secret"]
