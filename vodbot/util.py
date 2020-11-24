@@ -38,19 +38,6 @@ def make_conf(directory):
 		f.write(filedata)
 
 
-def make_encode_json(directory):
-	"""
-	Writes the JSON preset data for HandBrakeCLI to use.
-
-	:param directory: A pathlib.Path directory object of where the preset should be written to.
-	"""
-
-	encode_json = import_module(".encode_json", "vodbot")
-
-	with open(str(directory / "vodbot-hbcli-encode.json"), "w") as f:
-		f.write(encode_json.json)
-
-
 def init_dir(directory):
 	"""
 	Initializes all the necessary directory structures and files for VodBot.
@@ -59,7 +46,6 @@ def init_dir(directory):
 	"""
 	make_dir(directory)
 	make_conf(directory)
-	make_encode_json(directory)
 
 
 def load_conf(directory):

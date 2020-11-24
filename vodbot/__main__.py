@@ -2,6 +2,7 @@ from . import util
 from .channel import Channel
 from .video import Video
 
+import argparse as arg
 import subprocess
 import json
 import os
@@ -94,14 +95,26 @@ def main():
 			vodstodownload.append(vod1)
 
 	for vod in vodstodownload:
-		filename = str(voddir / vod.user_name / f"{vod.created_at}_{vod.id}.mp4.temp".replace(":", ";"))
+		filename = str(voddir / vod.user_name / f"{vod.created_at}_{vod.id}.mkv".replace(":", ";"))
+		
 		streamlinkcmd = [
 			"streamlink",
 			"--hls-segment-threads", str(10),
 			("twitch.tv/videos/" + vod.id), "best",
-			"-o", filename, "-f"
+			"-o", filename + ".temp", "-f"
 		]
 		subprocess.run(streamlinkcmd)
+
+		ffmpegcmd = [
+			"ffmpeg",
+			"-i", filename + ".temp", "-cpu-used", "8",
+			"-c:v", "libvpx-vp9", "-crf", "30", "-b:v", "3000k",
+			"-threads", "8", "-row-mt", "1", "-strict", "experimental", filename
+		]
+		subprocess.run(ffmpegcmd)
+
+		os.remove(filename + ".temp")
+
 		vod.write_meta(str(voddir / vod.user_name / (vod.id + ".meta")))
 	
 	print("Done!")
