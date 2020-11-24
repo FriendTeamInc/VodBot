@@ -16,8 +16,7 @@ def main():
 
 	# Initial error checks
 	if not os.path.exists(str(vodbotdir)):
-		util.make_dir(vodbotdir)
-		util.make_conf(vodbotdir)
+		util.init_dir(vodbotdir)
 		util.exit_prog(1, f"Edit the config files in \"{vodbotdir}\" before running again.")
 	
 	if not os.path.isdir(str(vodbotdir)):
@@ -28,7 +27,7 @@ def main():
 
 
 	# Load the config and set up the access token
-	(CLIENT_ID, CLIENT_SECRET, CHANNELS) = util.load_conf(vodbotdir / "conf.json")
+	(CLIENT_ID, CLIENT_SECRET, CHANNELS) = util.load_conf(vodbotdir)
 	ACCESS_TOKEN = util.get_access_token(CLIENT_ID, CLIENT_SECRET)
 	HEADERS = {"Client-ID":CLIENT_ID, "Authorization": "Bearer " + ACCESS_TOKEN}
 
