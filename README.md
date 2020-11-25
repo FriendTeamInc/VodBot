@@ -6,7 +6,9 @@ Requirements:
 * [Python 3.6+](https://www.python.org/)
 * [Streamlink](https://github.com/streamlink/streamlink)
 
-For now, the program can be installed with the `pip install .` command after cloning the repo. Running `vodbot` for the first time will generate a `.vodbot` directory in your home directory, located at `~` on UNIX platforms and `C:\Users\%USERNAME%\` on Windows. You must fill out the `config.toml` file inside this directory before the app will run. VodBot is intended to be ran by some sort of scheduling program and never directly, like systemd or chron, however it can run as an immediate program and will not function differently.
+VodBot can be installed with `pip install .`, running it will write a config file and associated folder in your home directory (`~` on UNIX systems, `C:\Users\%USERNAME%\` on Windows). You'll need to fill out the config before continuing the program with your Twitch app's Client ID and Secret, along with the names of the channels you want to watch for VODs. After that, everytime VodBot is ran it will search Twitch for VODs it does not have from the channels you're watching.
+
+It is recommended that you run VodBot with some kind of scheduling program like systemd or cron every so often to pull the VODs for you.
 
 # License
 This project is licensed under the zlib license, copyright Logan "NotQuiteApex" Hickok-Dickson. See LICENSE.md for more details.

@@ -21,7 +21,7 @@ setup(
 	],
 	entry_points={
 		'console_scripts': [
-			'vodbot=vodbot.__main__:main',
+			'vodbot=vodbot.__main__:deffered_main',
 		],
 	}
 )

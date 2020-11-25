@@ -12,16 +12,16 @@ def make_dir(directory):
 	"""
 	Creates the directory structure to house the configuration data and VODs.
 
-	:param directory: A pathlib.Path directory object of where the directory structure should be made.
+	:param directory: A string of where the directory structure should be made.
 	"""
-	os.makedirs(str(directory / "vods"))
+	os.makedirs(directory, exist_ok=True)
 
 
-def make_conf(directory):
+def make_conf(filename):
 	"""
 	Writes the configuration JSON that defines VodBot's operation.
 
-	:param directory: A pathlib.Path directory object of where the conf.json should be written to.
+	:param filename: A string of where the conf.json should be written to.
 	"""
 
 	basejson = {
@@ -34,44 +34,35 @@ def make_conf(directory):
 
 	filedata = json.dumps(basejson, indent=4, sort_keys=True)
 
-	with open(str(directory / "conf.json"), "w") as f:
-		f.write(filedata)
+	try:
+		with open(filename, "w+") as f:
+			f.write(filedata)
+	except FileNotFoundError:
+		exit_prog(67, f"Cannot create file at \"{filename}\".")
 
 
-def init_dir(directory):
-	"""
-	Initializes all the necessary directory structures and files for VodBot.
-
-	:param directory: A pathlib.Path directory object of where everthing goes.
-	"""
-	make_dir(directory)
-	make_conf(directory)
-
-
-def load_conf(directory):
+def load_conf(filename):
 	"""
 	Loads the config of VodBot at a specific directory.
 
-	:param directory: Directory that houses the conf.json configuration file.
+	:param filename: File name of the JSON formatted configuration file.
 	:returns: Tuple containing the strings of the application's Twitch client ID, secret, and list of channel string names to watch for VODs, respectively.
 	"""
 
-	filename = directory / "conf.json"
-
 	conf = None
 	try:
-		with open(str(filename)) as f:
+		with open(filename) as f:
 			conf = json.load(f)
 	except FileNotFoundError:
 		make_conf(filename)
-		exit_prog(2, f"Config not found. New one has been made at \"{str(filename)}\".")
+		exit_prog(2, f"Config not found. New one has been made at \"{filename}\".")
 	
 	CLIENT_ID = conf["twitch"]["client-id"]
 	CLIENT_SECRET = conf["twitch"]["client-secret"]
 	CHANNELS = conf["twitch"]["channels"]
 
 	if CLIENT_ID == defaultclientid or CLIENT_SECRET == defaultclientsecret:
-		exit_prog(3, f"Please edit your config with your Client ID and Secret.")
+		exit_prog(3, f"Please edit your config with your Client ID and Secret from the default values, located at \"{filename}\".")
 	
 	return (CLIENT_ID, CLIENT_SECRET, CHANNELS)
 
@@ -108,6 +99,8 @@ def exit_prog(code=0, errmsg=None):
 	:param code: The error code to exit with. Should be unique per exit case.
 	:param errmsg: The corresponding error message to print when exiting.
 	"""
+
+	print()
 
 	if code != 0:
 		msg = f"ERROR! ({code}) "
