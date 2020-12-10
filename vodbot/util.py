@@ -37,7 +37,8 @@ def make_conf(filename):
 	filedata = json.dumps(basejson, indent=4, sort_keys=True)
 
 	try:
-		with open(filename, "w+") as f:
+		make_dir(Path(filename).parent)
+		with open(filename, "w") as f:
 			f.write(filedata)
 	except FileNotFoundError:
 		exit_prog(67, f"Cannot create file at \"{filename}\".")
