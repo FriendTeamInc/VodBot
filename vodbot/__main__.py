@@ -23,7 +23,7 @@ def deffered_main():
 
 def main():
 	# Default path
-	vodbotdir = Path.home() / ".vodbot"
+	vodbotdir = util.vodbotdir
 
 	# Process arguments
 	parser = argparse.ArgumentParser(
@@ -39,11 +39,9 @@ def main():
 		default=str(vodbotdir / "conf.json"))
 	parser.add_argument("-d", type=str, dest="directory",
 		help="directory location to store VOD files in",
-		default=str(vodbotdir / "vods"))
+		default=None)
 	
 	args = parser.parse_args()
-	
-	util.make_dir(args.directory)
 
 	# Initial error checks
 	if not os.path.exists(args.config):
@@ -58,13 +56,19 @@ def main():
 
 
 	# Load the config and set up the access token
-	(CLIENT_ID, CLIENT_SECRET, CHANNELS) = util.load_conf(args.config)
+	(CLIENT_ID, CLIENT_SECRET, CHANNELS, VODS_DIR) = util.load_conf(args.config)
 	ACCESS_TOKEN = util.get_access_token(CLIENT_ID, CLIENT_SECRET)
-	HEADERS = {"Client-ID":CLIENT_ID, "Authorization": "Bearer " + ACCESS_TOKEN}
+	HEADERS = {"Client-ID": CLIENT_ID, "Authorization": "Bearer " + ACCESS_TOKEN}
 
 	# If command line has channels to watch instead, use those instead of the config ones.
 	if len(args.channels) != 0:
 		CHANNELS = args.channels
+	
+	# If argparse has a specific directory for vods, use that. otherwise default to conf.
+	if args.directory is None:
+		args.directory = VODS_DIR
+	
+	util.make_dir(args.directory)
 
 
 	# GET https://api.twitch.tv/helix/users: get User-IDs with this

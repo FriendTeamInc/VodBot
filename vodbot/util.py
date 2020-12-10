@@ -7,6 +7,7 @@ from importlib import import_module
 
 defaultclientid = "TWITCH.CLIENT-ID"
 defaultclientsecret = "TWITCH.CLIENT-SECRET"
+vodbotdir = Path.home() / ".vodbot"
 
 def make_dir(directory):
 	"""
@@ -28,7 +29,8 @@ def make_conf(filename):
 		"twitch": {
 			"client-id":defaultclientid,
 			"client-secret":defaultclientsecret,
-			"channels":["notquiteapex", "juicibit", "batkigu", "alkana"]
+			"channels":["notquiteapex", "juicibit", "batkigu", "alkana"],
+			"vod-dir": str(vodbotdir / "vods")
 		}
 	}
 
@@ -59,14 +61,16 @@ def load_conf(filename):
 	except json.decoder.JSONDecodeError as e:
 		exit_prog(98, f"Failed to decode config. \"{e.msg}\"")
 	
+	# TODO: add checks that these all exist, otherwise throw a fit (?)
 	CLIENT_ID = conf["twitch"]["client-id"]
 	CLIENT_SECRET = conf["twitch"]["client-secret"]
 	CHANNELS = conf["twitch"]["channels"]
+	VODS_DIR = conf["twitch"]["vod-dir"]
 
 	if CLIENT_ID == defaultclientid or CLIENT_SECRET == defaultclientsecret:
 		exit_prog(3, f"Please edit your config with your Client ID and Secret from the default values, located at \"{filename}\".")
 	
-	return (CLIENT_ID, CLIENT_SECRET, CHANNELS)
+	return (CLIENT_ID, CLIENT_SECRET, CHANNELS, VODS_DIR)
 
 
 def get_access_token(CLIENT_ID, CLIENT_SECRET):
