@@ -144,7 +144,7 @@ def main():
 			"streamlink",
 			"--hls-segment-threads", str(10),
 			("twitch.tv/videos/" + vod.id), "best",
-			"-o", filename, "-f"
+			"-o", filename, "-f", "-Q"
 		]
 		subprocess.run(streamlinkcmd)
 
