@@ -131,7 +131,12 @@ def main():
 			vodstodownload.append(vod1)
 
 	# Download all the VODs we need.
+	previouschannel = None
 	for vod in vodstodownload:
+		if previouschannel != vod.user_id:
+			previouschannel = vod.user_id
+			print(f"\n\nDownloading {vod.user_name}'s Vods\n")
+
 		pogdir = voddir / vod.user_name.lower()
 		filename = str(pogdir / f"{vod.created_at}_{vod.id}.mkv".replace(":", ";"))
 		
