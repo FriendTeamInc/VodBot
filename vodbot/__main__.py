@@ -48,7 +48,7 @@ def main():
 		util.make_conf(args.config)
 		util.exit_prog(39,  f"Edit the config file at \"{args.config}\" before running again.")
 	
-	if not os.path.isdir(args.directory):
+	if args.directory is not None and not os.path.isdir(args.directory):
 		util.exit_prog(54, f"Non-directory object \"{args.directory}\" must be removed before proceeding!")
 
 	if find_executable("streamlink") is None:
