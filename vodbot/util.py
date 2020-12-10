@@ -28,7 +28,7 @@ def make_conf(filename):
 		"twitch": {
 			"client-id":defaultclientid,
 			"client-secret":defaultclientsecret,
-			"channels":["notquiteapex","juicibit","batkigu"]
+			"channels":["notquiteapex", "juicibit", "batkigu", "alkana"]
 		}
 	}
 
@@ -56,6 +56,8 @@ def load_conf(filename):
 	except FileNotFoundError:
 		make_conf(filename)
 		exit_prog(2, f"Config not found. New one has been made at \"{filename}\".")
+	except json.decoder.JSONDecodeError as e:
+		exit_prog(98, f"Failed to decode config. \"{e.msg}\"")
 	
 	CLIENT_ID = conf["twitch"]["client-id"]
 	CLIENT_SECRET = conf["twitch"]["client-secret"]

@@ -84,7 +84,6 @@ def main():
 	for i in response["data"]:
 		channels.append(Channel(i))
 
-
 	# GET https://api.twitch.tv/helix/videos: get videos using the channel IDs
 	vods = []
 	for i in channels:
@@ -102,14 +101,13 @@ def main():
 		for vod in response["data"]:
 			if vod["thumbnail_url"] != "": # Live VODs don't have thumbnails
 				vods.append(Video(vod))
-	
 
 	# Check what VODs we do and don't have.
 	voddir = Path(args.directory)
 	existingvods = []
 	
 	for channel in channels:
-		channeldir = voddir / channel.login
+		channeldir = voddir / channel.login.lower()
 		os.makedirs(str(channeldir), exist_ok=True)
 		for _, _, files in os.walk(str(channeldir)):
 			for file in files:
@@ -130,7 +128,8 @@ def main():
 
 	# Download all the VODs we need.
 	for vod in vodstodownload:
-		filename = str(voddir / vod.user_name / f"{vod.created_at}_{vod.id}.mkv".replace(":", ";"))
+		pogdir = voddir / vod.user_name.lower()
+		filename = str(pogdir / f"{vod.created_at}_{vod.id}.mkv".replace(":", ";"))
 		
 		streamlinkcmd = [
 			"streamlink",
@@ -140,7 +139,7 @@ def main():
 		]
 		subprocess.run(streamlinkcmd)
 
-		vod.write_meta(str(voddir / vod.user_name / (vod.id + ".meta")))
+		vod.write_meta(str(pogdir / (vod.id + ".meta")))
 	
 	print("Done!")
 	
