@@ -31,6 +31,8 @@ def main():
 		epilog="VodBot (c) 2020 Logan \"NotQuiteApex\" Hickok-Dickson")
 	parser.add_argument("-v","--version", action="version",
 		version=__project__ + " " + __version__)
+	parser.add_argument("type", type=str, default="vods",
+		help="Content type flag, can be \"vods\" or \"clips\".")
 	parser.add_argument("channels", metavar="channel",
 		type=str, default=[], nargs="*",
 		help="Twitch.tv channel name to pull VODs from (optional, overrides config setting)")
@@ -56,7 +58,9 @@ def main():
 
 
 	# Load the config and set up the access token
-	(CLIENT_ID, CLIENT_SECRET, CHANNELS, VODS_DIR) = util.load_conf(args.config)
+	print("Loading config...")
+	(CLIENT_ID, CLIENT_SECRET, CHANNELS, VODS_DIR, CLIPS_DIR) = util.load_conf(args.config)
+	print("Logging in to Twitch.tv...")
 	ACCESS_TOKEN = util.get_access_token(CLIENT_ID, CLIENT_SECRET)
 	HEADERS = {"Client-ID": CLIENT_ID, "Authorization": "Bearer " + ACCESS_TOKEN}
 
@@ -66,12 +70,20 @@ def main():
 	
 	# If argparse has a specific directory for vods, use that. otherwise default to conf.
 	if args.directory is None:
-		args.directory = VODS_DIR
+		if args.type == "vods":
+			args.directory = VODS_DIR
+		elif args.type == "clips":
+			args.directory = CLIPS_DIR
+		else:
+			util.exit_prog(85, f"Unknown content type \"{args.type}\".")
+
 	
 	util.make_dir(args.directory)
 
+	print()
 
 	# GET https://api.twitch.tv/helix/users: get User-IDs with this
+	print("Getting User ID's...")
 	getidsurl = "https://api.twitch.tv/helix/users?" 
 	getidsurl += "&".join(f"login={i}" for i in CHANNELS)
 	response = requests.get(getidsurl, headers=HEADERS)
@@ -91,7 +103,15 @@ def main():
 	# GET https://api.twitch.tv/helix/videos: get videos using the channel IDs
 	vods = []
 	for i in channels:
-		getvideourl = f"https://api.twitch.tv/helix/videos?user_id={i.id}&first=100"
+		print(f"Getting VOD list for {i.display_name}...")
+		
+		contenttype = ""
+		if args.type == "vods":
+			contenttype = "videos"
+		elif args.type == "clips":
+			contenttype = "clips"
+
+		getvideourl = f"https://api.twitch.tv/helix/{contenttype}?user_id={i.id}&first=100"
 		response = requests.get(getvideourl, headers=HEADERS)
 		# Some basic checks
 		if response.status_code != 200:
@@ -99,19 +119,23 @@ def main():
 		try:
 			response = response.json()
 		except ValueError:
-			util.exit_prog(9, f"Could not parse response json for {i.login}'s videos.")
+			util.exit_prog(9, f"Could not parse response json for {i.display_name}'s videos.")
 			
 		# Add VODs to list to download later.
 		for vod in response["data"]:
 			if vod["thumbnail_url"] != "": # Live VODs don't have thumbnails
 				vods.append(Video(vod))
 
+	print()
+	print("Doing VOD checks...")
+	print()
+
 	# Check what VODs we do and don't have.
 	voddir = Path(args.directory)
 	existingvods = []
 	
 	for channel in channels:
-		channeldir = voddir / channel.login.lower()
+		channeldir = voddir / channel.display_name.lower()
 		os.makedirs(str(channeldir), exist_ok=True)
 		for _, _, files in os.walk(str(channeldir)):
 			for file in files:
@@ -132,10 +156,11 @@ def main():
 
 	# Download all the VODs we need.
 	previouschannel = None
+	print(f"Total number of VOD's to download: {len(vodstodownload)}.")
 	for vod in vodstodownload:
 		if previouschannel != vod.user_id:
 			previouschannel = vod.user_id
-			print(f"\n\nDownloading {vod.user_name}'s Vods\n")
+			print(f"\n\nDownloading {vod.user_name}'s VOD's")
 
 		pogdir = voddir / vod.user_name.lower()
 		filename = str(pogdir / f"{vod.created_at}_{vod.id}.mkv".replace(":", ";"))
@@ -150,7 +175,7 @@ def main():
 
 		vod.write_meta(str(pogdir / (vod.id + ".meta")))
 	
-	print("Done!")
+	print("\n\nAll done, goodbye!")
 	
 
 if __name__ == "__main__":

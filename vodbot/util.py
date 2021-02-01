@@ -67,11 +67,12 @@ def load_conf(filename):
 	CLIENT_SECRET = conf["twitch"]["client-secret"]
 	CHANNELS = conf["twitch"]["channels"]
 	VODS_DIR = conf["twitch"]["vod-dir"]
+	CLIPS_DIR = conf["twitch"]["clip-dir"]
 
 	if CLIENT_ID == defaultclientid or CLIENT_SECRET == defaultclientsecret:
 		exit_prog(3, f"Please edit your config with your Client ID and Secret from the default values, located at \"{filename}\".")
 	
-	return (CLIENT_ID, CLIENT_SECRET, CHANNELS, VODS_DIR)
+	return (CLIENT_ID, CLIENT_SECRET, CHANNELS, VODS_DIR, CLIPS_DIR)
 
 
 def get_access_token(CLIENT_ID, CLIENT_SECRET):
