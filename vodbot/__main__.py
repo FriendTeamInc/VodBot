@@ -109,13 +109,12 @@ def main():
 	for i in channels:
 		print(f"Getting {contentnoun} list for {i.display_name}...")
 		
-		contenttype = ""
+		getvideourl = ""
 		if args.type == "vods":
-			contenttype = "videos"
+			getvideourl = f"https://api.twitch.tv/helix/videos?user_id={i.id}&first=100"
 		elif args.type == "clips":
-			contenttype = "clips"
+			getvideourl = f"https://api.twitch.tv/helix/clips?broadcaster_id={i.id}&first=100"
 
-		getvideourl = f"https://api.twitch.tv/helix/{contenttype}?user_id={i.id}&first=100"
 		response = requests.get(getvideourl, headers=HEADERS)
 		# Some basic checks
 		if response.status_code != 200:
