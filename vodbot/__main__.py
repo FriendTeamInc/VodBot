@@ -1,6 +1,7 @@
 from . import util, __project__, __version__
 from .channel import Channel
 from .video import Video
+from .clip import Clip
 
 import argparse
 import subprocess
@@ -127,10 +128,13 @@ def main():
 		# Add VODs to list to download later.
 		for vod in response["data"]:
 			if vod["thumbnail_url"] != "": # Live VODs don't have thumbnails
-				vods.append(Video(vod))
+				if args.type == "vods":
+					vods.append(Video(vod))
+				elif args.type == "clips":
+					vods.append(Clip(vod))
 
 	print()
-	print(f"Doing {contentnoun}VOD checks...")
+	print(f"Doing {contentnoun} checks...")
 	print()
 
 	# Check what VODs we do and don't have.
@@ -167,17 +171,11 @@ def main():
 
 		pogdir = voddir / vod.user_name.lower()
 		filename = str(pogdir / f"{vod.created_at}_{vod.id}.mkv".replace(":", ";"))
-		
-		contenttype = ""
-		if args.type == "vods":
-			contenttype = "videos"
-		elif args.type == "clips":
-			contenttype = "clips"
 
 		streamlinkcmd = [
 			"streamlink",
-			"--hls-segment-threads", str(10),
-			(f"twitch.tv/{contenttype}/" + vod.id), "best",
+			"--hls-segment-threads", "10",
+			vod.url, "best",
 			"-o", filename, "-f", "-Q"
 		]
 		subprocess.run(streamlinkcmd)
