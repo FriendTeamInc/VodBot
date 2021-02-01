@@ -69,11 +69,14 @@ def main():
 		CHANNELS = args.channels
 	
 	# If argparse has a specific directory for vods, use that. otherwise default to conf.
+	contentnoun = ""
 	if args.directory is None:
 		if args.type == "vods":
 			args.directory = VODS_DIR
+			contentnoun = "VOD"
 		elif args.type == "clips":
 			args.directory = CLIPS_DIR
+			contentnoun = "CLIP"
 		else:
 			util.exit_prog(85, f"Unknown content type \"{args.type}\".")
 
@@ -103,7 +106,7 @@ def main():
 	# GET https://api.twitch.tv/helix/videos: get videos using the channel IDs
 	vods = []
 	for i in channels:
-		print(f"Getting VOD list for {i.display_name}...")
+		print(f"Getting {contentnoun} list for {i.display_name}...")
 		
 		contenttype = ""
 		if args.type == "vods":
@@ -115,11 +118,11 @@ def main():
 		response = requests.get(getvideourl, headers=HEADERS)
 		# Some basic checks
 		if response.status_code != 200:
-			util.exit_prog(5, f"Failed to get video data from Twitch. Status: {response.status_code}")
+			util.exit_prog(5, f"Failed to get {contentnoun} data from Twitch. Status: {response.status_code}")
 		try:
 			response = response.json()
 		except ValueError:
-			util.exit_prog(9, f"Could not parse response json for {i.display_name}'s videos.")
+			util.exit_prog(9, f"Could not parse response json for {i.display_name}'s {contentnoun}s.")
 			
 		# Add VODs to list to download later.
 		for vod in response["data"]:
@@ -127,7 +130,7 @@ def main():
 				vods.append(Video(vod))
 
 	print()
-	print("Doing VOD checks...")
+	print(f"Doing {contentnoun}VOD checks...")
 	print()
 
 	# Check what VODs we do and don't have.
@@ -156,19 +159,25 @@ def main():
 
 	# Download all the VODs we need.
 	previouschannel = None
-	print(f"Total number of VOD's to download: {len(vodstodownload)}.")
+	print(f"Total number of {contentnoun}s to download: {len(vodstodownload)}.")
 	for vod in vodstodownload:
 		if previouschannel != vod.user_id:
 			previouschannel = vod.user_id
-			print(f"\n\nDownloading {vod.user_name}'s VOD's")
+			print(f"\n\nDownloading {vod.user_name}'s {contentnoun}s")
 
 		pogdir = voddir / vod.user_name.lower()
 		filename = str(pogdir / f"{vod.created_at}_{vod.id}.mkv".replace(":", ";"))
 		
+		contenttype = ""
+		if args.type == "vods":
+			contenttype = "videos"
+		elif args.type == "clips":
+			contenttype = "clips"
+
 		streamlinkcmd = [
 			"streamlink",
 			"--hls-segment-threads", str(10),
-			("twitch.tv/videos/" + vod.id), "best",
+			(f"twitch.tv/{contenttype}/" + vod.id), "best",
 			"-o", filename, "-f", "-Q"
 		]
 		subprocess.run(streamlinkcmd)
