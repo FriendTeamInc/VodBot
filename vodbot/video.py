@@ -12,7 +12,7 @@ class Video:
 		self.url = f"twitch.tv/videos/{self.id}"
 	
 	def __repr__(self):
-		return f"VOD({self.id}, {self.user_name}, {self.created_at}, {self.duration})"
+		return f"VOD({self.id}, {self.created_at}, {self.user_name}, {self.created_at}, {self.duration})"
 	
 	def write_meta(self, filename):
 		jsondict = {

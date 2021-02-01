@@ -14,15 +14,15 @@ class Clip:
 		self.url = f"twitch.tv/{self.user_name}/clip/{self.id}"
 	
 	def __repr__(self):
-		return f"Clip({self.id}, {self.user_name}, {self.created_at}, {self.duration})"
+		return f"Clip({self.title}, {self.created_at}, {self.user_name}, {self.clipper_name}, {self.created_at})"
 	
 	def write_meta(self, filename):
 		jsondict = {
 			"id": self.id,
 			"user_id": self.user_id,
 			"user_name": self.user_name,
-			"user_id": self.clipper_id,
-			"user_name": self.clipper_name,
+			"clipper_id": self.clipper_id,
+			"clipper_name": self.clipper_name,
 			"title": self.title,
 			"created_at": self.created_at,
 			"view_count": self.view_count
