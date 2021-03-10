@@ -173,7 +173,7 @@ def main():
 
 		streamlinkcmd = [
 			"streamlink",
-			"--hls-segment-threads", "10",
+			"--hls-segment-threads", "6",
 			vod.url, "best",
 			"-o", filename, "-f", "-Q"
 		]
