@@ -1,3 +1,3 @@
 @echo off
 REM For quick-testing the bot!
-pip uninstall vodbot -y >NUL && pip install . >NUL && vodbot -h
+pip3 uninstall vodbot -y >NUL && pip3 install . >NUL && vodbot -h

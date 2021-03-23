@@ -1,4 +1,4 @@
-# VodBot
+# <img src="/assets/vodbot_logo.png" alt="VodBot by NotQuiteApex & FTI." height="100" />
 A VOD manager for Twitch to Youtube, written in Python, that keeps copies and uploads them to YouTube.
 
 # Installation and Usage
