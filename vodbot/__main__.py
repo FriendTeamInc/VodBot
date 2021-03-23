@@ -28,8 +28,8 @@ def main():
 
 	# Process arguments
 	parser = argparse.ArgumentParser(
-		description="Downloads and processes VODs from Twitch.tv channels.",
-		epilog="VodBot (c) 2020 Logan \"NotQuiteApex\" Hickok-Dickson")
+		description="Downloads and processes VODs and clips from Twitch.tv channels.",
+		epilog="VodBot (c) 2020-2021 Logan \"NotQuiteApex\" Hickok-Dickson")
 	parser.add_argument("-v","--version", action="version",
 		version=__project__ + " " + __version__)
 	parser.add_argument("type", type=str, default="vods",

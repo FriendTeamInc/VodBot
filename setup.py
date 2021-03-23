@@ -7,7 +7,7 @@ setup(
 	name="VodBot",
 	version=vodbot.__version__,
 	description="Twitch VOD manager",
-	long_description="Downloads, stores, and reuploads Twitch VODs.",
+	long_description="Downloads and stores Twitch VODs and clips.",
 	author="Logan \"NotQuiteApex\" Hickok-Dickson",
 	author_email="self@notquiteapex.net",
 	url="https://github.com/NotQuiteApex/VodBot",
