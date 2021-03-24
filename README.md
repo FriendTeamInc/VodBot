@@ -6,7 +6,7 @@ This project is a heavy Work-In-Progress, and lots of changes can occur before a
 
 # Installation
 Requirements:
-* [Python 3.6+](https://www.python.org/)
+* [Python 3.5+](https://www.python.org/)
 * [Streamlink](https://github.com/streamlink/streamlink)
 
 VodBot can be installed with `pip install .`, running it will write a config file and associated folder in your home directory (`~` on UNIX systems, `C:\Users\%USERNAME%\` on Windows). You'll need to fill out the config before continuing the program with your Twitch app's Client ID and Secret, along with the names of the channels you want to watch for VODs.

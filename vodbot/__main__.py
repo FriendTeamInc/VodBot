@@ -38,10 +38,10 @@ def main():
 		type=str, default=[], nargs="*",
 		help="Twitch.tv channel name to pull VODs from (optional, overrides config setting)")
 	parser.add_argument("-c", type=str, dest="config",
-		help="location of the config file",
-		default=str(vodbotdir / "conf.json"))
+		help="Location of the Twitch config file",
+		default=str(vodbotdir / "twitch-conf.json"))
 	parser.add_argument("-d", type=str, dest="directory",
-		help="directory location to store VOD files in",
+		help="Directory location to store VOD files in",
 		default=None)
 	
 	args = parser.parse_args()
