@@ -17,7 +17,10 @@ setup(
 	python_requires='>=3.5',
 	install_requires=[
 		"requests>=2.25",
-		"toml>=0.10.2"
+		"pathlib",
+		"requests",
+		"distutils",
+		"json"
 	],
 	entry_points={
 		'console_scripts': [

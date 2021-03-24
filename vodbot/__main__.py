@@ -48,7 +48,7 @@ def main():
 
 	# Initial error checks
 	if not os.path.exists(args.config):
-		util.make_conf(args.config)
+		util.make_twitch_conf(args.config)
 		util.exit_prog(39,  f"Edit the config file at \"{args.config}\" before running again.")
 	
 	if args.directory is not None and not os.path.isdir(args.directory):
@@ -60,7 +60,7 @@ def main():
 
 	# Load the config and set up the access token
 	print("Loading config...")
-	(CLIENT_ID, CLIENT_SECRET, CHANNELS, VODS_DIR, CLIPS_DIR) = util.load_conf(args.config)
+	(CLIENT_ID, CLIENT_SECRET, CHANNELS, VODS_DIR, CLIPS_DIR) = util.load_twitch_conf(args.config)
 	print("Logging in to Twitch.tv...")
 	ACCESS_TOKEN = util.get_access_token(CLIENT_ID, CLIENT_SECRET)
 	HEADERS = {"Client-ID": CLIENT_ID, "Authorization": "Bearer " + ACCESS_TOKEN}
