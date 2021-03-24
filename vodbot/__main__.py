@@ -40,6 +40,9 @@ def main():
 	parser.add_argument("-c", type=str, dest="config",
 		help="Location of the Twitch config file",
 		default=str(vodbotdir / "twitch-conf.json"))
+	parser.add_argument("-yt", type=str, dest="yt_config",
+		help="Location of the YouTube config file (CURRENTLY UNUSED)",
+		default=str(vodbotdir / "youtube-conf.json"))
 	parser.add_argument("-d", type=str, dest="directory",
 		help="Directory location to store VOD files in",
 		default=None)
