@@ -84,7 +84,6 @@ def main():
 			contentnoun = "Clip"
 		else:
 			util.exit_prog(85, f"Unknown content type \"{args.type}\".")
-
 	
 	util.make_dir(args.directory)
 	util.make_dir(str(vodbotdir))
@@ -113,23 +112,22 @@ def main():
 	# GET https://api.twitch.tv/helix/videos: get videos using the channel IDs
 	vods = []
 	
+	getvideourl = None
+	if args.type == "vods":
+		getvideourl = "https://api.twitch.tv/helix/videos?user_id={video_id}&first=100&type=archive"
+	elif args.type == "clips":
+		getvideourl = "https://api.twitch.tv/helix/clips?broadcaster_id={video_id}&first=100"
 
 	for i in channels:
 		print(f"Getting {contentnoun} list for {i.display_name}...")
-
-		getvideourl = ""
-		if args.type == "vods":
-			getvideourl = f"https://api.twitch.tv/helix/videos?user_id={i.id}&first=100&type=archive"
-		elif args.type == "clips":
-			getvideourl = f"https://api.twitch.tv/helix/clips?broadcaster_id={i.id}&first=100"
 
 		pagination = ""
 
 		while True:
 			# generate URL
-			url = getvideourl
+			url = getvideourl.format(video_id=i.id)
 			if pagination != "":
-				url += f"&after={pagination}"
+				url += "&after=" + pagination
 			response = requests.get(url, headers=HEADERS)
 
 			# Some basic checks
