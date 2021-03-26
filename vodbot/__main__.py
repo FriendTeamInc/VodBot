@@ -2,6 +2,7 @@ from . import util, __project__, __version__
 from .channel import Channel
 from .video import Video
 from .clip import Clip
+from .itd import download as itd_dl, worker as itd_work
 
 import argparse
 import subprocess
@@ -86,6 +87,8 @@ def main():
 
 	
 	util.make_dir(args.directory)
+	util.make_dir(str(vodbotdir))
+	util.make_dir(str(vodbotdir / "temp"))
 
 	print()
 
@@ -174,15 +177,17 @@ def main():
 		pogdir = voddir / vod.user_name.lower()
 		filename = str(pogdir / f"{vod.created_at}_{vod.id}.mkv".replace(":", ";"))
 
-		streamlinkcmd = [
-			"streamlink",
-			"--hls-segment-threads", "10",
-			vod.url, "best",
-			"-o", filename, "-f", "-Q"
-		]
-		subprocess.run(streamlinkcmd)
-
-		vod.write_meta(str(pogdir / (vod.id + ".meta")))
+		try:
+			if isinstance(vod, Video): # Download video
+				itd_dl.dl_video(vod.id, filename, 20)
+			elif isinstance(vod, Clip): # Download clip
+				itd_dl.dl_clip(vod.id, filename)
+		except itd_dl.JoiningFailed:
+			print(f"VOD `{vod.id}` joining failed! Preserving files...")
+		except itd_work.DownloadFailed:
+			print(f"Clip `{vod.id}` download failed!")
+		else:
+			vod.write_meta(str(pogdir / (vod.id + ".meta")))
 	
 	print("\n\nAll done, goodbye!")
 	
