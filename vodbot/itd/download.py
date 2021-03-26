@@ -1,6 +1,7 @@
 from . import gql, worker
 from vodbot.util import make_dir, vodbotdir
 
+import subprocess
 import requests
 import m3u8
 import re
@@ -47,6 +48,10 @@ def dl_video(video_id, path, max_workers):
 	tempdir = vodbotdir / "temp" / video_id
 	make_dir(str(tempdir))
 
+	# Dump playlist to a file
+	playlist_path = tempdir / "playlist.m3u8"
+	playlist.dump(str(playlist_path))
+
 	# Get all the necessary vod paths for the uri
 	base_uri = re.sub("/[^/]+$", "/", source_uri)
 	vod_paths = []
@@ -55,11 +60,23 @@ def dl_video(video_id, path, max_workers):
 			vod_paths.append(segment.uri)
 
 	# Download VOD chunks to the temp folder
-	worker.download_files(base_uri, tempdir, vod_paths, max_workers)
+	path_map = worker.download_files(video_id, base_uri, tempdir, vod_paths, max_workers)
+	print("Done, now to join...")
 
 	# join the vods using ffmpeg at specified path
+	cmd = [
+		"ffmpeg", "-i", str(playlist_path),
+		"-c", "copy", path, "-y",
+		"-stats", "-loglevel", "warning"
+	]
+
+	result = subprocess.run(cmd)
+	if result != 0:
+		print("VOD joining failed! Preserving files...")
+		return
+
 	# delete temp folder and contents
-	pass
+	
 
 def dl_clip(id, path, max_workers):
 	# Grab full video identifier

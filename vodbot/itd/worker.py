@@ -74,7 +74,7 @@ def format_size(bytes_, digits=1):
 	else:
 		return "{{:d}}{}".format("GB").format(bytes_)
 
-def _print_progress(futures):
+def _print_progress(video_id, futures):
 	downloaded_count = 0
 	downloaded_size = 0
 	max_msg_size = 0
@@ -93,24 +93,24 @@ def _print_progress(futures):
 		remaining = (total_count - downloaded_count) * duration / downloaded_count
 
 		msg = " ".join([
-			f"Downloaded VOD part {downloaded_count}/{total_count}",
+			f"VOD `{video_id}` pt{downloaded_count}/{total_count}",
 			f"({percentage}%){format_size(downloaded_size)}",
 			f"of ~{format_size(est_total_size)};",
 			f"at {format_size(speed)}/s;" if speed > 0 else "",
-			f"remaining ~{format_duration(remaining)}" if speed > 0 else "",
+			f"~{format_duration(remaining)} left" if speed > 0 else "",
 		])
 
 		max_msg_size = max(len(msg), max_msg_size)
 		print("\r" + msg.ljust(max_msg_size), end="")
 
 
-def download_files(base_url, target_dir, vod_paths, max_workers):
+def download_files(video_id, base_url, target_dir, vod_paths, max_workers):
 	urls = [base_url + path for path in vod_paths]
-	targets = [str(target_dir / "{:06d}.ts".format(k)) for k, _ in enumerate(vod_paths)]
+	targets = [str(target_dir / f"{k}.ts") for k, _ in enumerate(vod_paths)]
 	partials = (partial(_download_file, url, path) for url, path in zip(urls, targets))
 
 	with ThreadPoolExecutor(max_workers=max_workers) as executor:
 		futures = [executor.submit(fn) for fn in partials]
-		_print_progress(futures)
+		_print_progress(video_id, futures)
 
 	return OrderedDict(zip(vod_paths, targets))
