@@ -16,11 +16,7 @@ setup(
 	packages=["vodbot"],
 	python_requires='>=3.5',
 	install_requires=[
-		"requests>=2.25",
-		"pathlib",
-		"requests",
-		"distutils",
-		"json"
+		"requests>=2.25"
 	],
 	entry_points={
 		'console_scripts': [
