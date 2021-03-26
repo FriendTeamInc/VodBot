@@ -33,7 +33,7 @@ def _download(url, path):
 	return size
 
 
-def _download_file(url, path, retries=RETRY_COUNT):
+def download_file(url, path, retries=RETRY_COUNT):
 	if os.path.exists(path):
 		return os.path.getsize(path)
 
@@ -107,7 +107,7 @@ def _print_progress(video_id, futures):
 def download_files(video_id, base_url, target_dir, vod_paths, max_workers):
 	urls = [base_url + path for path in vod_paths]
 	targets = [str(target_dir / f"{k}.ts") for k, _ in enumerate(vod_paths)]
-	partials = (partial(_download_file, url, path) for url, path in zip(urls, targets))
+	partials = (partial(download_file, url, path) for url, path in zip(urls, targets))
 
 	with ThreadPoolExecutor(max_workers=max_workers) as executor:
 		futures = [executor.submit(fn) for fn in partials]

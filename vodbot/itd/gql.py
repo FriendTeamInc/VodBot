@@ -19,17 +19,17 @@ def gql_query(query=None, data=None):
 
 VIDEO_ACCESS_QUERY = """
 {{
-    videoPlaybackAccessToken(
-        id: {video_id},
-        params: {{
-            platform: "web",
-            playerBackend: "mediaplayer",
-            playerType: "site"
-        }}
-    ) {{
-        signature
-        value
-    }}
+	videoPlaybackAccessToken(
+		id: {video_id},
+		params: {{
+			platform: "web",
+			playerBackend: "mediaplayer",
+			playerType: "site"
+		}}
+	) {{
+		signature
+		value
+	}}
 }}
 """
 
@@ -42,3 +42,37 @@ def get_access_token(video_id):
 	resp = gql_query(query=query).json()
 
 	return resp["data"]["videoPlaybackAccessToken"]
+
+CLIP_SOURCE_QUERY = """
+{{
+	clip(slug: "{}") {{
+		id
+		slug
+		title
+		createdAt
+		viewCount
+		durationSeconds
+		url
+		videoQualities {{
+			frameRate
+			quality
+			sourceURL
+		}}
+		game {{
+			id
+			name
+		}}
+		broadcaster {{
+			displayName
+			login
+		}}
+	}}
+}}
+"""
+
+def get_clip_source(clip_id):
+	query = CLIP_SOURCE_QUERY.format(clip_id)
+
+	resp = gql_query(query=query).json()
+
+	return resp["data"]["clip"]["videoQualities"][0]["sourceURL"]

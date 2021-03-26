@@ -8,6 +8,9 @@ import m3u8
 import re
 import os
 
+class JoiningFailed(Exception):
+	pass
+
 def get_playlist_uris(video_id, access_token):
 	"""
 	Grabs the URI's for accessing each of the video chunks.
@@ -77,15 +80,18 @@ def dl_video(video_id, path, max_workers):
 	os.chdir(cwd)
 
 	if result.returncode != 0:
-		print("VOD joining failed! Preserving files...")
-		return
+		raise JoiningFailed()
 
 	# delete temp folder and contents
 	shutil.rmtree(str(tempdir))
 
-def dl_clip(id, path, max_workers):
-	# Grab full video identifier
+
+def dl_clip(clip_id, path):
 	# Get proper clip file URL
-	# download file to path
-	pass
-   
+	source_url = gql.get_clip_source(clip_id)
+
+	# Download file to path
+	size = worker.download_file(source_url, path)
+
+	# Print progress
+	print(f"Clip `{clip_id}` pt1/1 ~{worker.format_size(size)}")
