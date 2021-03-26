@@ -16,18 +16,18 @@ VodBot can be installed with `pip install .`, running it will write a config fil
 The Makefile in the repo can be used, though it is simply a shorthand script for rapid testing the program for the devs.
 
 # Usage
-If it hasn't been run before, simply run `vodbot` to initialize directories and files.
+If it hasn't been run before, simply run `vodbot` to initialize directories and files. Navigate to the path presented and edit the config accordingly.
 
-Running `vodbot vods` or `vodbot clips` will download the vods or clips of the channels you have set to watch in your config file. It's recommended that if you plan to use this for the long term to save the videos in some kind of redundant storage array or in multiple locations (or both).
+Running `vodbot vods` or `vodbot clips` will download the VODs or clips of the channels you have set to watch in your config file. You can also just run `vodbot` alone to download VODs.
 
 Metadata json files contain the date (in UTC), the user that streamed, the title, and the video ID. Clips metadata have all that info in addition to clip author and view count.
 
-It is recommended that you run VodBot with some kind of scheduling program like `systemd` or `cron` every so often to pull the VODs and clips for you.
+It's recommended that if you plan to use this for the long term to save the videos in some kind of redundant storage array or in multiple locations (or both). It's also recommended that VodBot is run with some kind of scheduling program like `systemd` or `cron` every so often to pull the VODs and clips for you.
 
 # Configurations
 These are the default config files for the services used by VodBot.
 
-`twitch-conf.json` - Channels to watch for VODs and clips, and where to save them to.
+### `conf.json` - Twitch channels to watch for VODs and clips, and where to save them to.
 ```json
 {
   "channels": [
@@ -37,15 +37,15 @@ These are the default config files for the services used by VodBot.
     "46moura",
   ],
 
-  "client_id": "[[INSERT CLIENT ID HERE]]",
-  "client_secret": "[[INSERT CLIENT SECRET HERE]]",
+  "twitch_client_id": "[[INSERT CLIENT ID HERE]]",
+  "twitch_client_secret": "[[INSERT CLIENT SECRET HERE]]",
 
   "vod_dir": "/mnt/md0/vods",
   "clip_dir": "/mnt/md0/clips"
 }
 ```
 
-`youtube-conf.json` - API json for [uploading videos to YouTube](https://developers.google.com/youtube/v3/guides/uploading_a_video).
+### `youtube-conf.json` - API json for [uploading videos to YouTube](https://developers.google.com/youtube/v3/guides/uploading_a_video). (Currently Unused)
 ```json
 {
   "web": {

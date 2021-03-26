@@ -33,14 +33,14 @@ def main():
 		epilog="VodBot (c) 2020-2021 Logan \"NotQuiteApex\" Hickok-Dickson")
 	parser.add_argument("-v","--version", action="version",
 		version=__project__ + " " + __version__)
-	parser.add_argument("type", type=str, default="vods",
+	parser.add_argument("type", type=str, default="vods", nargs="?",
 		help="Content type flag, can be \"vods\" or \"clips\".")
 	parser.add_argument("channels", metavar="channel",
 		type=str, default=[], nargs="*",
 		help="Twitch.tv channel name to pull VODs from (optional, overrides config setting)")
 	parser.add_argument("-c", type=str, dest="config",
 		help="Location of the Twitch config file",
-		default=str(vodbotdir / "twitch-conf.json"))
+		default=str(vodbotdir / "conf.json"))
 	parser.add_argument("-yt", type=str, dest="yt_config",
 		help="Location of the YouTube config file (CURRENTLY UNUSED)",
 		default=str(vodbotdir / "youtube-conf.json"))
