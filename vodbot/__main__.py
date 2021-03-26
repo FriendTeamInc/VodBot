@@ -73,7 +73,8 @@ def main():
 	if len(args.channels) != 0:
 		CHANNELS = args.channels
 	
-	# If argparse has a specific directory for vods, use that. otherwise default to conf.
+	# If argparse has a specific directory for vods, use that. Otherwise default to conf.
+	# Also select "contentnoun" for making certain prints make sense.
 	contentnoun = ""
 	if args.directory is None:
 		if args.type == "vods":
@@ -85,6 +86,7 @@ def main():
 		else:
 			util.exit_prog(85, f"Unknown content type \"{args.type}\".")
 	
+	# Setup directories for videos, config, and temp
 	util.make_dir(args.directory)
 	util.make_dir(str(vodbotdir))
 	util.make_dir(str(vodbotdir / "temp"))
@@ -95,23 +97,24 @@ def main():
 	print("Getting User ID's...")
 	getidsurl = "https://api.twitch.tv/helix/users?" 
 	getidsurl += "&".join(f"login={i}" for i in CHANNELS)
-	response = requests.get(getidsurl, headers=HEADERS)
+	resp = requests.get(getidsurl, headers=HEADERS)
 	# Some basic checks
-	if response.status_code != 200:
+	if resp.status_code != 200:
 		util.exit_prog(5, f"Failed to get user ID's from Twitch. Status: {response.status_code}")
 	try:
-		response = response.json()
+		resp = resp.json()
 	except ValueError:
 		util.exit_prog(12, f"Could not parse response json for user ID's.")
 	
 	# Make channel objects and store them in a list
 	channels = []
-	for i in response["data"]:
+	for i in resp["data"]:
 		channels.append(Channel(i))
 
-	# GET https://api.twitch.tv/helix/videos: get videos using the channel IDs
+	# GET https://api.twitch.tv/helix/videos: get list of videos using the channel IDs
 	vods = []
 	
+	# Switch between the two API endpoints.
 	getvideourl = None
 	if args.type == "vods":
 		getvideourl = "https://api.twitch.tv/helix/videos?user_id={video_id}&first=100&type=archive"
@@ -190,13 +193,17 @@ def main():
 	previouschannel = None
 	print(f"Total number of {contentnoun}s to download: {len(vodstodownload)}.")
 	for vod in vodstodownload:
+		# Print if we're on to a new user.
 		if previouschannel != vod.user_id:
 			previouschannel = vod.user_id
 			print(f"\n\nDownloading {vod.user_name}'s {contentnoun}s")
 
+		# Generate path for video
 		pogdir = voddir / vod.user_name.lower()
 		filename = str(pogdir / f"{vod.created_at}_{vod.id}.mkv".replace(":", ";"))
 
+		# Write video data and handle exceptions
+		# If successful, write the meta file
 		try:
 			if isinstance(vod, Video): # Download video
 				itd_dl.dl_video(vod.id, filename, 20)
