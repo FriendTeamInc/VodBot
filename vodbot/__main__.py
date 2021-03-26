@@ -2,6 +2,7 @@ from . import util, __project__, __version__
 from .channel import Channel
 from .video import Video
 from .clip import Clip
+from .itd import download as itd_dl
 
 import argparse
 import subprocess
@@ -174,10 +175,12 @@ def main():
 		pogdir = voddir / vod.user_name.lower()
 		filename = str(pogdir / f"{vod.created_at}_{vod.id}.mkv".replace(":", ";"))
 
-		if isinstance(vod, Video):
-			pass # Download video
-		elif isinstance(vod, Clip):
-			pass # Download clip
+		if isinstance(vod, Video): # Download video
+			vid_id = vod.url.split("/")[2]
+			itd_dl.dl_video(vid_id, filename)
+		elif isinstance(vod, Clip): # Download clip
+			vid_id = vod.url.split("/")[3]
+			itd_dl.dl_clip(vid_id, filename)
 
 		# streamlinkcmd = [
 		# 	"streamlink",
@@ -187,7 +190,7 @@ def main():
 		# ]
 		# subprocess.run(streamlinkcmd)
 
-		vod.write_meta(str(pogdir / (vod.id + ".meta")))
+		#vod.write_meta(str(pogdir / (vod.id + ".meta")))
 	
 	print("\n\nAll done, goodbye!")
 	
