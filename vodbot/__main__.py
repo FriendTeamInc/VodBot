@@ -174,13 +174,18 @@ def main():
 		pogdir = voddir / vod.user_name.lower()
 		filename = str(pogdir / f"{vod.created_at}_{vod.id}.mkv".replace(":", ";"))
 
-		streamlinkcmd = [
-			"streamlink",
-			"--hls-segment-threads", "10",
-			vod.url, "best",
-			"-o", filename, "-f", "-Q"
-		]
-		subprocess.run(streamlinkcmd)
+		if isinstance(vod, Video):
+			pass # Download video
+		elif isinstance(vod, Clip):
+			pass # Download clip
+
+		# streamlinkcmd = [
+		# 	"streamlink",
+		# 	"--hls-segment-threads", "10",
+		# 	vod.url, "best",
+		# 	"-o", filename, "-f", "-Q"
+		# ]
+		# subprocess.run(streamlinkcmd)
 
 		vod.write_meta(str(pogdir / (vod.id + ".meta")))
 	
