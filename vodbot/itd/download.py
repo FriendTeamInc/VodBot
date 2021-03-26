@@ -5,7 +5,6 @@ import subprocess
 import requests
 import shutil
 import m3u8
-import re
 import os
 
 class JoiningFailed(Exception):
@@ -58,7 +57,7 @@ def dl_video(video_id, path, max_workers):
 	playlist.dump(str(playlist_path))
 
 	# Get all the necessary vod paths for the uri
-	base_uri = re.sub("/[^/]+$", "/", source_uri)
+	base_uri = "/".join(source_uri.split("/")[:-1]) + "/"
 	vod_paths = []
 	for segment in playlist.segments:
 		if segment.uri not in vod_paths:
