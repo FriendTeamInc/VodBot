@@ -81,7 +81,7 @@ def main():
 			contentnoun = "VOD"
 		elif args.type == "clips":
 			args.directory = CLIPS_DIR
-			contentnoun = "CLIP"
+			contentnoun = "Clip"
 		else:
 			util.exit_prog(85, f"Unknown content type \"{args.type}\".")
 
@@ -112,34 +112,56 @@ def main():
 
 	# GET https://api.twitch.tv/helix/videos: get videos using the channel IDs
 	vods = []
+	
+
 	for i in channels:
 		print(f"Getting {contentnoun} list for {i.display_name}...")
-		
+
 		getvideourl = ""
 		if args.type == "vods":
-			getvideourl = f"https://api.twitch.tv/helix/videos?user_id={i.id}&first=100"
+			getvideourl = f"https://api.twitch.tv/helix/videos?user_id={i.id}&first=100&type=archive"
 		elif args.type == "clips":
 			getvideourl = f"https://api.twitch.tv/helix/clips?broadcaster_id={i.id}&first=100"
 
-		response = requests.get(getvideourl, headers=HEADERS)
-		# Some basic checks
-		if response.status_code != 200:
-			util.exit_prog(5, f"Failed to get {contentnoun} data from Twitch. Status: {response.status_code}")
-		try:
-			response = response.json()
-		except ValueError:
-			util.exit_prog(9, f"Could not parse response json for {i.display_name}'s {contentnoun}s.")
+		pagination = ""
+
+		while True:
+			# generate URL
+			url = getvideourl
+			if pagination != "":
+				url += f"&after={pagination}"
+			response = requests.get(url, headers=HEADERS)
+
+			# Some basic checks
+			if response.status_code != 200:
+				util.exit_prog(5, f"Failed to get {contentnoun} data from Twitch. Status: {response.status_code}")
+			try:
+				response = response.json()
+			except ValueError:
+				util.exit_prog(9, f"Could not parse response json for {i.display_name}'s {contentnoun}s.")
 			
-		# Add VODs to list to download later.
-		for vod in response["data"]:
-			if vod["thumbnail_url"] != "": # Live VODs don't have thumbnails
-				if args.type == "vods":
-					vods.append(Video(vod))
-				elif args.type == "clips":
-					vods.append(Clip(vod))
+			# Break out if we went through all the clips
+			if len(response["data"]) == 0:
+				break
+
+			# Add VODs to list to download later.
+			for vod in response["data"]:
+				# We need to ignore live VOD's
+				# Live VODs don't have thumbnails
+				if vod["thumbnail_url"] != "":
+					if args.type == "vods":
+						vods.append(Video(vod))
+					elif args.type == "clips":
+						vods.append(Clip(vod))
+			
+			# If there's no other cursors, let's break.
+			if "cursor" in response["pagination"]:
+				pagination = response["pagination"]["cursor"]
+			else:
+				break
 
 	print()
-	print(f"Doing {contentnoun} checks...")
+	print(f"Checking for existing {contentnoun}...")
 	print()
 
 	# Check what VODs we do and don't have.
