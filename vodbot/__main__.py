@@ -87,6 +87,8 @@ def main():
 
 	
 	util.make_dir(args.directory)
+	util.make_dir(str(vodbotdir))
+	util.make_dir(str(vodbotdir / "temp"))
 
 	print()
 

@@ -1,4 +1,6 @@
 from . import gql
+from vodbot.util import make_dir, vodbotdir
+
 import requests
 import m3u8
 
@@ -29,11 +31,21 @@ def get_playlist_uris(video_id, access_token):
 def dl_video(video_id, path):
 	# Grab access token
 	access_token = gql.get_access_token(video_id)
+
 	# Get M3U8 playlist, and parse them
 	# (first URI is always source quality!)
 	uris = get_playlist_uris(video_id, access_token)
-	print(uris)
+	source_uri = uris[0]
+
+	# Fetch playlist at proper quality
+	resp = requests.get(source_uri)
+	resp.raise_for_status()
+	playlist = m3u8.loads(resp.text)
+
 	# Create a temp dir in .vodbot/temp
+	tempdir = vodbotdir / "temp" / video_id
+	make_dir(str(tempdir))
+
 	# Download VOD chunks to the temp folder
 	# join the vods using ffmpeg at specified path
 	# delete temp folder and contents
