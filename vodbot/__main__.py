@@ -10,7 +10,6 @@ import json
 import os
 import requests
 from pathlib import Path
-from distutils.spawn import find_executable
 
 
 def deffered_main():
@@ -57,9 +56,6 @@ def main():
 	
 	if args.directory is not None and not os.path.isdir(args.directory):
 		util.exit_prog(54, f"Non-directory object \"{args.directory}\" must be removed before proceeding!")
-
-	if find_executable("streamlink") is None:
-		util.exit_prog(28, "Streamlink not found. Did you forget to install it?")
 
 
 	# Load the config and set up the access token
