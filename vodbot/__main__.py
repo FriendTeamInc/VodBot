@@ -179,10 +179,10 @@ def main():
 
 		if isinstance(vod, Video): # Download video
 			vid_id = vod.url.split("/")[2]
-			itd_dl.dl_video(vid_id, filename)
+			itd_dl.dl_video(vid_id, filename, 20)
 		elif isinstance(vod, Clip): # Download clip
 			vid_id = vod.url.split("/")[3]
-			itd_dl.dl_clip(vid_id, filename)
+			itd_dl.dl_clip(vid_id, filename, 20)
 
 		# streamlinkcmd = [
 		# 	"streamlink",

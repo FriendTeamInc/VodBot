@@ -1,8 +1,9 @@
-from . import gql
+from . import gql, worker
 from vodbot.util import make_dir, vodbotdir
 
 import requests
 import m3u8
+import re
 
 def get_playlist_uris(video_id, access_token):
 	"""
@@ -28,7 +29,7 @@ def get_playlist_uris(video_id, access_token):
 	
 	return playlist_uris
 
-def dl_video(video_id, path):
+def dl_video(video_id, path, max_workers):
 	# Grab access token
 	access_token = gql.get_access_token(video_id)
 
@@ -46,12 +47,21 @@ def dl_video(video_id, path):
 	tempdir = vodbotdir / "temp" / video_id
 	make_dir(str(tempdir))
 
+	# Get all the necessary vod paths for the uri
+	base_uri = re.sub("/[^/]+$", "/", source_uri)
+	vod_paths = []
+	for segment in playlist.segments:
+		if segment.uri not in vod_paths:
+			vod_paths.append(segment.uri)
+
 	# Download VOD chunks to the temp folder
+	worker.download_files(base_uri, tempdir, vod_paths, max_workers)
+
 	# join the vods using ffmpeg at specified path
 	# delete temp folder and contents
 	pass
 
-def dl_clip(id, path):
+def dl_clip(id, path, max_workers):
 	# Grab full video identifier
 	# Get proper clip file URL
 	# download file to path
