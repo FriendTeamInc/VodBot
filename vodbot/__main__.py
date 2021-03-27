@@ -3,6 +3,7 @@ from .channel import Channel
 from .video import Video
 from .clip import Clip
 from .itd import download as itd_dl, worker as itd_work
+from .printer import cprint
 
 import argparse
 import subprocess
@@ -48,6 +49,9 @@ def main():
 		default=None)
 	
 	args = parser.parse_args()
+
+	cprint("#bM#fKVodBot Lives in Technicolor!")
+	return
 
 	# Initial error checks
 	if not os.path.exists(args.config):

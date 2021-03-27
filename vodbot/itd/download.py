@@ -93,4 +93,4 @@ def dl_clip(clip_id, path):
 	size = worker.download_file(source_url, path)
 
 	# Print progress
-	print(f"Clip `{clip_id}` pt1/1 ~{worker.format_size(size)}")
+	print(f"Clip `{clip_id}` ~{worker.format_size(size)}")
