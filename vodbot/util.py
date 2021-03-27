@@ -1,3 +1,5 @@
+from .printer import cprint
+
 import os
 import sys
 import json
@@ -153,10 +155,10 @@ def exit_prog(code=0, errmsg=None):
 	print()
 
 	if code != 0:
-		msg = f"ERROR! ({code}) "
+		msg = f"#fR#lERROR! (#fY#l{code}#fR#l) "
 		if errmsg != None:
 			msg += errmsg
-		print(msg)
+		cprint(msg)
 
 	print("Exiting...")
 	sys.exit(code)

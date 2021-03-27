@@ -50,8 +50,8 @@ def main():
 	
 	args = parser.parse_args()
 
-	cprint("#bM#fKVodBot Lives in Technicolor!")
-	return
+	cprint("#bM#fWVodBot (c) 2020-21, NotQuiteApex")
+	print()
 
 	# Initial error checks
 	if not os.path.exists(args.config):
