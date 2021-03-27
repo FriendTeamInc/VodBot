@@ -155,10 +155,10 @@ def exit_prog(code=0, errmsg=None):
 	print()
 
 	if code != 0:
-		msg = f"#fR#lERROR! (#fY#l{code}#fR#l) "
+		msg = f"#fR#lERROR! #fY#l({code})#r"
 		if errmsg != None:
-			msg += errmsg
-		cprint(msg)
+			msg += " #fR#l" + errmsg + "#r"
+		cprint(msg, end=" ")
 
-	print("Exiting...")
+	cprint("#dExiting...#r")
 	sys.exit(code)

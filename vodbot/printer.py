@@ -39,6 +39,4 @@ def strip_color(text: str):
 
 def cprint(*args, **kwargs):
 	args = [colorize(txt) if USE_COLOR else strip_color(txt) for txt in args]
-	if USE_COLOR:
-		args[0] += COLOR_CODES["r"]
 	print(*args, **kwargs)

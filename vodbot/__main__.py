@@ -3,7 +3,7 @@ from .channel import Channel
 from .video import Video
 from .clip import Clip
 from .itd import download as itd_dl, worker as itd_work
-from .printer import cprint
+from .printer import cprint, colorize
 
 import argparse
 import subprocess
@@ -27,30 +27,28 @@ def main():
 	# Default path
 	vodbotdir = util.vodbotdir
 
+	titletext = colorize(f"#fM* VodBot {__version__} (c) 2020-21 Logan \"NotQuiteApex\" Hickok-Dickson *#r")
+
 	# Process arguments
 	parser = argparse.ArgumentParser(
 		description="Downloads and processes VODs and clips from Twitch.tv channels.",
-		epilog="VodBot (c) 2020-2021 Logan \"NotQuiteApex\" Hickok-Dickson")
-	parser.add_argument("-v","--version", action="version",
-		version=__project__ + " " + __version__)
+		epilog=titletext)
+	parser.add_argument("-v","--version", action="version", version=titletext)
 	parser.add_argument("type", type=str, default="vods", nargs="?",
-		help="Content type flag, can be \"vods\" or \"clips\".")
-	parser.add_argument("channels", metavar="channel",
-		type=str, default=[], nargs="*",
-		help="Twitch.tv channel name to pull VODs from (optional, overrides config setting)")
+		help="content type flag, can be \"vods\" or \"clips\"; defaults to \"vods\"")
+	parser.add_argument("channels", metavar="channel", type=str, default=[], nargs="*",
+		help="twitch.tv channel name to pull VODs from; optional, defaults to config")
 	parser.add_argument("-c", type=str, dest="config",
-		help="Location of the Twitch config file",
-		default=str(vodbotdir / "conf.json"))
+		help="location of the Twitch config file", default=str(vodbotdir / "conf.json"))
 	parser.add_argument("-yt", type=str, dest="yt_config",
-		help="Location of the YouTube config file (CURRENTLY UNUSED)",
+		help="location of the YouTube config file (CURRENTLY UNUSED)",
 		default=str(vodbotdir / "youtube-conf.json"))
 	parser.add_argument("-d", type=str, dest="directory",
-		help="Directory location to store VOD files in",
-		default=None)
+		help="directory location to store the content files in", default=None)
 	
 	args = parser.parse_args()
 
-	cprint("#bM#fWVodBot (c) 2020-21, NotQuiteApex")
+	print(titletext)
 	print()
 
 	# Initial error checks
