@@ -59,9 +59,9 @@ def main():
 		util.exit_prog(54, f"Non-directory object \"{args.directory}\" must be removed before proceeding!")
 
 	# Load the config and set up the access token
-	cprint("#dLoading config...", end=" ")
+	cprint("#dLoading config...", end=" ", flush=True)
 	(CLIENT_ID, CLIENT_SECRET, CHANNELS, VODS_DIR, CLIPS_DIR) = util.load_twitch_conf(args.config)
-	cprint("Logging in to Twitch.tv...", end=" ")
+	cprint("Logging in to Twitch.tv...", end=" ", flush=True)
 	ACCESS_TOKEN = util.get_access_token(CLIENT_ID, CLIENT_SECRET)
 	HEADERS = {"Client-ID": CLIENT_ID, "Authorization": "Bearer " + ACCESS_TOKEN}
 
@@ -89,7 +89,7 @@ def main():
 	util.make_dir(str(vodbotdir / "temp"))
 
 	# GET https://api.twitch.tv/helix/users: get User-IDs with this
-	cprint("Getting User ID's...#r")
+	cprint("Getting User ID's...#r", flush=True)
 	getidsurl = "https://api.twitch.tv/helix/users?" 
 	getidsurl += "&".join(f"login={i}" for i in CHANNELS)
 	resp = requests.get(getidsurl, headers=HEADERS)
