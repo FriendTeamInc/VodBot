@@ -109,7 +109,6 @@ def main():
 
 	# GET https://api.twitch.tv/helix/videos: get list of videos using the channel IDs
 	vods = []
-	allvods = []
 	vodcount = 0
 	
 	# Switch between the two API endpoints.
@@ -121,6 +120,8 @@ def main():
 
 	for channel in channels:
 		cprint(f"Getting #fM#l{contentnoun}#r list for #fY#l{channel.display_name}#r...", end=" ")
+
+		allvods = []
 
 		# Deal with pagination
 		pagination = ""
@@ -169,12 +170,13 @@ def main():
 				if len(filename) > 1 and filename[1] == "meta":
 					if any(filename[0] == x.id for x in allvods):
 						existingvods.append(filename[0])
+		
 		for vod in allvods:
 			if not any(vod.id == x for x in existingvods):
 				vods.append(vod)
 
 		# Print videos found
-		cprint(f"#fC#l{len(vods) - vodcount} #fM#l{contentnoun}s#r")
+		cprint(f"#fC#l{len(vods) - vodcount} #fM#l{contentnoun}s#r {len(vods)} {len(allvods)} {len(existingvods)}")
 		vodcount = len(vods)
 
 	cprint(f"Total #fM#l{contentnoun}s#r: #fC#l{len(vods)}#r")
@@ -206,7 +208,7 @@ def main():
 			cprint(f"Download failed! Skipping...#r")
 			failed = True
 		except itd_work.DownloadCancelled:
-			cprint(f"\n#fR#lClip download cancelled.#r")
+			cprint(f"\n#fR#l{contentnoun} download cancelled.#r")
 			raise KeyboardInterrupt()
 		
 		if not failed:
