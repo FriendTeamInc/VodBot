@@ -58,7 +58,6 @@ def main():
 	if args.directory is not None and not os.path.isdir(args.directory):
 		util.exit_prog(54, f"Non-directory object \"{args.directory}\" must be removed before proceeding!")
 
-
 	# Load the config and set up the access token
 	cprint("#dLoading config...", end=" ")
 	(CLIENT_ID, CLIENT_SECRET, CHANNELS, VODS_DIR, CLIPS_DIR) = util.load_twitch_conf(args.config)
@@ -119,7 +118,7 @@ def main():
 		getvideourl = "https://api.twitch.tv/helix/clips?broadcaster_id={video_id}&first=100"
 
 	for channel in channels:
-		cprint(f"Getting #fM#l{contentnoun}#r list for #fY#l{channel.display_name}#r...", end=" ")
+		cprint(f"Pulling #fM#l{contentnoun}#r list: #fY#l{channel.display_name}#r...", end=" ")
 
 		allvods = []
 
@@ -179,7 +178,7 @@ def main():
 		cprint(f"#fC#l{len(vods) - vodcount} #fM#l{contentnoun}s#r")
 		vodcount = len(vods)
 
-	cprint(f"Total #fM#l{contentnoun}s#r: #fC#l{len(vods)}#r")
+	cprint(f"Total #fM#l{contentnoun}s#r to download: #fC#l{len(vods)}#r")
 
 	# Download all the VODs we need.
 	previouschannel = None
@@ -214,7 +213,7 @@ def main():
 		if not failed:
 			vod.write_meta(str(pogdir / (vod.id + ".meta")))
 	
-	print("\n\nAll done, goodbye!")
+	cprint("\n#fM#l* All done, goodbye! *#r\n")
 	
 
 if __name__ == "__main__":

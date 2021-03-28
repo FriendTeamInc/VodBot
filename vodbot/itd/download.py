@@ -66,7 +66,7 @@ def dl_video(video_id, path, max_workers):
 
 	# Download VOD chunks to the temp folder
 	path_map = worker.download_files(video_id, base_uri, tempdir, vod_paths, max_workers)
-	cprint("#dDone, now ffmpeg join...#r")
+	cprint("#dDone, now to ffmpeg join...#r")
 
 	# join the vods using ffmpeg at specified path
 	cwd = os.getcwd()
