@@ -3,6 +3,7 @@ from .channel import Channel
 from .video import Video
 from .clip import Clip
 from .itd import download as itd_dl, worker as itd_work
+from .printer import cprint, colorize
 
 import argparse
 import subprocess
@@ -26,28 +27,28 @@ def main():
 	# Default path
 	vodbotdir = util.vodbotdir
 
+	titletext = colorize(f"#fM#l* VodBot {__version__} (c) 2020-21 Logan \"NotQuiteApex\" Hickok-Dickson *#r")
+
 	# Process arguments
 	parser = argparse.ArgumentParser(
 		description="Downloads and processes VODs and clips from Twitch.tv channels.",
-		epilog="VodBot (c) 2020-2021 Logan \"NotQuiteApex\" Hickok-Dickson")
-	parser.add_argument("-v","--version", action="version",
-		version=__project__ + " " + __version__)
+		epilog=titletext)
+	parser.add_argument("-v","--version", action="version", version=titletext)
 	parser.add_argument("type", type=str, default="vods", nargs="?",
-		help="Content type flag, can be \"vods\" or \"clips\".")
-	parser.add_argument("channels", metavar="channel",
-		type=str, default=[], nargs="*",
-		help="Twitch.tv channel name to pull VODs from (optional, overrides config setting)")
+		help="content type flag, can be \"vods\" or \"clips\"; defaults to \"vods\"")
+	parser.add_argument("channels", metavar="channel", type=str, default=[], nargs="*",
+		help="twitch.tv channel name to pull VODs from; optional, defaults to config")
 	parser.add_argument("-c", type=str, dest="config",
-		help="Location of the Twitch config file",
-		default=str(vodbotdir / "conf.json"))
+		help="location of the Twitch config file", default=str(vodbotdir / "conf.json"))
 	parser.add_argument("-yt", type=str, dest="yt_config",
-		help="Location of the YouTube config file (CURRENTLY UNUSED)",
+		help="location of the YouTube config file (CURRENTLY UNUSED)",
 		default=str(vodbotdir / "youtube-conf.json"))
 	parser.add_argument("-d", type=str, dest="directory",
-		help="Directory location to store VOD files in",
-		default=None)
+		help="directory location to store the content files in", default=None)
 	
 	args = parser.parse_args()
+
+	print(titletext)
 
 	# Initial error checks
 	if not os.path.exists(args.config):
@@ -59,9 +60,9 @@ def main():
 
 
 	# Load the config and set up the access token
-	print("Loading config...")
+	cprint("#dLoading config...", end=" ")
 	(CLIENT_ID, CLIENT_SECRET, CHANNELS, VODS_DIR, CLIPS_DIR) = util.load_twitch_conf(args.config)
-	print("Logging in to Twitch.tv...")
+	cprint("Logging in to Twitch.tv...", end=" ")
 	ACCESS_TOKEN = util.get_access_token(CLIENT_ID, CLIENT_SECRET)
 	HEADERS = {"Client-ID": CLIENT_ID, "Authorization": "Bearer " + ACCESS_TOKEN}
 
@@ -84,13 +85,12 @@ def main():
 	
 	# Setup directories for videos, config, and temp
 	util.make_dir(args.directory)
+	voddir = Path(args.directory)
 	util.make_dir(str(vodbotdir))
 	util.make_dir(str(vodbotdir / "temp"))
 
-	print()
-
 	# GET https://api.twitch.tv/helix/users: get User-IDs with this
-	print("Getting User ID's...")
+	cprint("Getting User ID's...#r")
 	getidsurl = "https://api.twitch.tv/helix/users?" 
 	getidsurl += "&".join(f"login={i}" for i in CHANNELS)
 	resp = requests.get(getidsurl, headers=HEADERS)
@@ -109,6 +109,8 @@ def main():
 
 	# GET https://api.twitch.tv/helix/videos: get list of videos using the channel IDs
 	vods = []
+	allvods = []
+	vodcount = 0
 	
 	# Switch between the two API endpoints.
 	getvideourl = None
@@ -117,14 +119,14 @@ def main():
 	elif args.type == "clips":
 		getvideourl = "https://api.twitch.tv/helix/clips?broadcaster_id={video_id}&first=100"
 
-	for i in channels:
-		print(f"Getting {contentnoun} list for {i.display_name}...")
+	for channel in channels:
+		cprint(f"Getting #fM#l{contentnoun}#r list for #fY#l{channel.display_name}#r...", end=" ")
 
+		# Deal with pagination
 		pagination = ""
-
 		while True:
 			# generate URL
-			url = getvideourl.format(video_id=i.id)
+			url = getvideourl.format(video_id=channel.id)
 			if pagination != "":
 				url += "&after=" + pagination
 			response = requests.get(url, headers=HEADERS)
@@ -135,7 +137,7 @@ def main():
 			try:
 				response = response.json()
 			except ValueError:
-				util.exit_prog(9, f"Could not parse response json for {i.display_name}'s {contentnoun}s.")
+				util.exit_prog(9, f"Could not parse response json for {channel.display_name}'s {contentnoun}s.")
 			
 			# Break out if we went through all the clips
 			if len(response["data"]) == 0:
@@ -147,52 +149,43 @@ def main():
 				# Live VODs don't have thumbnails
 				if vod["thumbnail_url"] != "":
 					if args.type == "vods":
-						vods.append(Video(vod))
+						allvods.append(Video(vod))
 					elif args.type == "clips":
-						vods.append(Clip(vod))
+						allvods.append(Clip(vod))
 			
 			# If there's no other cursors, let's break.
 			if "cursor" in response["pagination"]:
 				pagination = response["pagination"]["cursor"]
 			else:
 				break
-
-	print()
-	print(f"Checking for existing {contentnoun}...")
-	print()
-
-	# Check what VODs we do and don't have.
-	voddir = Path(args.directory)
-	existingvods = []
-	
-	for channel in channels:
-		channeldir = voddir / channel.display_name.lower()
-		os.makedirs(str(channeldir), exist_ok=True)
-		for _, _, files in os.walk(str(channeldir)):
+		
+		# Check for existing videos
+		existingvods = []
+		channel_dir = voddir / channel.display_name.lower()
+		util.make_dir(channel_dir)
+		for _, _, files in os.walk(str(channel_dir)):
 			for file in files:
 				filename = file.split(".")
 				if len(filename) > 1 and filename[1] == "meta":
-					existingvods.append(filename[0])
-	
-	# Compare vods that do and don't exist, and add the non-existant ones to a list to download
-	vodstodownload = []
-	for vod1 in vods:
-		exists = False
-		for vod2 in existingvods:
-			if vod1.id == vod2:
-				exists = True
-				break
-		if not exists:
-			vodstodownload.append(vod1)
+					if any(filename[0] == x.id for x in allvods):
+						existingvods.append(filename[0])
+		for vod in allvods:
+			if not any(vod.id == x for x in existingvods):
+				vods.append(vod)
+
+		# Print videos found
+		cprint(f"#fC#l{len(vods) - vodcount} #fM#l{contentnoun}s#r")
+		vodcount = len(vods)
+
+	cprint(f"Total #fM#l{contentnoun}s#r: #fC#l{len(vods)}#r")
 
 	# Download all the VODs we need.
 	previouschannel = None
-	print(f"Total number of {contentnoun}s to download: {len(vodstodownload)}.")
-	for vod in vodstodownload:
+	for vod in vods:
 		# Print if we're on to a new user.
 		if previouschannel != vod.user_id:
 			previouschannel = vod.user_id
-			print(f"\n\nDownloading {vod.user_name}'s {contentnoun}s")
+			cprint(f"\nDownloading #fY#l{vod.user_name}#r's #fM#l{contentnoun}s#r...")
 
 		# Generate path for video
 		pogdir = voddir / vod.user_name.lower()
@@ -200,16 +193,23 @@ def main():
 
 		# Write video data and handle exceptions
 		# If successful, write the meta file
+		failed = False
 		try:
 			if isinstance(vod, Video): # Download video
 				itd_dl.dl_video(vod.id, filename, 20)
 			elif isinstance(vod, Clip): # Download clip
 				itd_dl.dl_clip(vod.id, filename)
 		except itd_dl.JoiningFailed:
-			print(f"VOD `{vod.id}` joining failed! Preserving files...")
+			cprint(f"#fR#lVOD `{vod.id}` joining failed! Preserving files...#r")
+			failed = True
 		except itd_work.DownloadFailed:
-			print(f"Clip `{vod.id}` download failed!")
-		else:
+			cprint(f"Download failed! Skipping...#r")
+			failed = True
+		except itd_work.DownloadCancelled:
+			cprint(f"\n#fR#lClip download cancelled.#r")
+			raise KeyboardInterrupt()
+		
+		if not failed:
 			vod.write_meta(str(pogdir / (vod.id + ".meta")))
 	
 	print("\n\nAll done, goodbye!")

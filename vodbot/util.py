@@ -1,3 +1,5 @@
+from .printer import cprint
+
 import os
 import sys
 import json
@@ -17,7 +19,7 @@ def make_dir(directory):
 
 	:param directory: A string of where the directory structure should be made.
 	"""
-	os.makedirs(directory, exist_ok=True)
+	os.makedirs(str(directory), exist_ok=True)
 
 
 def make_twitch_conf(filename):
@@ -153,10 +155,10 @@ def exit_prog(code=0, errmsg=None):
 	print()
 
 	if code != 0:
-		msg = f"ERROR! ({code}) "
+		msg = f"#r#fR#lERROR! #fY#l({code})#r"
 		if errmsg != None:
-			msg += errmsg
-		print(msg)
+			msg += " #fR#l" + errmsg + "#r"
+		cprint(msg, end=" ")
 
-	print("Exiting...")
+	cprint("#dExiting...#r")
 	sys.exit(code)
