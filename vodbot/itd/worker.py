@@ -1,6 +1,8 @@
 # Based on https://github.com/ihabunek/twitch-dl/blob/master/twitchdl/download.py
 # Modified to fit the project a bit better, licensed under GPLv3.
 
+from vodbot.printer import cprint
+
 import os
 import requests
 
@@ -93,15 +95,14 @@ def _print_progress(video_id, futures):
 		remaining = (total_count - downloaded_count) * duration / downloaded_count
 
 		msg = " ".join([
-			f"VOD `{video_id}` pt{downloaded_count}/{total_count}",
-			f"({percentage}%){format_size(downloaded_size)}",
-			f"of ~{format_size(est_total_size)};",
-			f"at {format_size(speed)}/s;" if speed > 0 else "",
-			f"~{format_duration(remaining)} left" if speed > 0 else "",
+			f"#fM#lVOD#r `#fM{video_id}#r` pt#fC{downloaded_count}#r/#fB#l{total_count}#r,",
+			f"#fC{format_size(downloaded_size)}#r/#fB#l~{format_size(est_total_size)}#r #d({percentage}%)#r;",
+			f"at #fY~{format_size(speed)}/s#r;" if speed > 0 else "",
+			f"#fG~{format_duration(remaining)}#r left" if speed > 0 else "",
 		])
 
 		max_msg_size = max(len(msg), max_msg_size)
-		print("\r" + msg.ljust(max_msg_size), end="")
+		cprint("\r" + msg.ljust(max_msg_size), end="")
 
 
 def download_files(video_id, base_url, target_dir, vod_paths, max_workers):

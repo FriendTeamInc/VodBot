@@ -3,6 +3,7 @@ from sys import argv as sys_argv
 # Taken from https://github.com/tartley/colorama#recognised-ansi-sequences
 COLOR_CODES = {
 	"r": "\033[0m", # reset
+	"c": "\033[K",  # clear line
 	"l": "\033[1m", # light
 	"d": "\033[2m", # dim
 

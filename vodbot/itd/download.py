@@ -1,5 +1,6 @@
 from . import gql, worker
 from vodbot.util import make_dir, vodbotdir
+from vodbot.printer import cprint
 
 import subprocess
 import requests
@@ -65,7 +66,7 @@ def dl_video(video_id, path, max_workers):
 
 	# Download VOD chunks to the temp folder
 	path_map = worker.download_files(video_id, base_uri, tempdir, vod_paths, max_workers)
-	print("Done, now to join...")
+	cprint("#dDone, now ffmpeg join...#r")
 
 	# join the vods using ffmpeg at specified path
 	cwd = os.getcwd()
