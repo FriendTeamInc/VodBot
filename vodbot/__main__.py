@@ -205,6 +205,10 @@ def main():
 		except itd_work.DownloadFailed:
 			print(f"Clip `{vod.id}` download failed!")
 			failed = True
+		except itd_work.DownloadCancelled:
+			print(f"\nClip `{vod.id}` download cancelled.")
+			raise KeyboardInterrupt()
+			failed = True
 		
 		if not failed:
 			vod.write_meta(str(pogdir / (vod.id + ".meta")))
