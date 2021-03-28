@@ -113,7 +113,6 @@ def _print_progress(video_id, futures):
 		raise DownloadCancelled()
 
 
-
 def download_files(video_id, base_url, target_dir, vod_paths, max_workers):
 	urls = [base_url + path for path in vod_paths]
 	targets = [str(target_dir / f"{k}.ts") for k, _ in enumerate(vod_paths)]

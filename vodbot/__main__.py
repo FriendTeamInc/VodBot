@@ -200,15 +200,14 @@ def main():
 			elif isinstance(vod, Clip): # Download clip
 				itd_dl.dl_clip(vod.id, filename)
 		except itd_dl.JoiningFailed:
-			print(f"VOD `{vod.id}` joining failed! Preserving files...")
+			cprint(f"#fR#lVOD `{vod.id}` joining failed! Preserving files...#r")
 			failed = True
 		except itd_work.DownloadFailed:
-			print(f"Clip `{vod.id}` download failed!")
+			cprint(f"Download failed! Skipping...#r")
 			failed = True
 		except itd_work.DownloadCancelled:
-			print(f"\nClip `{vod.id}` download cancelled.")
+			cprint(f"\n#fR#lClip download cancelled.#r")
 			raise KeyboardInterrupt()
-			failed = True
 		
 		if not failed:
 			vod.write_meta(str(pogdir / (vod.id + ".meta")))
