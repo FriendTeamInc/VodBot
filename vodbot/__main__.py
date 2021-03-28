@@ -176,7 +176,7 @@ def main():
 				vods.append(vod)
 
 		# Print videos found
-		cprint(f"#fC#l{len(vods) - vodcount} #fM#l{contentnoun}s#r {len(vods)} {len(allvods)} {len(existingvods)}")
+		cprint(f"#fC#l{len(vods) - vodcount} #fM#l{contentnoun}s#r")
 		vodcount = len(vods)
 
 	cprint(f"Total #fM#l{contentnoun}s#r: #fC#l{len(vods)}#r")
