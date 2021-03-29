@@ -8,9 +8,14 @@ from .printer import cprint, colorize
 import argparse
 import subprocess
 import json
-import os
 import requests
 from pathlib import Path
+from os import listdir
+from os.path import isfile, exists
+
+
+# Default path
+vodbotdir = util.vodbotdir
 
 
 def deffered_main():
@@ -24,9 +29,6 @@ def deffered_main():
 
 
 def main():
-	# Default path
-	vodbotdir = util.vodbotdir
-
 	titletext = colorize(f"#fM#l* VodBot {__version__} (c) 2020-21 Logan \"NotQuiteApex\" Hickok-Dickson *#r")
 
 	# Process arguments
@@ -65,14 +67,11 @@ def main():
 	
 	args = parser.parse_args()
 
-	print(args)
-
 	# Initial error checks
-	if not os.path.exists(args.config):
+	if not exists(args.config):
 		util.make_twitch_conf("conf.json")
 		util.exit_prog(39,  f"Edit the config file at \"{args.config}\" before running again.")
 
-	
 	# Handle commands
 	if args.command == "init":
 		pass
@@ -97,55 +96,80 @@ def download_twitch_video(args):
 	contentnoun = "video" # temp contentnoun until the rest is reworked
 	
 	# Setup directories for videos, config, and temp
-	util.make_dir(args.directory)
-	voddir = Path(args.directory)
 	util.make_dir(str(vodbotdir))
 	util.make_dir(str(vodbotdir / "temp"))
+	voddir = Path(VODS_DIR)
+	util.make_dir(voddir)
+	clipdir = Path(CLIPS_DIR)
+	util.make_dir(clipdir)
 
-	# GET https://api.twitch.tv/helix/users: get User-IDs with this
+	# Get user channel objects from Twitch API
 	cprint("Getting User ID's...#r", flush=True)
 	channels = twitch.get_channels(CHANNEL_IDS, HEADERS)
 
-	# GET https://api.twitch.tv/helix/videos: get list of videos using the channel IDs
-	vods = []
-	vodcount = 0
-	
-	# Switch between the two API endpoints.
-	getvideourl = None
-	if args.type == "vods":
-		getvideourl = "https://api.twitch.tv/helix/videos?user_id={video_id}&first=100&type=archive"
+	# Get list of videos using channel object ID's from Twitch API
+	videos = []
+	totalvods = 0
+	totalclips = 0
+
+	channel_print = None
+	if args.type == "both":
+		channel_print = "Pulling #fM#lVOD#r & #fM#lClip#r list: #fY#l{}#r..."
+	elif args.type == "vods":
+		channel_print = "Pulling #fM#lVOD#r list: #fY#l{}#r..."
 	elif args.type == "clips":
-		getvideourl = "https://api.twitch.tv/helix/clips?broadcaster_id={video_id}&first=100"
+		channel_print = "Pulling #fM#lClip#r list: #fY#l{}#r..."
+
+	def compare_existant_file(dyr, allvods):
+		# Check for existing videos
+		existingvods = [f for f in listdir(str(dyr)) if isfile(str(dyr/f)) and f[-4:] == "meta"]
+		# Compare vods, if they arent downloaded (meta is missing) then we need to queue them
+		result = [vod for vod in allvods if not any(vod.id == x for x in existingvods)]
+		return result
 
 	for channel in channels:
-		cprint(f"Pulling #fM#l{contentnoun}#r list: #fY#l{channel.display_name}#r...", end=" ")
+		vods = None
+		clips = None
+		cprint(channel_print.format(channel.display_name), end=" ")
 
-		allvods = twitch.get_channel_vods(channel, HEADERS)
-		
-		# Check for existing videos
-		existingvods = []
-		channel_dir = voddir / channel.display_name.lower()
-		util.make_dir(channel_dir)
-		for _, _, files in os.walk(str(channel_dir)):
-			for file in files:
-				filename = file.split(".")
-				if len(filename) > 1 and filename[1] == "meta":
-					if any(filename[0] == x.id for x in allvods):
-						existingvods.append(filename[0])
-		
-		for vod in allvods:
-			if not any(vod.id == x for x in existingvods):
-				vods.append(vod)
+		# Grab list of VODs and check against existing VODs
+		if args.type == "both" or args.type == "vods":
+			util.make_dir(voddir / channel.login)
+			allvods = twitch.get_channel_vods(channel, HEADERS)
+			vods = compare_existant_file(voddir, allvods)
+			totalvods += len(vods)
 
-		# Print videos found
-		cprint(f"#fC#l{len(vods) - vodcount} #fM#l{contentnoun}s#r")
-		vodcount = len(vods)
+		# Grab list of Clips and check against existing Clips
+		if args.type == "both" or args.type == "clips":
+			util.make_dir(clipdir / channel.login)
+			allclips = twitch.get_channel_clips(channel, HEADERS)
+			clips = compare_existant_file(clipdir, allclips)
+			totalclips += len(clips)
 
-	cprint(f"Total #fM#l{contentnoun}s#r to download: #fC#l{len(vods)}#r")
+		# Print content found and save it
+		if args.type == "both":
+			cprint(f"#fC#l{len(vods)} #fM#lVODSs#r & #fC#l{len(clips)} #fM#lClips#r")
+			videos += vods
+			videos += clips
+		elif args.type == "vods":
+			cprint(f"#fC#l{len(vods)} #fM#lVODSs#r")
+			videos += vods
+		elif args.type == "clips":
+			cprint(f"#fC#l{len(clips)} #fM#lClips#r")
+			videos += clips
+			
+	if args.type == "both":
+		cprint(f"Total #fMVODs#r to download: #fC#l{totalvods}#r")
+		cprint(f"Total #fMClips#r to download: #fC#l{totalclips}#r")
+		cprint(f"Total #fM#lvideos#r to download: #fC#l{len(videos)}#r")
+	elif args.type == "vods":
+		cprint(f"Total #fMVODs#r to download: #fC#l{totalvods}#r")
+	elif args.type == "clips":
+		cprint(f"Total #fMClips#r to download: #fC#l{totalclips}#r")
 
-	# Download all the VODs we need.
+	# Download all the videos we need.
 	previouschannel = None
-	for vod in vods:
+	for vod in videos:
 		# Print if we're on to a new user.
 		if previouschannel != vod.user_id:
 			previouschannel = vod.user_id

@@ -18,23 +18,26 @@ def get_access_token(CLIENT_ID, CLIENT_SECRET):
 
 	url = "https://id.twitch.tv/oauth2/token?client_id={id}&client_secret={secret}&grant_type=client_credentials"
 	resp = requests.post(url.format(id=CLIENT_ID, secret=CLIENT_SECRET))
-
-	accesstoken = None
 	
 	# Some basic checks
 	if resp.status_code != 200:
 		util.exit_prog(33, f"Failed to get access token from Twitch. Status: {resp.status_code}")
+	
+	# Try to decode response
+	accesstoken_json = None
 	try:
-		accesstokenjson = resp.json()
+		accesstoken_json = resp.json()
 	except ValueError:
 		util.exit_prog(34, f"Could not parse response json for access token.")
 
+	# Try to pull access token from response
+	accesstoken = None
 	if "access_token" in accesstoken_json:
 		accesstoken = accesstoken_json["access_token"]
 	else:
 		exit_prog(4, "Could not get access token! Check your Client ID/Secret.")
 		
-	headers = {"Client-ID": CLIENT_ID, "Authorization": "Bearer " + ACCESS_TOKEN}
+	headers = {"Client-ID": CLIENT_ID, "Authorization": "Bearer " + accesstoken}
 	
 	return headers
 
@@ -120,9 +123,9 @@ def _get_channel_content(video_url, noun, channel, headers):
 			# We need to ignore live VOD's
 			# Live VODs don't have thumbnails
 			if vod["thumbnail_url"] != "":
-				if args.type == "vods":
+				if noun == "VOD":
 					videos.append(Video(vod))
-				elif args.type == "clips":
+				elif noun == "Clip":
 					videos.append(Clip(vod))
 		
 		# If there's no other cursors, let's break.
