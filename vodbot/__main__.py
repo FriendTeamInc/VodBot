@@ -1,7 +1,5 @@
 from . import util, twitch, __project__, __version__
-from .channel import Channel
-from .video import Video
-from .clip import Clip
+from .twitch import Channel, Vod, Clip
 from .itd import download as itd_dl, worker as itd_work
 from .printer import cprint, colorize
 
@@ -41,7 +39,7 @@ def main():
 		default=str(vodbotdir / "conf.json"))
 
 	# Subparsers for different commands
-	subparsers = parser.add_subparsers(title="command", help="command to run.")
+	subparsers = parser.add_subparsers(title="command", dest="cmd", help="command to run.")
 
 	# `vodbot init`
 	initparse = subparsers.add_parser("init", epilog=titletext,
@@ -82,13 +80,13 @@ def main():
 		util.exit_prog(39,  f'Edit the config file at "{args.config}" before running again.')
 
 	# Handle commands
-	if args.command == "init":
+	if args.cmd == "init":
 		pass
-	elif args.command == "pull":
+	elif args.cmd == "pull":
 		download_twitch_video(args)
-	elif args.command == "stage":
+	elif args.cmd == "stage":
 		pass
-	elif args.command == "upload":
+	elif args.cmd == "upload":
 		pass
 
 def download_twitch_video(args):
@@ -131,7 +129,7 @@ def download_twitch_video(args):
 
 	def compare_existant_file(path, allvods):
 		# Check for existing videos by finding the meta files
-		existingvods = [f for f in listdir(str(path)) if isfile(str(path/f)) and f[-4:]=="meta"]
+		existingvods = [f[:-5] for f in listdir(str(path)) if isfile(str(path/f)) and f[-4:]=="meta"]
 		# Compare vods, if they arent downloaded (meta is missing) then we need to queue them
 		result = [vod for vod in allvods if not any(vod.id == x for x in existingvods)]
 		return result
@@ -143,16 +141,18 @@ def download_twitch_video(args):
 
 		# Grab list of VODs and check against existing VODs
 		if args.type == "both" or args.type == "vods":
-			util.make_dir(voddir / channel.login)
+			folder = voddir / channel.login
+			util.make_dir(folder)
 			allvods = twitch.get_channel_vods(channel, HEADERS)
-			vods = compare_existant_file(voddir, allvods)
+			vods = compare_existant_file(folder, allvods)
 			totalvods += len(vods)
 
 		# Grab list of Clips and check against existing Clips
 		if args.type == "both" or args.type == "clips":
-			util.make_dir(clipdir / channel.login)
+			folder = clipdir / channel.login
+			util.make_dir(folder)
 			allclips = twitch.get_channel_clips(channel, HEADERS)
-			clips = compare_existant_file(clipdir, allclips)
+			clips = compare_existant_file(folder, allclips)
 			totalclips += len(clips)
 
 		# Print content found and save it
@@ -188,7 +188,7 @@ def download_twitch_video(args):
 		viddir = None
 		contentnoun = None
 
-		if isinstance(vod, Video):
+		if isinstance(vod, Vod):
 			viddir = voddir / vod.user_name.lower()
 			contentnoun = "VOD"
 		elif isinstance(vod, Clip):
@@ -197,27 +197,21 @@ def download_twitch_video(args):
 		
 		filename = viddir / f"{vod.created_at}_{vod.id}.mkv".replace(":", ";")
 		filename = str(filename)
+		metaname = str(viddir / (vod.id + ".meta"))
 
 		# Write video data and handle exceptions
-		# If successful, write the meta file
-		failed = False
 		try:
-			if isinstance(vod, Video): # Download video
-				itd_dl.dl_video(vod.id, filename, 20)
+			if isinstance(vod, Vod): # Download video
+				itd_dl.dl_video(vod, filename, metaname, 20)
 			elif isinstance(vod, Clip): # Download clip
-				itd_dl.dl_clip(vod.id, filename)
+				itd_dl.dl_clip(vod, filename, metaname)
 		except itd_dl.JoiningFailed:
 			cprint(f"#fR#lVOD `{vod.id}` joining failed! Preserving files...#r")
-			failed = True
 		except itd_work.DownloadFailed:
 			cprint(f"Download failed! Skipping...#r")
-			failed = True
 		except itd_work.DownloadCancelled:
 			cprint(f"\n#fR#l{contentnoun} download cancelled.#r")
 			raise KeyboardInterrupt()
-		
-		if not failed:
-			vod.write_meta(str(pogdir / (vod.id + ".meta")))
 	
 	cprint("\n#fM#l* All done, goodbye! *#r\n")
 	
