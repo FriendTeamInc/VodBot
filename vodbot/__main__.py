@@ -29,40 +29,49 @@ def deffered_main():
 
 
 def main():
-	titletext = colorize(f"#fM#l* VodBot {__version__} (c) 2020-21 Logan \"NotQuiteApex\" Hickok-Dickson *#r")
+	titletext = colorize('#fM#l* VodBot {} (c) 2020-21 Logan "NotQuiteApex" Hickok-Dickson *#r')
+	titletext = titletext.format(__version__)
 
 	# Process arguments
-	parser = argparse.ArgumentParser(description="Downloads and processes VODs and clips from Twitch.tv channels.",
-		epilog=titletext)
+	parser = argparse.ArgumentParser(epilog=titletext,
+		description="Downloads and processes VODs and clips from Twitch.tv channels.")
 	parser.add_argument("-v","--version", action="version", version=titletext)
 	parser.add_argument("-c", type=str, dest="config",
 		help="location of the Twitch config file",
 		default=str(vodbotdir / "conf.json"))
 
 	# Subparsers for different commands
-	subparsers = parser.add_subparsers(title="command", help="command to run.", dest="command")
+	subparsers = parser.add_subparsers(title="command", help="command to run.")
 
-	# vodbot init
-	initparse = subparsers.add_parser("init", description="Runs the setup process for VodBot", epilog=titletext)
+	# `vodbot init`
+	initparse = subparsers.add_parser("init", epilog=titletext,
+		description="Runs the setup process for VodBot")
 
-	# vodbot pull <vods/clips/both> [channel ...]
-	download = subparsers.add_parser("pull", description="Downloads VODs and/or clips.", epilog=titletext)
+	# `vodbot pull <vods/clips/both> [channel ...]`
+	download = subparsers.add_parser("pull", epilog=titletext,
+		description="Downloads VODs and/or clips.")
 	download.add_argument("type", type=str, default="both", nargs="?",
 		help='content type flag, can be "vods", "clips", or "both"; defaults to "both"')
 	download.add_argument("channels", metavar="channel", type=str, default=[], nargs="*",
 		help="twitch.tv channel name to pull VODs from; optional, defaults to config")
 
-	# vodbot stage
-	stager = subparsers.add_parser("stage", description="Stages sections of video to upload", epilog=titletext)
-	stager_subparser = stager.add_subparsers(title="action", description='action for staging the video')
-	# vodbot stage add <id> [--ss="0:0:0"] [--to="99:59:59"] [--title="Apex - BBT"] [--desc="PogChamp {streamer}\n{link}"]
-	stager_add = stager_subparser.add_parser("add", description="adds a VOD or Clip to the staging area", epilog=titletext)
+	# `vodbot stage`
+	stager = subparsers.add_parser("stage", epilog=titletext,
+		description="Stages sections of video to upload",)
+	stager_subparser = stager.add_subparsers(title="action",
+		description='action for staging the video')
+	# `vodbot stage add <id> [--ss="0:0:0"] [--to="99:59:59"] \`
+	# `[--title="Apex - BBT"] [--desc="PogChamp {streamer}\n{link}"]`
+	stager_add = stager_subparser.add_parser("add", epilog=titletext,
+		description="adds a VOD or Clip to the staging area")
 	stager_add.add_argument("id", type=str, help="id of the VOD or Clip to stage")
-	# vodbot stage rm <id>
-	stager_rm = stager_subparser.add_parser("rm", description="removes a VOD or Clip from the staging area", epilog=titletext)
+	# `vodbot stage rm <id>`
+	stager_rm = stager_subparser.add_parser("rm", epilog=titletext,
+		description="removes a VOD or Clip from the staging area")
 	stager_rm.add_argument("id", type=str, help="id of the staged video data")
-	# vodbot stage list [id]
-	stager_list = stager_subparser.add_parser("list", description="lists info on staging area or staged items", epilog=titletext)
+	# `vodbot stage list [id]`
+	stager_list = stager_subparser.add_parser("list", epilog=titletext,
+		description="lists info on staging area or staged items")
 	stager_list.add_argument("id", type=str, help="id of the staged video data")
 	
 	args = parser.parse_args()
@@ -70,7 +79,7 @@ def main():
 	# Initial error checks
 	if not exists(args.config):
 		util.make_twitch_conf("conf.json")
-		util.exit_prog(39,  f"Edit the config file at \"{args.config}\" before running again.")
+		util.exit_prog(39,  f'Edit the config file at "{args.config}" before running again.')
 
 	# Handle commands
 	if args.command == "init":
@@ -120,9 +129,9 @@ def download_twitch_video(args):
 	elif args.type == "clips":
 		channel_print = "Pulling #fM#lClip#r list: #fY#l{}#r..."
 
-	def compare_existant_file(dyr, allvods):
-		# Check for existing videos
-		existingvods = [f for f in listdir(str(dyr)) if isfile(str(dyr/f)) and f[-4:] == "meta"]
+	def compare_existant_file(path, allvods):
+		# Check for existing videos by finding the meta files
+		existingvods = [f for f in listdir(str(path)) if isfile(str(path/f)) and f[-4:]=="meta"]
 		# Compare vods, if they arent downloaded (meta is missing) then we need to queue them
 		result = [vod for vod in allvods if not any(vod.id == x for x in existingvods)]
 		return result
@@ -176,8 +185,18 @@ def download_twitch_video(args):
 			cprint(f"\nDownloading #fY#l{vod.user_name}#r's #fM#l{contentnoun}s#r...")
 
 		# Generate path for video
-		pogdir = voddir / vod.user_name.lower()
-		filename = str(pogdir / f"{vod.created_at}_{vod.id}.mkv".replace(":", ";"))
+		viddir = None
+		contentnoun = None
+
+		if isinstance(vod, Video):
+			viddir = voddir / vod.user_name.lower()
+			contentnoun = "VOD"
+		elif isinstance(vod, Clip):
+			viddir = clipdir / vod.user_name.lower()
+			contentnoun = "Clip"
+		
+		filename = viddir / f"{vod.created_at}_{vod.id}.mkv".replace(":", ";")
+		filename = str(filename)
 
 		# Write video data and handle exceptions
 		# If successful, write the meta file
