@@ -3,7 +3,6 @@ from .printer import cprint
 import os
 import sys
 import json
-import requests
 from pathlib import Path
 from importlib import import_module
 
@@ -87,7 +86,9 @@ def load_twitch_conf(filename):
 	Loads the config of VodBot at a specific directory.
 
 	:param filename: File name of the JSON formatted configuration file.
-	:returns: Tuple containing the strings of the application's Twitch client ID, secret, and list of channel string names to watch for VODs, respectively.
+	:returns: Tuple containing the strings of the application's Twitch client ID,
+	secret, a list of channel names to pull data from, and the directories to store
+	VODs and Clips; in that order.
 	"""
 
 	conf = None

@@ -36,8 +36,6 @@ def main():
 	parser.add_argument("-c", type=str, dest="config",
 		help="location of the Twitch config file",
 		default=str(vodbotdir / "conf.json"))
-	parser.add_argument("-d", type=str, dest="directory", default=None,
-		help="directory location to store the content files in")
 
 	# Subparsers for different commands
 	subparsers = parser.add_subparsers(title="command", help="command to run.", dest="command")
@@ -73,9 +71,7 @@ def main():
 	if not os.path.exists(args.config):
 		util.make_twitch_conf("conf.json")
 		util.exit_prog(39,  f"Edit the config file at \"{args.config}\" before running again.")
-	
-	if args.directory is not None and not os.path.isdir(args.directory):
-		util.exit_prog(54, f"Non-directory object \"{args.directory}\" must be removed before proceeding!")
+
 	
 	# Handle commands
 	if args.command == "init":
@@ -90,7 +86,7 @@ def main():
 def download_twitch_video(args):
 	# Load the config and set up the access token
 	cprint("#dLoading config...", end=" ", flush=True)
-	(CLIENT_ID, CLIENT_SECRET, CHANNELS, VODS_DIR, CLIPS_DIR) = util.load_twitch_conf(args.config)
+	(CLIENT_ID, CLIENT_SECRET, CHANNEL_IDS, VODS_DIR, CLIPS_DIR) = util.load_twitch_conf(args.config)
 	cprint("Logging in to Twitch.tv...", end=" ", flush=True)
 	HEADERS = twitch.get_access_token(CLIENT_ID, CLIENT_SECRET)
 
@@ -108,7 +104,7 @@ def download_twitch_video(args):
 
 	# GET https://api.twitch.tv/helix/users: get User-IDs with this
 	cprint("Getting User ID's...#r", flush=True)
-	channels = twitch.get_channels(CHANNELS, HEADERS)
+	channels = twitch.get_channels(CHANNEL_IDS, HEADERS)
 
 	# GET https://api.twitch.tv/helix/videos: get list of videos using the channel IDs
 	vods = []
@@ -124,44 +120,7 @@ def download_twitch_video(args):
 	for channel in channels:
 		cprint(f"Pulling #fM#l{contentnoun}#r list: #fY#l{channel.display_name}#r...", end=" ")
 
-		allvods = []
-
-		# Deal with pagination
-		pagination = ""
-		while True:
-			# generate URL
-			url = getvideourl.format(video_id=channel.id)
-			if pagination != "":
-				url += "&after=" + pagination
-			response = requests.get(url, headers=HEADERS)
-
-			# Some basic checks
-			if response.status_code != 200:
-				util.exit_prog(5, f"Failed to get {contentnoun} data from Twitch. Status: {response.status_code}")
-			try:
-				response = response.json()
-			except ValueError:
-				util.exit_prog(9, f"Could not parse response json for {channel.display_name}'s {contentnoun}s.")
-			
-			# Break out if we went through all the clips
-			if len(response["data"]) == 0:
-				break
-
-			# Add VODs to list to download later.
-			for vod in response["data"]:
-				# We need to ignore live VOD's
-				# Live VODs don't have thumbnails
-				if vod["thumbnail_url"] != "":
-					if args.type == "vods":
-						allvods.append(Video(vod))
-					elif args.type == "clips":
-						allvods.append(Clip(vod))
-			
-			# If there's no other cursors, let's break.
-			if "cursor" in response["pagination"]:
-				pagination = response["pagination"]["cursor"]
-			else:
-				break
+		allvods = twitch.get_channel_vods(channel, HEADERS)
 		
 		# Check for existing videos
 		existingvods = []
