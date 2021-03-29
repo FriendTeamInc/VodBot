@@ -30,34 +30,65 @@ def main():
 	titletext = colorize(f"#fM#l* VodBot {__version__} (c) 2020-21 Logan \"NotQuiteApex\" Hickok-Dickson *#r")
 
 	# Process arguments
-	parser = argparse.ArgumentParser(
-		description="Downloads and processes VODs and clips from Twitch.tv channels.",
+	parser = argparse.ArgumentParser(description="Downloads and processes VODs and clips from Twitch.tv channels.",
 		epilog=titletext)
 	parser.add_argument("-v","--version", action="version", version=titletext)
-	parser.add_argument("type", type=str, default="vods", nargs="?",
-		help="content type flag, can be \"vods\" or \"clips\"; defaults to \"vods\"")
-	parser.add_argument("channels", metavar="channel", type=str, default=[], nargs="*",
-		help="twitch.tv channel name to pull VODs from; optional, defaults to config")
 	parser.add_argument("-c", type=str, dest="config",
-		help="location of the Twitch config file", default=str(vodbotdir / "conf.json"))
-	parser.add_argument("-yt", type=str, dest="yt_config",
-		help="location of the YouTube config file (CURRENTLY UNUSED)",
-		default=str(vodbotdir / "youtube-conf.json"))
-	parser.add_argument("-d", type=str, dest="directory",
-		help="directory location to store the content files in", default=None)
+		help="location of the Twitch config file",
+		default=str(vodbotdir / "conf.json"))
+	parser.add_argument("-d", type=str, dest="directory", default=None,
+		help="directory location to store the content files in")
+
+	# Subparsers for different commands
+	subparsers = parser.add_subparsers(title="command", help="command to run.", dest="command")
+
+	# vodbot init
+	initparse = subparsers.add_parser("init", description="Runs the setup process for VodBot", epilog=titletext)
+
+	# vodbot pull <vods/clips/both> [channel ...]
+	download = subparsers.add_parser("pull", description="Downloads VODs and/or clips.", epilog=titletext)
+	download.add_argument("type", type=str, default="both", nargs="?",
+		help='content type flag, can be "vods", "clips", or "both"; defaults to "both"')
+	download.add_argument("channels", metavar="channel", type=str, default=[], nargs="*",
+		help="twitch.tv channel name to pull VODs from; optional, defaults to config")
+
+	# vodbot stage
+	stager = subparsers.add_parser("stage", description="Stages sections of video to upload", epilog=titletext)
+	stager_subparser = stager.add_subparsers(title="action", description='action for staging the video')
+	# vodbot stage add <id> [--ss="0:0:0"] [--to="99:59:59"] [--title="Apex - BBT"] [--desc="PogChamp {streamer}\n{link}"]
+	stager_add = stager_subparser.add_parser("add", description="adds a VOD or Clip to the staging area", epilog=titletext)
+	stager_add.add_argument("id", type=str, help="id of the VOD or Clip to stage")
+	# vodbot stage rm <id>
+	stager_rm = stager_subparser.add_parser("rm", description="removes a VOD or Clip from the staging area", epilog=titletext)
+	stager_rm.add_argument("id", type=str, help="id of the staged video data")
+	# vodbot stage list [id]
+	stager_list = stager_subparser.add_parser("list", description="lists info on staging area or staged items", epilog=titletext)
+	stager_list.add_argument("id", type=str, help="id of the staged video data")
 	
 	args = parser.parse_args()
 
 	print(titletext)
+	print(args)
 
 	# Initial error checks
 	if not os.path.exists(args.config):
-		util.make_twitch_conf(args.config)
+		util.make_twitch_conf("conf.json")
 		util.exit_prog(39,  f"Edit the config file at \"{args.config}\" before running again.")
 	
 	if args.directory is not None and not os.path.isdir(args.directory):
 		util.exit_prog(54, f"Non-directory object \"{args.directory}\" must be removed before proceeding!")
+	
+	# Handle commands
+	if args.command == "init":
+		pass
+	elif args.command == "pull":
+		download_twitch_video(args)
+	elif args.command == "stage":
+		pass
+	elif args.command == "upload":
+		pass
 
+def download_twitch_video(args):
 	# Load the config and set up the access token
 	cprint("#dLoading config...", end=" ", flush=True)
 	(CLIENT_ID, CLIENT_SECRET, CHANNELS, VODS_DIR, CLIPS_DIR) = util.load_twitch_conf(args.config)
