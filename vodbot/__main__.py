@@ -1,4 +1,4 @@
-from . import util, __project__, __version__
+from . import util, twitch, __project__, __version__
 from .channel import Channel
 from .video import Video
 from .clip import Clip
@@ -67,7 +67,6 @@ def main():
 	
 	args = parser.parse_args()
 
-	print(titletext)
 	print(args)
 
 	# Initial error checks
@@ -93,25 +92,13 @@ def download_twitch_video(args):
 	cprint("#dLoading config...", end=" ", flush=True)
 	(CLIENT_ID, CLIENT_SECRET, CHANNELS, VODS_DIR, CLIPS_DIR) = util.load_twitch_conf(args.config)
 	cprint("Logging in to Twitch.tv...", end=" ", flush=True)
-	ACCESS_TOKEN = util.get_access_token(CLIENT_ID, CLIENT_SECRET)
-	HEADERS = {"Client-ID": CLIENT_ID, "Authorization": "Bearer " + ACCESS_TOKEN}
+	HEADERS = twitch.get_access_token(CLIENT_ID, CLIENT_SECRET)
 
 	# If command line has channels to watch instead, use those instead of the config ones.
 	if len(args.channels) != 0:
 		CHANNELS = args.channels
 	
-	# If argparse has a specific directory for vods, use that. Otherwise default to conf.
-	# Also select "contentnoun" for making certain prints make sense.
-	contentnoun = ""
-	if args.directory is None:
-		if args.type == "vods":
-			args.directory = VODS_DIR
-			contentnoun = "VOD"
-		elif args.type == "clips":
-			args.directory = CLIPS_DIR
-			contentnoun = "Clip"
-		else:
-			util.exit_prog(85, f"Unknown content type \"{args.type}\".")
+	contentnoun = "video" # temp contentnoun until the rest is reworked
 	
 	# Setup directories for videos, config, and temp
 	util.make_dir(args.directory)
@@ -121,21 +108,7 @@ def download_twitch_video(args):
 
 	# GET https://api.twitch.tv/helix/users: get User-IDs with this
 	cprint("Getting User ID's...#r", flush=True)
-	getidsurl = "https://api.twitch.tv/helix/users?" 
-	getidsurl += "&".join(f"login={i}" for i in CHANNELS)
-	resp = requests.get(getidsurl, headers=HEADERS)
-	# Some basic checks
-	if resp.status_code != 200:
-		util.exit_prog(5, f"Failed to get user ID's from Twitch. Status: {response.status_code}")
-	try:
-		resp = resp.json()
-	except ValueError:
-		util.exit_prog(12, f"Could not parse response json for user ID's.")
-	
-	# Make channel objects and store them in a list
-	channels = []
-	for i in resp["data"]:
-		channels.append(Channel(i))
+	channels = twitch.get_channels(CHANNELS, HEADERS)
 
 	# GET https://api.twitch.tv/helix/videos: get list of videos using the channel IDs
 	vods = []

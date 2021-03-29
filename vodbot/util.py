@@ -119,31 +119,6 @@ def load_twitch_conf(filename):
 	return (CLIENT_ID, CLIENT_SECRET, CHANNELS, VODS_DIR, CLIPS_DIR)
 
 
-def get_access_token(CLIENT_ID, CLIENT_SECRET):
-	"""
-	Uses a (blocking) HTTP request to retrieve an access token for use with Twitch's API
-
-	:param CLIENT_ID: The associated client ID of the Twitch Application, registered at the Twitch Dev Console online and stored in the appropriate vodbot config.
-	:param CLIENT_SECRET: The associate client secret, from the same as client ID.
-	:returns: The string of the access token (not including the "Bearer: " prefix).
-	"""
-
-	clientsecreturl = ("https://id.twitch.tv/oauth2/token?"
-					f"client_id={CLIENT_ID}&client_secret={CLIENT_SECRET}&"
-					"grant_type=client_credentials"
-					)
-	accesstokenrequest = requests.post(clientsecreturl)
-
-	accesstoken = accesstokenrequest.json()
-
-	if "access_token" in accesstoken:
-		accesstoken = accesstoken["access_token"]
-	else:
-		exit_prog(4, "Could not get access token! Check your Client ID/Secret.")
-	
-	return accesstoken
-
-
 def exit_prog(code=0, errmsg=None):
 	"""
 	Exits the program with an error code and optional error message.
