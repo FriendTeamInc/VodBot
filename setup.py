@@ -18,7 +18,8 @@ setup(
 	install_requires=[
 		"google-api-python-client>=2.0",
 		"requests>=2.20",
-		"m3u8>=0.8"
+		"pytz>=2021.1",
+		"m3u8>=0.8",
 	],
 	entry_points={
 		'console_scripts': [
