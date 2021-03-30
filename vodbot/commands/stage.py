@@ -61,13 +61,17 @@ def find_video_by_id(id, config):
 	
 	raise CouldntFindVideo()
 
-def check_time(inputstring):
-	output = ""
+def check_time(prefix, inputstring, resp):
+	output = resp
+	checkedonce = False
 
 	while True:
-		output = input(inputstring)
+		if checkedonce:
+			output = input(inputstring)
+		checkedonce = True
+
 		if output == "":
-			return "00:00:00"
+			return "0:0:0"
 
 		intime = output.split(":")
 		timelist = []
@@ -76,7 +80,7 @@ def check_time(inputstring):
 		hours = None
 
 		if len(intime) > 3:
-			cprint("#fRTime cannot have more than 3 units.#r")
+			cprint(f"#fR{prefix}: Time cannot have more than 3 units.#r")
 			continue
 		
 		if len(intime) >= 1:
@@ -84,36 +88,36 @@ def check_time(inputstring):
 			try:
 				seconds = int(seconds)
 			except ValueError:
-				cprint("#fRSeconds does not appear to be a number.#r")
+				cprint(f"#fR{prefix}: Seconds does not appear to be a number.#r")
 				continue
 			if seconds > 59 or seconds < 0:
-				cprint("#fRSeconds must be in the range of 0 to 59.#r")
+				cprint(f"#fR{prefix}: Seconds must be in the range of 0 to 59.#r")
 				continue
-			timelist.insert(0, seconds)
+			timelist.insert(0, str(seconds))
 		
 		if len(intime) >= 2:
 			minutes = intime[-2]
 			try:
 				minutes = int(minutes)
 			except ValueError:
-				cprint("#fRMinutes does not appear to be a number.#r")
+				cprint(f"#fR{prefix}: Minutes does not appear to be a number.#r")
 				continue
 			if minutes > 59 or minutes < 0:
-				cprint("#fRMinutes must be in the range of 0 to 59.#r")
+				cprint(f"#fR{prefix}: Minutes must be in the range of 0 to 59.#r")
 				continue
-			timelist.insert(0, minutes)
+			timelist.insert(0, str(minutes))
 		
 		if len(intime) == 3:
 			hours = intime[-3]
 			try:
 				hours = int(hours)
 			except ValueError:
-				cprint("#fRHours does not appear to be a number.#r")
+				cprint(f"#fR{prefix}: Hours does not appear to be a number.#r")
 				continue
-			timelist.insert(0, hours)
+			timelist.insert(0, str(hours))
 		
-
-		output = ":".join([hours])
+		output = ":".join(timelist)
+		break
 
 	return output
 
@@ -138,17 +142,14 @@ def run(args):
 				if args.title == "":
 					cprint("#fRTitle cannot be blank.#r")
 
-		if args.ss == "":
-			args.ss = check_time("Start time of the Video (--ss, default 0:0:0): ")
-
-		if args.to == "":
-			args.to = check_time("End time of the Video (--to, default EOF): ")
+		args.ss = check_time("Start time", "Start time of the Video (--ss, default 0:0:0): ", args.ss)
+		args.to = check_time("End time", "End time of the Video (--to, default EOF): ", args.to)
 
 		if args.desc == "":
-			args.title = ""
-			while args.title == "":
-				args.title = input("Description of Video (--desc): ")
-				if args.title == "":
+			args.desc = ""
+			while args.desc == "":
+				args.desc = input("Description of Video (--desc): ")
+				if args.desc == "":
 					cprint("#fRDescription cannot be blank.#r")
 		
 		print(args)

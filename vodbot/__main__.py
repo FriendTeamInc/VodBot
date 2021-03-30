@@ -78,7 +78,6 @@ def main():
 	args = parser.parse_args()
 
 	print(titletext)
-	print(args)
 
 	# Initial error checks
 	if not exists(args.config):
