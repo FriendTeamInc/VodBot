@@ -14,8 +14,9 @@ setup(
 	keywords="twitch vod video download",
 	license="zlib/libpng",
 	packages=find_packages(include=["vodbot", "vodbot.*"]),
-	python_requires='>=3.5',
+	python_requires='>=3.6',
 	install_requires=[
+		"google-api-python-client>=2.0",
 		"requests>=2.20",
 		"m3u8>=0.8"
 	],
