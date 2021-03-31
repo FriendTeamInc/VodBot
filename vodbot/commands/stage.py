@@ -8,7 +8,7 @@ import pytz
 import hashlib
 from datetime import datetime
 from pathlib import Path
-from os import walk as os_walk
+from os import walk as os_walk, remove as os_remove
 from os import listdir
 from os.path import isfile, isdir
 
@@ -164,148 +164,168 @@ def check_time(prefix, inputstring, resp):
 	return output
 
 
-def run(args):
-	util.make_dir(vodbotdir)
-	util.make_dir(vodbotdir / "stage")
-	stagedir = vodbotdir / "stage"
-	conf = util.load_twitch_conf(args.config)
+def _add(args, conf, stagedir):
 	VODS_DIR = conf["vod_dir"]
 	CLIPS_DIR = conf["clip_dir"]
 
-	if args.action == "add":
-		filename = None
-		metadata = None
-		videotype = None
+	filename = None
+	metadata = None
+	videotype = None
 
+	try:
+		(filename, metadata, videotype) = find_video_by_id(args.id, VODS_DIR, CLIPS_DIR)
+	except CouldntFindVideo:
+		util.exit_prog(13, f'Could not find video with ID "{args.id}"')
+	
+	cprint(f"Found #fM#l{videotype}#r #fM{args.id}#r from #fY#l{metadata['user_name']}#r.")
+
+	# Get any necessary input
+	# Get what streamers were involved (usernames), always asked
+	args.streamers = None
+	if args.streamers == None:
+		args.streamers = ""
+		while args.streamers == "":
+			args.streamers = input(colorize(f"#fW#lWho was in the VOD#r #d(default `{metadata['user_name']}`, csv)#r: "))
+			if args.streamers == "":
+				args.streamers = [metadata["user_name"]]
+			else:
+				args.streamers = args.streamers.replace(" ", "").split(",")
+				
+	# Grab the title
+	if args.title == None:
+		args.title = ""
+		while args.title == "":
+			args.title = input(colorize("#fW#lTitle of the Video#r #d(--title)#r: "))
+			if args.title == "":
+				cprint("#fRTitle cannot be blank.#r")
+
+	# Grab times
+	args.ss = check_time("Start time", "#fW#lStart time of the Video#r #d(--ss, default 0:0:0)#r: ", args.ss)
+	args.to = check_time("End time", "#fW#lEnd time of the Video#r #d(--to, default EOF)#r: ", args.to)
+
+	# Generate dict to use for formatting
+	est = pytz.timezone("US/Eastern") # TODO: allow config to change this
+	utc = pytz.utc
+	date = datetime.strptime(metadata["created_at"], "%Y-%m-%dT%H:%M:%SZ")
+	date.replace(tzinfo=utc)
+	date.astimezone(est)
+	datestring = date.astimezone(est).strftime("%Y/%m/%d")
+	formatdict = {
+		"date": datestring,
+		"link": f"https://twitch.tv/{metadata['user_name']}",
+		"streamer": metadata['user_name'],
+	}
+	formatdict["twatch"] = f"-- Watch live at " + " ".join([f"https://twitch.tv/{s}" for s in args.streamers])
+
+	# Grab description
+	if args.desc == None:
+		args.desc = ""
+	else:
+		# Format the description
 		try:
-			(filename, metadata, videotype) = find_video_by_id(args.id, VODS_DIR, CLIPS_DIR)
-		except CouldntFindVideo:
-			util.exit_prog(13, f'Could not find video with ID "{args.id}"')
-		
-		cprint(f"Found #fM#l{videotype}#r #fM{args.id}#r from #fY#l{metadata['user_name']}#r.")
-
-		# Get any necessary input
-		# Get what streamers were involved (usernames), always asked
-		args.streamers = None
-		if args.streamers == None:
-			args.streamers = ""
-			while args.streamers == "":
-				args.streamers = input(colorize(f"#fW#lWho was in the VOD#r #d(default `{metadata['user_name']}`, csv)#r: "))
-				if args.streamers == "":
-					args.streamers = [metadata["user_name"]]
-				else:
-					args.streamers = args.streamers.replace(" ", "").split(",")
-					
-		# Grab the title
-		if args.title == None:
-			args.title = ""
-			while args.title == "":
-				args.title = input(colorize("#fW#lTitle of the Video#r #d(--title)#r: "))
-				if args.title == "":
-					cprint("#fRTitle cannot be blank.#r")
-
-		# Grab times
-		args.ss = check_time("Start time", "#fW#lStart time of the Video#r #d(--ss, default 0:0:0)#r: ", args.ss)
-		args.to = check_time("End time", "#fW#lEnd time of the Video#r #d(--to, default EOF)#r: ", args.to)
-
-		# Generate dict to use for formatting
-		est = pytz.timezone("US/Eastern") # TODO: allow config to change this
-		utc = pytz.utc
-		date = datetime.strptime(metadata["created_at"], "%Y-%m-%dT%H:%M:%SZ")
-		date.replace(tzinfo=utc)
-		date.astimezone(est)
-		datestring = date.astimezone(est).strftime("%Y/%m/%d")
-		formatdict = {
-			"date": datestring,
-			"link": f"https://twitch.tv/{metadata['user_name']}",
-			"streamer": metadata['user_name'],
-		}
-		formatdict["twatch"] = f"-- Watch live at " + " ".join([f"https://twitch.tv/{s}" for s in args.streamers])
-
-		# Grab description
-		if args.desc == None:
+			args.desc = args.desc.format(**formatdict).replace("\\n", "\n")
+		except KeyError as err:
+			cprint(f"#fRDescription format error: {err}.#r")
 			args.desc = ""
-		else:
-			# Format the description
+
+	while args.desc == "":
+		args.desc = input(colorize("#fW#lDescription of Video#r #d(--desc)#r: "))
+		if args.desc == "":
+			cprint("#fRDescription cannot be blank.#r")
+
+		# Format the description
+		try:
+			args.desc = args.desc.format(**formatdict).replace("\\n", "\n")
+		except KeyError as err:
+			cprint(f"#fRDescription format error: {err}.#r")
+			args.desc = ""
+
+	stage = StageData(args.title, args.desc, args.ss, args.to, args.streamers, datestring, str(filename))
+	shortfile = stage.filename.replace(VODS_DIR, "...").replace(CLIPS_DIR, "...")
+
+	print()
+	cprint(f"#r`#fC{stage.title}#r` #d({stage.ss} - {stage.to})#r")
+	cprint(f"#d''' {shortfile}#r\n#fG{stage.desc}#r\n#d''' {stage.hashdigest}#r")
+	cprint(f"#d#fM{' '.join(stage.streamers)}#r")
+	
+	stagename = str(stagedir / (stage.hashdigest + ".stage"))
+	stage.write_stage(stagename)
+
+	# Done!
+
+
+def _list(args, conf, stagedir):
+	VODS_DIR = conf["vod_dir"]
+	CLIPS_DIR = conf["clip_dir"]
+	if args.id == None:
+		stages = [d[:-6] for d in listdir(str(stagedir))
+			if isfile(str(stagedir / d)) and d[-5:] == "stage"]
+
+		for stage in stages:
+			jsonread = None
 			try:
-				args.desc = args.desc.format(**formatdict).replace("\\n", "\n")
-			except KeyError as err:
-				cprint(f"#fRDescription format error: {err}.#r")
-				args.desc = ""
+				with open(str(stagedir / (stage+".stage"))) as f:
+					jsonread = json.load(f)
+			except FileNotFoundError:
+				# Throw error?
+				continue
+			except KeyError:
+				continue
+			
+			cprint(f'#r#fY#l{stage}#r -- `#fC{jsonread["title"]}#r` #d(', end="")
+			cprint(f'{jsonread["ss"]} - {jsonread["to"]})#r -- ', end="")
+			cprint(f'#fM{", ".join(jsonread["streamers"])}#r')
+		
+		if len(stages) == 0:
+			cprint("#fBNothing staged right now.#r")
+	else:
+		if not isfile(str(stagedir / (args.id + ".stage"))):
+			util.exit_prog(45, f'Could not find stage "{args.id}".')
+		
+		jsonread = None
+		try:
+			with open(str(stagedir / (args.id+".stage"))) as f:
+				jsonread = json.load(f)
+		except FileNotFoundError:
+			util.exit_prog(46, f'Could not find stage "{args.id}". (FileNotFound)')
+		except KeyError:
+			util.exit_prog(46, f'Could not parse stage "{args.id}" as JSON. Is this file corrupted?')
+		
+		title = jsonread['title']
+		desc = jsonread['desc']
+		ss = jsonread['ss']
+		to = jsonread['to']
+		streamers = jsonread['streamers']
+		datestring = jsonread['datestring']
+		filename = jsonread['filename']
 
-		while args.desc == "":
-			args.desc = input(colorize("#fW#lDescription of Video#r #d(--desc)#r: "))
-			if args.desc == "":
-				cprint("#fRDescription cannot be blank.#r")
-
-			# Format the description
-			try:
-				args.desc = args.desc.format(**formatdict).replace("\\n", "\n")
-			except KeyError as err:
-				cprint(f"#fRDescription format error: {err}.#r")
-				args.desc = ""
-
-		stage = StageData(args.title, args.desc, args.ss, args.to, args.streamers, datestring, str(filename))
+		stage = StageData(title, desc, ss, to, streamers, datestring, filename)
 		shortfile = stage.filename.replace(VODS_DIR, "...").replace(CLIPS_DIR, "...")
 
 		print()
 		cprint(f"#r`#fC{stage.title}#r` #d({stage.ss} - {stage.to})#r")
-		cprint(f"#d''' {shortfile}#r\n#fG{stage.desc}#r\n#d''' {stage.hashdigest}#r")
+		cprint(f"#d''' {shortfile}#r\n#fG{stage.desc}#r\n#d''' #fY{stage.hashdigest}#r")
 		cprint(f"#d#fM{' '.join(stage.streamers)}#r")
-		
-		stagename = str(stagedir / (stage.hashdigest + ".stage"))
-		stage.write_stage(stagename)
 
-		# Done!
+
+def run(args):
+	util.make_dir(vodbotdir)
+	stagedir = vodbotdir / "stage"
+	util.make_dir(stagedir)
+	conf = util.load_twitch_conf(args.config)
+
+	if args.action == "add":
+		_add(args, conf, stagedir)
 	elif args.action == "edit":
 		pass
 	elif args.action == "rm":
-		pass
+		if not isfile(str(stagedir / (args.id + ".stage"))):
+			util.exit_prog(45, f'Could not find stage "{args.id}".')
+		
+		try:
+			os_remove(str(stagedir / (args.id + ".stage")))
+			cprint(f'Stage "#fY#l{args.id}#r" has been #fRremoved#r.')
+		except OSError as err:
+			util.exit_prog(88, f'Stage "{args.id}" could not be removed due to an error. {err}')
 	elif args.action == "list":
-		if args.id == None:
-			stages = [d[:-6] for d in listdir(str(stagedir))
-				if isfile(str(stagedir / d)) and d[-5:] == "stage"]
-			for stage in stages:
-				jsonread = None
-				try:
-					with open(str(stagedir / (stage+".stage"))) as f:
-						jsonread = json.load(f)
-				except FileNotFoundError:
-					# Throw error?
-					continue
-				except KeyError:
-					continue
-				
-				cprint(f'#r#fY#l{stage}#r -- `#fC{jsonread["title"]}#r` #d(', end="")
-				cprint(f'{jsonread["ss"]} - {jsonread["to"]})#r -- ', end="")
-				cprint(f'#fM{", ".join(jsonread["streamers"])}#r')
-		else:
-			if not isfile(str(stagedir / (args.id + ".stage"))):
-				util.exit_prog(45, f'Could not find stage "{args.id}".')
-			
-			jsonread = None
-			try:
-				with open(str(stagedir / (args.id+".stage"))) as f:
-					jsonread = json.load(f)
-			except FileNotFoundError:
-				util.exit_prog(46, f'Could not find stage "{args.id}". (FileNotFound)')
-			except KeyError:
-				util.exit_prog(46, f'Could not parse stage "{args.id}" as JSON. Is this file corrupted?')
-			
-			title = jsonread['title']
-			desc = jsonread['desc']
-			ss = jsonread['ss']
-			to = jsonread['to']
-			streamers = jsonread['streamers']
-			datestring = jsonread['datestring']
-			filename = jsonread['filename']
-
-			stage = StageData(title, desc, ss, to, streamers, datestring, filename)
-			shortfile = stage.filename.replace(VODS_DIR, "...").replace(CLIPS_DIR, "...")
-
-			print()
-			cprint(f"#r`#fC{stage.title}#r` #d({stage.ss} - {stage.to})#r")
-			cprint(f"#d''' {shortfile}#r\n#fG{stage.desc}#r\n#d''' #fY{stage.hashdigest}#r")
-			cprint(f"#d#fM{' '.join(stage.streamers)}#r")
-	
-	# run
+		_list(args, conf, stagedir)
