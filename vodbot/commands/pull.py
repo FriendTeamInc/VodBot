@@ -19,7 +19,13 @@ def run(args):
 def download_twitch_video(args):
 	# Load the config and set up the access token
 	cprint("#r#dLoading config...", end=" ", flush=True)
-	(CLIENT_ID, CLIENT_SECRET, CHANNEL_IDS, VODS_DIR, CLIPS_DIR) = util.load_twitch_conf(args.config)
+	conf = util.load_twitch_conf(args.config)
+	CHANNELS = conf["channels"]
+	CLIENT_ID = conf["twitch_client_id"]
+	CLIENT_SECRET = conf["twitch_client_secret"]
+	VODS_DIR = conf["vod_dir"]
+	CLIPS_DIR = conf["clip_dir"]
+
 	cprint("Logging in to Twitch.tv...", end=" ", flush=True)
 	HEADERS = twitch.get_access_token(CLIENT_ID, CLIENT_SECRET)
 

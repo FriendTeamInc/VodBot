@@ -58,10 +58,10 @@ def main():
 	stager_add = stager_subparser.add_parser("add", epilog=titletext,
 		description="adds a VOD or Clip to the staging area")
 	stager_add.add_argument("id", type=str, help="id of the VOD or Clip to stage")
-	stager_add.add_argument("--title", help="title of video", type=str, required=False, default="")
-	stager_add.add_argument("--ss", help="start time of video", type=str, required=False, default="")
-	stager_add.add_argument("--to", help="end time of video", type=str, required=False, default="")
-	stager_add.add_argument("--desc", help="description of video", type=str, required=False, default="")
+	stager_add.add_argument("--title", help="title of video", type=str, required=False, default=None)
+	stager_add.add_argument("--ss", help="start time of video", type=str, required=False, default=None)
+	stager_add.add_argument("--to", help="end time of video", type=str, required=False, default=None)
+	stager_add.add_argument("--desc", help="description of video", type=str, required=False, default=None)
 	# `vodbot stage rm <id>`
 	stager_rm = stager_subparser.add_parser("rm", epilog=titletext,
 		description="removes a VOD or Clip from the staging area")

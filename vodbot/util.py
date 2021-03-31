@@ -88,9 +88,7 @@ def load_twitch_conf(filename):
 	Loads the config of VodBot at a specific directory.
 
 	:param filename: File name of the JSON formatted configuration file.
-	:returns: Tuple containing the strings of the application's Twitch client ID,
-	secret, a list of channel names to pull data from, and the directories to store
-	VODs and Clips; in that order.
+	:returns: Dictionary created from the conf file.
 	"""
 
 	conf = None
@@ -119,7 +117,7 @@ def load_twitch_conf(filename):
 	if len(CHANNELS) == 0:
 		exit_prog(40, "No channels listed in config, please edit your config to continue.")
 
-	return (CLIENT_ID, CLIENT_SECRET, CHANNELS, VODS_DIR, CLIPS_DIR)
+	return conf
 
 
 def exit_prog(code=0, errmsg=None):
