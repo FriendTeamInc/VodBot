@@ -5,6 +5,7 @@ from vodbot.printer import cprint, colorize
 
 import json
 import pytz
+import hashlib
 from datetime import datetime
 from pathlib import Path
 from os import walk as os_walk
@@ -17,13 +18,24 @@ vodbotdir = util.vodbotdir
 
 
 class StageData():
-	def __init__(self, title, description, ss, to, filename):
+	def __init__(self, title, desc, ss, to, streamers, datestring, filename):
 		self.title = title
-		self.desc = description
+		self.desc = desc
 		self.ss = ss
 		self.to = to
+		self.streamers = streamers
+		self.datestring = datestring
 		self.filename = filename
-		self.hash = str(hex(hash(self)))[3:][:8] # TODO: add bounds checking and formatting
+
+		self.hash = hashlib.sha1()
+		self.hash.update(title.encode("utf-8"))
+		self.hash.update(desc.encode("utf-8"))
+		self.hash.update(ss.encode("utf-8"))
+		self.hash.update(to.encode("utf-8"))
+		self.hash.update(datestring.encode("utf-8"))
+		self.hash.update(filename.encode("utf-8"))
+		
+		self.hashdigest = self.hash.hexdigest()[:8]
 	
 	def __hash__(self):
 		return hash((self.title, self.desc, self.ss, self.to, self.filename))
@@ -36,7 +48,9 @@ class StageData():
 				"ss": self.ss,
 				"to": self.to,
 				"filename": self.filename,
-				"hash": str(hex(hash(self)))
+				"streamers": self.streamers,
+				"datestring": self.datestring,
+				"hash": self.hash.hexdigest()
 			}
 			json.dump(jsondump, f)
 
@@ -172,6 +186,17 @@ def run(args):
 		cprint(f"Found #fM#l{videotype}#r #fM{args.id}#r from #fY#l{metadata['user_name']}#r.")
 
 		# Get any necessary input
+		# Get what streamers were involved (usernames), always asked
+		args.streamers = None
+		if args.streamers == None:
+			args.streamers = ""
+			while args.streamers == "":
+				args.streamers = input(colorize(f"#fW#lWho was in the VOD#r #d(default `{metadata['user_name']}`, csv)#r: "))
+				if args.streamers == "":
+					args.streamers = [metadata["user_name"]]
+				else:
+					args.streamers = args.streamers.replace(" ", "").split(",")
+					
 		# Grab the title
 		if args.title == None:
 			args.title = ""
@@ -190,12 +215,13 @@ def run(args):
 		date = datetime.strptime(metadata["created_at"], "%Y-%m-%dT%H:%M:%SZ")
 		date.replace(tzinfo=utc)
 		date.astimezone(est)
+		datestring = date.astimezone(est).strftime("%Y/%m/%d")
 		formatdict = {
-			"date": date.astimezone(est).strftime("%Y/%m/%d"),
+			"date": datestring,
 			"link": f"https://twitch.tv/{metadata['user_name']}",
-			"streamer": metadata["user_name"],
+			"streamer": metadata['user_name'],
 		}
-		formatdict["twatch"] = f"-- Watch live at {formatdict['link']}"
+		formatdict["twatch"] = f"-- Watch live at " + " ".join([f"https://twitch.tv/{s}" for s in args.streamers])
 
 		# Grab description
 		if args.desc == None:
@@ -220,14 +246,14 @@ def run(args):
 				cprint(f"#fRDescription format error: {err}.#r")
 				args.desc = ""
 
-		stage = StageData(args.title, args.desc, args.ss, args.to, str(filename))
+		stage = StageData(args.title, args.desc, args.ss, args.to, args.streamers, datestring, str(filename))
 		shortfile = stage.filename.replace(VODS_DIR, "...").replace(CLIPS_DIR, "...")
 
 		print()
 		cprint(f"#r`#fY{stage.title}#r` #d({stage.ss} - {stage.to})#r")
-		cprint(f"#d''' {shortfile}#r\n#fY{stage.desc}#r\n#d''' {stage.hash}#r")
+		cprint(f"#d''' {shortfile}#r\n#fY{stage.desc}#r\n#d''' {stage.hashdigest}#r")
 		
-		stagename = str(stagedir / (stage.hash + ".stage"))
+		stagename = str(stagedir / (stage.hashdigest + ".stage"))
 		stage.write_stage(stagename)
 
 		# Done!
@@ -236,4 +262,6 @@ def run(args):
 	elif args.action == "rm":
 		pass
 	elif args.action == "list":
+		stages = [d[:-6] for d in listdir(str(stagedir)) if d[-5:] == "stage"]
+		print(stages)
 		pass
