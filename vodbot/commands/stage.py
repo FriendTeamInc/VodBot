@@ -12,6 +12,10 @@ from os import listdir
 from os.path import isfile, isdir
 
 
+# Default path
+vodbotdir = util.vodbotdir
+
+
 class StageData():
 	def __init__(self, title, description, ss, to, filename):
 		self.title = title
@@ -19,14 +23,27 @@ class StageData():
 		self.ss = ss
 		self.to = to
 		self.filename = filename
-		self.hash = str(hex(hash(self)))[2:][:8]
+		self.hash = str(hex(hash(self)))[3:][:8] # TODO: add bounds checking and formatting
 	
 	def __hash__(self):
 		return hash((self.title, self.desc, self.ss, self.to, self.filename))
+	
+	def write_stage(self, filename):
+		with open(filename, "w") as f:
+			jsondump = {
+				"title": self.title,
+				"description": self.desc,
+				"ss": self.ss,
+				"to": self.to,
+				"filename": self.filename,
+				"hash": str(hex(hash(self)))
+			}
+			json.dump(jsondump, f)
 
 
 class CouldntFindVideo(Exception):
 	pass
+
 
 def find_video_by_id(vid_id, VODS_DIR, CLIPS_DIR):
 	"""
@@ -63,6 +80,7 @@ def find_video_by_id(vid_id, VODS_DIR, CLIPS_DIR):
 					pass
 	
 	raise CouldntFindVideo()
+
 
 def check_time(prefix, inputstring, resp):
 	output = resp
@@ -131,7 +149,12 @@ def check_time(prefix, inputstring, resp):
 
 	return output
 
+
 def run(args):
+	util.make_dir(vodbotdir)
+	util.make_dir(vodbotdir / "stage")
+	stagedir = vodbotdir / "stage"
+
 	if args.action == "add":
 		conf = util.load_twitch_conf(args.config)
 		VODS_DIR = conf["vod_dir"]
@@ -149,6 +172,7 @@ def run(args):
 		cprint(f"Found #fM#l{videotype}#r #fM{args.id}#r from #fY#l{metadata['user_name']}#r.")
 
 		# Get any necessary input
+		# Grab the title
 		if args.title == None:
 			args.title = ""
 			while args.title == "":
@@ -156,15 +180,9 @@ def run(args):
 				if args.title == "":
 					cprint("#fRTitle cannot be blank.#r")
 
+		# Grab times
 		args.ss = check_time("Start time", "#fW#lStart time of the Video#r #d(--ss, default 0:0:0)#r: ", args.ss)
 		args.to = check_time("End time", "#fW#lEnd time of the Video#r #d(--to, default EOF)#r: ", args.to)
-
-		if args.desc == None:
-			args.desc = ""
-			while args.desc == "":
-				args.desc = input(colorize("#fW#lDescription of Video#r #d(--desc)#r: "))
-				if args.desc == "":
-					cprint("#fRDescription cannot be blank.#r")
 
 		# Generate dict to use for formatting
 		est = pytz.timezone("US/Eastern") # TODO: allow config to change this
@@ -179,10 +197,28 @@ def run(args):
 		}
 		formatdict["twatch"] = f"-- Watch live at {formatdict['link']}"
 
-		# Format the description
-		args.desc = args.desc.format(**formatdict).replace("\\n", "\n")
+		# Grab description
+		if args.desc == None:
+			args.desc = ""
+		else:
+			# Format the description
+			try:
+				args.desc = args.desc.format(**formatdict).replace("\\n", "\n")
+			except KeyError as err:
+				cprint(f"#fRDescription format error: {err}.#r")
+				args.desc = ""
 
-		shortfilename = str(filename).replace(VODS_DIR, "...").replace(CLIPS_DIR, "...")
+		while args.desc == "":
+			args.desc = input(colorize("#fW#lDescription of Video#r #d(--desc)#r: "))
+			if args.desc == "":
+				cprint("#fRDescription cannot be blank.#r")
+
+			# Format the description
+			try:
+				args.desc = args.desc.format(**formatdict).replace("\\n", "\n")
+			except KeyError as err:
+				cprint(f"#fRDescription format error: {err}.#r")
+				args.desc = ""
 
 		stage = StageData(args.title, args.desc, args.ss, args.to, str(filename))
 		shortfile = stage.filename.replace(VODS_DIR, "...").replace(CLIPS_DIR, "...")
@@ -190,7 +226,11 @@ def run(args):
 		print()
 		cprint(f"#r`#fY{stage.title}#r` #d({stage.ss} - {stage.to})#r")
 		cprint(f"#d''' {shortfile}#r\n#fY{stage.desc}#r\n#d''' {stage.hash}#r")
+		
+		stagename = str(stagedir / (stage.hash + ".stage"))
+		stage.write_stage(stagename)
 
+		# Done!
 	elif args.action == "edit":
 		pass
 	elif args.action == "rm":
