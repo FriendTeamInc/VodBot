@@ -73,7 +73,7 @@ def main():
 	# `vodbot stage list [id]`
 	stager_list = stager_subparser.add_parser("list", epilog=titletext,
 		description="lists info on staging area or staged items")
-	stager_list.add_argument("id", nargs="?", type=str, help="id of the staged video data")
+	stager_list.add_argument("id", nargs="?", type=str, help="id of the staged video data", default=None)
 	
 	args = parser.parse_args()
 

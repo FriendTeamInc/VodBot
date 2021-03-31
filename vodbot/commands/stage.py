@@ -28,12 +28,12 @@ class StageData():
 		self.filename = filename
 
 		self.hash = hashlib.sha1()
-		self.hash.update(title.encode("utf-8"))
-		self.hash.update(desc.encode("utf-8"))
-		self.hash.update(ss.encode("utf-8"))
-		self.hash.update(to.encode("utf-8"))
-		self.hash.update(datestring.encode("utf-8"))
-		self.hash.update(filename.encode("utf-8"))
+		self.hash.update(self.title.encode("utf-8"))
+		self.hash.update(self.desc.encode("utf-8"))
+		self.hash.update(self.ss.encode("utf-8"))
+		self.hash.update(self.to.encode("utf-8"))
+		self.hash.update(self.datestring.encode("utf-8"))
+		self.hash.update(self.filename.encode("utf-8"))
 		
 		self.hashdigest = self.hash.hexdigest()[:8]
 	
@@ -44,7 +44,7 @@ class StageData():
 		with open(filename, "w") as f:
 			jsondump = {
 				"title": self.title,
-				"description": self.desc,
+				"desc": self.desc,
 				"ss": self.ss,
 				"to": self.to,
 				"filename": self.filename,
@@ -168,12 +168,11 @@ def run(args):
 	util.make_dir(vodbotdir)
 	util.make_dir(vodbotdir / "stage")
 	stagedir = vodbotdir / "stage"
+	conf = util.load_twitch_conf(args.config)
+	VODS_DIR = conf["vod_dir"]
+	CLIPS_DIR = conf["clip_dir"]
 
 	if args.action == "add":
-		conf = util.load_twitch_conf(args.config)
-		VODS_DIR = conf["vod_dir"]
-		CLIPS_DIR = conf["clip_dir"]
-
 		filename = None
 		metadata = None
 		videotype = None
@@ -250,8 +249,9 @@ def run(args):
 		shortfile = stage.filename.replace(VODS_DIR, "...").replace(CLIPS_DIR, "...")
 
 		print()
-		cprint(f"#r`#fY{stage.title}#r` #d({stage.ss} - {stage.to})#r")
-		cprint(f"#d''' {shortfile}#r\n#fY{stage.desc}#r\n#d''' {stage.hashdigest}#r")
+		cprint(f"#r`#fC{stage.title}#r` #d({stage.ss} - {stage.to})#r")
+		cprint(f"#d''' {shortfile}#r\n#fG{stage.desc}#r\n#d''' {stage.hashdigest}#r")
+		cprint(f"#d#fM{' '.join(stage.streamers)}#r")
 		
 		stagename = str(stagedir / (stage.hashdigest + ".stage"))
 		stage.write_stage(stagename)
@@ -262,6 +262,50 @@ def run(args):
 	elif args.action == "rm":
 		pass
 	elif args.action == "list":
-		stages = [d[:-6] for d in listdir(str(stagedir)) if d[-5:] == "stage"]
-		print(stages)
-		pass
+		if args.id == None:
+			stages = [d[:-6] for d in listdir(str(stagedir))
+				if isfile(str(stagedir / d)) and d[-5:] == "stage"]
+			for stage in stages:
+				jsonread = None
+				try:
+					with open(str(stagedir / (stage+".stage"))) as f:
+						jsonread = json.load(f)
+				except FileNotFoundError:
+					# Throw error?
+					continue
+				except KeyError:
+					continue
+				
+				cprint(f'#r#fY#l{stage}#r -- `#fC{jsonread["title"]}#r` #d(', end="")
+				cprint(f'{jsonread["ss"]} - {jsonread["to"]})#r -- ', end="")
+				cprint(f'#fM{", ".join(jsonread["streamers"])}#r')
+		else:
+			if not isfile(str(stagedir / (args.id + ".stage"))):
+				util.exit_prog(45, f'Could not find stage "{args.id}".')
+			
+			jsonread = None
+			try:
+				with open(str(stagedir / (args.id+".stage"))) as f:
+					jsonread = json.load(f)
+			except FileNotFoundError:
+				util.exit_prog(46, f'Could not find stage "{args.id}". (FileNotFound)')
+			except KeyError:
+				util.exit_prog(46, f'Could not parse stage "{args.id}" as JSON. Is this file corrupted?')
+			
+			title = jsonread['title']
+			desc = jsonread['desc']
+			ss = jsonread['ss']
+			to = jsonread['to']
+			streamers = jsonread['streamers']
+			datestring = jsonread['datestring']
+			filename = jsonread['filename']
+
+			stage = StageData(title, desc, ss, to, streamers, datestring, filename)
+			shortfile = stage.filename.replace(VODS_DIR, "...").replace(CLIPS_DIR, "...")
+
+			print()
+			cprint(f"#r`#fC{stage.title}#r` #d({stage.ss} - {stage.to})#r")
+			cprint(f"#d''' {shortfile}#r\n#fG{stage.desc}#r\n#d''' #fY{stage.hashdigest}#r")
+			cprint(f"#d#fM{' '.join(stage.streamers)}#r")
+	
+	# run
