@@ -70,10 +70,10 @@ def main():
 	stager_rm = stager_subparser.add_parser("edit", epilog=titletext,
 		description="edits data of a VOD or Clip in the staging area")
 	stager_rm.add_argument("id", type=str, help="id of the staged video data")
-	stager_rm.add_argument("--title", help="title of video", type=str, required=False, default=None)
-	stager_rm.add_argument("--desc", help="description of video", type=str, required=False, default=None)
-	stager_rm.add_argument("--ss", help="start time of video", type=str, required=False, default=None)
-	stager_rm.add_argument("--to", help="end time of video", type=str, required=False, default=None)
+	stager_rm.add_argument("--title", help="title of video, defaults to original", type=str, required=False, default=None)
+	stager_rm.add_argument("--desc", help="description of video, defaults to original", type=str, required=False, default=None)
+	stager_rm.add_argument("--ss", help="start time of video, defaults to original", type=str, required=False, default=None)
+	stager_rm.add_argument("--to", help="end time of video, defaults to original", type=str, required=False, default=None)
 	# `vodbot stage list [id]`
 	stager_list = stager_subparser.add_parser("list", epilog=titletext,
 		description="lists info on staging area or staged items")

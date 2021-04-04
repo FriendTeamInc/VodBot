@@ -409,7 +409,7 @@ def _edit(args, conf, stagedir):
 	cprint(f"#d''' {shortfile}#r\n#fG{new_stage.desc}#r\n#d''' #fYHash: {new_stage.hashdigest}#r")
 	cprint(f"#d#fM{' '.join(new_stage.streamers)}#r")
 
-	color_input = colorize("#l#fRSave changes and remove old stage?#r (y/N)")
+	color_input = colorize("#l#fRSave changes and remove old stage?#r (y/N) ")
 	new_input = ""
 	while new_input == "":
 		new_input = input(color_input).lower().strip()
@@ -421,7 +421,7 @@ def _edit(args, conf, stagedir):
 	elif new_input == "y":
 		new_stagename = str(stagedir / (new_stage.hashdigest + ".stage"))
 		old_stagename = str(stagedir / (old_stage.hashdigest + ".stage"))
-		new_stage.write_stage(stagename)
+		new_stage.write_stage(new_stagename)
 		os_remove(old_stagename) # TODO: exception check this
 		cprint("#l#fRWrote new stage.#r")
 
