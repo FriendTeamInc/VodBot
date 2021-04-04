@@ -257,6 +257,7 @@ def _add(args, conf, stagedir):
 def _list(args, conf, stagedir):
 	VODS_DIR = conf["vod_dir"]
 	CLIPS_DIR = conf["clip_dir"]
+	
 	if args.id == None:
 		stages = [d[:-6] for d in listdir(str(stagedir))
 			if isfile(str(stagedir / d)) and d[-5:] == "stage"]
@@ -309,6 +310,9 @@ def _list(args, conf, stagedir):
 
 
 def _edit(args, conf, stagedir):
+	VODS_DIR = conf["vod_dir"]
+	CLIPS_DIR = conf["clip_dir"]
+
 	if not isfile(str(stagedir / (args.id + ".stage"))):
 		util.exit_prog(45, f'Could not find stage "{args.id}".')
 	
@@ -348,6 +352,11 @@ def _edit(args, conf, stagedir):
 				args.streamers = old_streamers
 			else:
 				args.streamers = args.streamers.replace(" ", "").split(",")
+				for streamer in args.streamers:
+					if len(streamer) == 0:
+						cprint("#l#fRMissing streamer name!#r")
+						args.streamers = ""
+						break
 
 	# Grab the title
 	if args.title == None:
@@ -362,23 +371,27 @@ def _edit(args, conf, stagedir):
 	args.to = check_time("End time", "#fW#lEnd time of the Video#r #d(--to, default to original)#r: ", args.to, old_to)
 
 	# Generate dict to use for formatting
-	est = pytz.timezone("US/Eastern") # TODO: allow config to change this
-	utc = pytz.utc
-	date = datetime.strptime(metadata["created_at"], "%Y-%m-%dT%H:%M:%SZ")
-	date.replace(tzinfo=utc)
-	date.astimezone(est)
-	datestring = date.astimezone(est).strftime("%Y/%m/%d")
 	formatdict = {
-		"date": datestring,
+		"date": old_datestring,
 		"links": " ".join([f"https://twitch.tv/{s}" for s in args.streamers]),
-		"streamer": metadata['user_name'],
+		"streamer": args.streamers[0],
 	}
 	formatdict["twatch"] = f"-- Watch live at " + formatdict["links"]
 
-	while args.desc == "":
+	if args.desc != None:
+		# Format the description
+		try:
+			args.desc = args.desc.format(**formatdict).replace("\\n", "\n")
+		except KeyError as err:
+			cprint(f"#fRDescription format error: {err}.#r")
+			args.desc = ""
+	
+	while args.desc == "" or args.desc == None:
 		args.desc = input(colorize("#fW#lDescription of Video#r #d(--desc, default to original)#r: "))
+		print(args.desc)
 		if args.desc == "":
 			args.desc = old_desc
+			print("hmm")
 			break
 
 		# Format the description
@@ -396,7 +409,21 @@ def _edit(args, conf, stagedir):
 	cprint(f"#d''' {shortfile}#r\n#fG{new_stage.desc}#r\n#d''' #fYHash: {new_stage.hashdigest}#r")
 	cprint(f"#d#fM{' '.join(new_stage.streamers)}#r")
 
-	cprint("#l#fRSave changes and remove old stage?#r")
+	color_input = colorize("#l#fRSave changes and remove old stage?#r (y/N)")
+	new_input = ""
+	while new_input == "":
+		new_input = input(color_input).lower().strip()
+		if new_input != "y" and new_input != "n":
+			new_input = ""
+
+	if new_input == "n":
+		cprint("#l#fRNot writing new stage.#r #dExiting...#r")
+	elif new_input == "y":
+		new_stagename = str(stagedir / (new_stage.hashdigest + ".stage"))
+		old_stagename = str(stagedir / (old_stage.hashdigest + ".stage"))
+		new_stage.write_stage(stagename)
+		os_remove(old_stagename) # TODO: exception check this
+		cprint("#l#fRWrote new stage.#r")
 
 
 def run(args):

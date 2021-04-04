@@ -20,7 +20,7 @@ def download_twitch_video(args):
 	# Load the config and set up the access token
 	cprint("#r#dLoading config...", end=" ", flush=True)
 	conf = util.load_twitch_conf(args.config)
-	CHANNELS = conf["channels"]
+	CHANNEL_IDS = conf["channels"]
 	CLIENT_ID = conf["twitch_client_id"]
 	CLIENT_SECRET = conf["twitch_client_secret"]
 	VODS_DIR = conf["vod_dir"]
