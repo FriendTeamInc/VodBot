@@ -59,6 +59,42 @@ class CouldntFindVideo(Exception):
 	pass
 
 
+def create_format_dict(conf, streamers, utcdate=None, truedate=None):
+	timezone = None
+	datestring = None
+	if truedate == None:
+		try:
+			timezone = pytz.timezone(conf["timezone"])
+		except pytz.UnknownTimeZoneError:
+			util.exit_prog(73, f"Unknown timezone {conf['timezone']}")
+		utc = pytz.utc
+		date = datetime.strptime(utcdate, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=utc)
+		datestring = date.astimezone(timezone).strftime("%Y/%m/%d")
+	else:
+		datestring = truedate
+	
+	formatdict = {
+		"date": datestring,
+		"link": f"https://twitch.tv/{streamers[0]}",
+		"streamer": streamers[0],
+		"links": " ".join([f"https://twitch.tv/{s}" for s in streamers]),
+		"streamers": streamers,
+	}
+
+	# first pass format
+	for x in range(2):
+		for item, string in conf["stage_format"].items():
+			try:
+				string = string.format(**formatdict)
+				formatdict[item] = string
+			except KeyError:
+				# ignore errors on first pass
+				if x == 1:
+					util.exit_prog(81, f"Format failed: {err}")
+
+	return formatdict
+
+
 def find_video_by_id(vid_id, VODS_DIR, CLIPS_DIR):
 	"""
 	Check where a video is by its ID
@@ -204,18 +240,7 @@ def _add(args, conf, stagedir):
 	args.to = check_time("End time", "#fW#lEnd time of the Video#r #d(--to, default EOF)#r: ", args.to)
 
 	# Generate dict to use for formatting
-	est = pytz.timezone("US/Eastern") # TODO: allow config to change this
-	utc = pytz.utc
-	date = datetime.strptime(metadata["created_at"], "%Y-%m-%dT%H:%M:%SZ")
-	date.replace(tzinfo=utc)
-	date.astimezone(est)
-	datestring = date.astimezone(est).strftime("%Y/%m/%d")
-	formatdict = {
-		"date": datestring,
-		"link": f"https://twitch.tv/{metadata['user_name']}",
-		"streamer": metadata['user_name'],
-	}
-	formatdict["twatch"] = f"-- Watch live at " + " ".join([f"https://twitch.tv/{s}" for s in args.streamers])
+	formatdict = create_format_dict(conf, args.streamers, utcdate=metadata["created_at"])
 
 	# Grab description
 	if args.desc == None:
@@ -371,12 +396,7 @@ def _edit(args, conf, stagedir):
 	args.to = check_time("End time", "#fW#lEnd time of the Video#r #d(--to, default to original)#r: ", args.to, old_to)
 
 	# Generate dict to use for formatting
-	formatdict = {
-		"date": old_datestring,
-		"links": " ".join([f"https://twitch.tv/{s}" for s in args.streamers]),
-		"streamer": args.streamers[0],
-	}
-	formatdict["twatch"] = f"-- Watch live at " + formatdict["links"]
+	formatdict = create_format_dict(conf, args.streamers, truedate=old_datestring)
 
 	if args.desc != None:
 		# Format the description

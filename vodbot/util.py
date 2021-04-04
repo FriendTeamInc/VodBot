@@ -31,7 +31,7 @@ def make_twitch_conf(filename):
 	"""
 
 	basejson = {
-		"channels": [ "46moura",
+		"twitch_channels": [ "46moura",
 			"alkana", "batkigu", "hylianswordsman1"
 			"juicibit", "michiri9", "notquiteapex",
 			"pissyellowcrocs", "percy_creates", "voobo",
@@ -39,6 +39,14 @@ def make_twitch_conf(filename):
 		
 		"twitch_client_id": default_twitch_clientid,
 		"twitch_client_secret": default_twitch_clientsecret,
+
+		"timezone": "US/Eastern",
+
+		"stage_format": {
+			"twatch": "-- Watch live at {links}",
+			"discord": "-- Join the Discord https://discord.gg/v2t6uag",
+			"credit": "\n{twatch}\n{discord}"
+		},
 		
 		"vod_dir": str(vodbotdir / "vods"),
 		"clip_dir": str(vodbotdir / "clips"),
@@ -101,15 +109,13 @@ def load_twitch_conf(filename):
 	except json.decoder.JSONDecodeError as e:
 		exit_prog(98, f"Failed to decode config. \"{e.msg}\"")
 		
-	for key in ["channels", "twitch_client_id", "twitch_client_secret", "vod_dir", "clip_dir"]:
+	for key in ["twitch_channels", "twitch_client_id", "twitch_client_secret", "vod_dir", "clip_dir", "stage_format", "timezone"]:
 		if key not in conf:
 			exit_prog(79, f"Missing key \"{key}\" in config, please edit your config to continue.")
 
-	CHANNELS = conf["channels"]
+	CHANNELS = conf["twitch_channels"]
 	CLIENT_ID = conf["twitch_client_id"]
 	CLIENT_SECRET = conf["twitch_client_secret"]
-	VODS_DIR = conf["vod_dir"]
-	CLIPS_DIR = conf["clip_dir"]
 	
 	if CLIENT_ID == default_twitch_clientid or CLIENT_SECRET == default_twitch_clientsecret:
 		exit_prog(3, f"Please edit your config with your Client ID and Secret from the default values, located at \"{filename}\".")
