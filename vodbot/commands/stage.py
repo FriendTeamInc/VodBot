@@ -96,7 +96,7 @@ def find_video_by_id(vid_id, VODS_DIR, CLIPS_DIR):
 	raise CouldntFindVideo()
 
 
-def check_time(prefix, inputstring, resp):
+def check_time(prefix, inputstring, resp, default=None):
 	output = resp
 	checkedonce = False
 
@@ -107,9 +107,9 @@ def check_time(prefix, inputstring, resp):
 
 		if output == "":
 			if prefix == "Start time":
-				return "0:0:0"
+				return default if default != None else "0:0:0"
 			elif prefix == "End time":
-				return "EOF"
+				return default if default != None else "EOF"
 
 		intime = output.split(":")
 		timelist = []
@@ -304,8 +304,99 @@ def _list(args, conf, stagedir):
 
 		print()
 		cprint(f"#r`#fC{stage.title}#r` #d({stage.ss} - {stage.to})#r")
-		cprint(f"#d''' {shortfile}#r\n#fG{stage.desc}#r\n#d''' #fY{stage.hashdigest}#r")
+		cprint(f"#d''' {shortfile}#r\n#fG{stage.desc}#r\n#d''' #fYHash: {stage.hashdigest}#r")
 		cprint(f"#d#fM{' '.join(stage.streamers)}#r")
+
+
+def _edit(args, conf, stagedir):
+	if not isfile(str(stagedir / (args.id + ".stage"))):
+		util.exit_prog(45, f'Could not find stage "{args.id}".')
+	
+	jsonread = None
+	try:
+		with open(str(stagedir / (args.id+".stage"))) as f:
+			jsonread = json.load(f)
+	except FileNotFoundError:
+		util.exit_prog(46, f'Could not find stage "{args.id}". (FileNotFound)')
+	except KeyError:
+		util.exit_prog(46, f'Could not parse stage "{args.id}" as JSON. Is this file corrupted?')
+	
+	old_title = jsonread['title']
+	old_desc = jsonread['desc']
+	old_ss = jsonread['ss']
+	old_to = jsonread['to']
+	old_streamers = jsonread['streamers']
+	old_datestring = jsonread['datestring']
+	old_filename = jsonread['filename']
+
+	old_stage = StageData(old_title, old_desc, old_ss, old_to, old_streamers, old_datestring, old_filename)
+	shortfile = old_stage.filename.replace(VODS_DIR, "...").replace(CLIPS_DIR, "...")
+
+	cprint("#l#fRCurrent stage:")
+	cprint(f"#r`#fC{old_stage.title}#r` #d({old_stage.ss} - {old_stage.to})#r")
+	cprint(f"#d''' {shortfile}#r\n#fG{old_stage.desc}#r\n#d''' #fYHash: {old_stage.hashdigest}#r")
+	cprint(f"#d#fM{' '.join(old_stage.streamers)}#r")
+	
+	# Now to take the edits, where blank responses are defaulted to the original value.
+	# Get what streamers were involved (usernames)
+	args.streamers = None
+	if args.streamers == None:
+		args.streamers = ""
+		while args.streamers == "":
+			args.streamers = input(colorize(f"#fW#lWho was in the VOD#r #d(default to original, csv)#r: "))
+			if args.streamers == "":
+				args.streamers = old_streamers
+			else:
+				args.streamers = args.streamers.replace(" ", "").split(",")
+
+	# Grab the title
+	if args.title == None:
+		args.title = ""
+		while args.title == "":
+			args.title = input(colorize("#fW#lTitle of the Video#r #d(--title, default to original)#r: "))
+			if args.title == "":
+				args.title = old_title
+
+	# Grab times
+	args.ss = check_time("Start time", "#fW#lStart time of the Video#r #d(--ss, default to original)#r: ", args.ss, old_ss)
+	args.to = check_time("End time", "#fW#lEnd time of the Video#r #d(--to, default to original)#r: ", args.to, old_to)
+
+	# Generate dict to use for formatting
+	est = pytz.timezone("US/Eastern") # TODO: allow config to change this
+	utc = pytz.utc
+	date = datetime.strptime(metadata["created_at"], "%Y-%m-%dT%H:%M:%SZ")
+	date.replace(tzinfo=utc)
+	date.astimezone(est)
+	datestring = date.astimezone(est).strftime("%Y/%m/%d")
+	formatdict = {
+		"date": datestring,
+		"links": " ".join([f"https://twitch.tv/{s}" for s in args.streamers]),
+		"streamer": metadata['user_name'],
+	}
+	formatdict["twatch"] = f"-- Watch live at " + formatdict["links"]
+
+	while args.desc == "":
+		args.desc = input(colorize("#fW#lDescription of Video#r #d(--desc, default to original)#r: "))
+		if args.desc == "":
+			args.desc = old_desc
+			break
+
+		# Format the description
+		try:
+			args.desc = args.desc.format(**formatdict).replace("\\n", "\n")
+		except KeyError as err:
+			cprint(f"#fRDescription format error: {err}.#r")
+			args.desc = ""
+
+	new_stage = StageData(args.title, args.desc, args.ss, args.to, args.streamers, old_datestring, old_filename)
+	shortfile = new_stage.filename.replace(VODS_DIR, "...").replace(CLIPS_DIR, "...")
+
+	cprint("#l#fRNew stage:")
+	cprint(f"#r`#fC{new_stage.title}#r` #d({new_stage.ss} - {new_stage.to})#r")
+	cprint(f"#d''' {shortfile}#r\n#fG{new_stage.desc}#r\n#d''' #fYHash: {new_stage.hashdigest}#r")
+	cprint(f"#d#fM{' '.join(new_stage.streamers)}#r")
+
+	cprint("#l#fRSave changes and remove old stage?#r")
 
 
 def run(args):
@@ -317,7 +408,7 @@ def run(args):
 	if args.action == "add":
 		_add(args, conf, stagedir)
 	elif args.action == "edit":
-		pass
+		_edit(args, conf, stagedir)
 	elif args.action == "rm":
 		if not isfile(str(stagedir / (args.id + ".stage"))):
 			util.exit_prog(45, f'Could not find stage "{args.id}".')
