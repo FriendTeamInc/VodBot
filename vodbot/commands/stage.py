@@ -8,8 +8,7 @@ import pytz
 import hashlib
 from datetime import datetime
 from pathlib import Path
-from os import walk as os_walk, remove as os_remove
-from os import listdir
+from os import walk as os_walk, remove as os_remove, listdir as os_listdir
 from os.path import isfile, isdir
 
 
@@ -92,7 +91,7 @@ def create_format_dict(conf, streamers, utcdate=None, truedate=None):
 				if x == 1:
 					util.exit_prog(81, f"Format failed: {err}")
 
-	return formatdict
+	return formatdict, datestring
 
 
 def find_video_by_id(vid_id, VODS_DIR, CLIPS_DIR):
@@ -105,8 +104,8 @@ def find_video_by_id(vid_id, VODS_DIR, CLIPS_DIR):
 	
 	VODS_DIR_PATH = Path(VODS_DIR)
 	CLIPS_DIR_PATH = Path(CLIPS_DIR)
-	vod_dirs = [d for d in listdir(VODS_DIR) if isdir(str(VODS_DIR_PATH / d))]
-	clip_dirs = [d for d in listdir(CLIPS_DIR) if isdir(str(CLIPS_DIR_PATH / d))]
+	vod_dirs = [d for d in os_listdir(VODS_DIR) if isdir(str(VODS_DIR_PATH / d))]
+	clip_dirs = [d for d in os_listdir(CLIPS_DIR) if isdir(str(CLIPS_DIR_PATH / d))]
 
 	filename = None
 	metaname = None
@@ -116,7 +115,7 @@ def find_video_by_id(vid_id, VODS_DIR, CLIPS_DIR):
 	for dir_t in directories:
 		for channel in dir_t[0]:
 			folder = dir_t[1] / Path(channel)
-			metas = [m[:-5] for m in listdir(str(folder)) if isfile(str(folder / Path(m))) and m[-4:]=="meta"]
+			metas = [m[:-5] for m in os_listdir(str(folder)) if isfile(str(folder / Path(m))) and m[-4:]=="meta"]
 			if vid_id in metas:
 				metajson = None
 				try:
@@ -240,7 +239,7 @@ def _add(args, conf, stagedir):
 	args.to = check_time("End time", "#fW#lEnd time of the Video#r #d(--to, default EOF)#r: ", args.to)
 
 	# Generate dict to use for formatting
-	formatdict = create_format_dict(conf, args.streamers, utcdate=metadata["created_at"])
+	formatdict, datestring = create_format_dict(conf, args.streamers, utcdate=metadata["created_at"])
 
 	# Grab description
 	if args.desc == None:
@@ -284,7 +283,7 @@ def _list(args, conf, stagedir):
 	CLIPS_DIR = conf["clip_dir"]
 	
 	if args.id == None:
-		stages = [d[:-6] for d in listdir(str(stagedir))
+		stages = [d[:-6] for d in os_listdir(str(stagedir))
 			if isfile(str(stagedir / d)) and d[-5:] == "stage"]
 
 		for stage in stages:

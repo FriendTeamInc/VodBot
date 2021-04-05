@@ -77,7 +77,7 @@ def make_youtube_conf(filename):
 			"client_secret": default_youtube_clientsecret,
 			"auth_uri": "https://accounts.google.com/o/oauth2/auth",
 			"token_uri": "https://accounts.google.com/o/oauth2/token",
-			"redirect_uris": []
+			"redirect_uris": ["http://localhost:8080/"] # TODO: Change this later to a proper webpage
 		}
 	}
 
