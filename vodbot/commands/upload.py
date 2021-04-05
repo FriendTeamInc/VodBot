@@ -13,6 +13,7 @@ import json
 from datetime import datetime
 from os import listdir as os_listdir, environ as os_environ, remove as os_remove
 from os.path import exists as os_exists, isfile as os_isfile
+from time import sleep
 
 from httplib2.error import HttpLib2Error, HttpLib2ErrorWithResponse
 
@@ -87,6 +88,7 @@ def upload_video(service, stagedata):
 
 	resp = None
 	retry = 0
+	errn = 0
 	while resp is None:
 		try:
 			print(f"Uploading stage {stagedata.hashdigest}")
@@ -99,13 +101,24 @@ def upload_video(service, stagedata):
 		except ResumableUploadError as err:
 			if err.resp.status == 403:
 				util.exit_prog(403, "API Quota exceeded, you'll have to wait ~24 hours to upload.")
+			print(f"A Resumeable error has occured, retrying in 5 sec... ({err.resp.status},{err.content})")
+			errn += 1
+			sleep(5)
 		except HttpError as err:
 			if err.resp.status in [500, 502, 503, 504]:
-				print(f"An HTTP error has occured, retrying ({err.resp.status},{err.content})")
+				print(f"An HTTP error has occured, retrying in 5 sec... ({err.resp.status},{err.content})")
+				errn += 1
+				sleep(5)
 			else:
 				raise
 		except RETRIABLE_EXCEPTS as err:
-			print(f"An HTTP error has occured, retrying ({err})")
+			print(f"An HTTP error has occured, retrying in 5 sec... ({err})")
+			errn += 1
+			sleep(5)
+		
+		if errn >= 5:
+			print("Skipping, errored too many times.")
+			break
 
 
 def run(args):
