@@ -78,6 +78,10 @@ def main():
 	stager_list = stager_subparser.add_parser("list", epilog=titletext,
 		description="lists info on staging area or staged items")
 	stager_list.add_argument("id", nargs="?", type=str, help="id of the staged video data", default=None)
+
+	# `vodbot upload <id/all>`
+	download = subparsers.add_parser("upload", epilog=titletext, description="Uploads stages to YouTube.")
+	download.add_argument("id", type=str, help='id of the staged video data, can be "all" to upload all stages sequentially')
 	
 	args = parser.parse_args()
 
