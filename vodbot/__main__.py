@@ -81,7 +81,7 @@ def main():
 
 	# `vodbot upload <id/all>`
 	download = subparsers.add_parser("upload", epilog=titletext, description="Uploads stages to YouTube.")
-	download.add_argument("id", type=str, help='id of the staged video data, can be "all" to upload all stages sequentially')
+	download.add_argument("id", type=str, help='id of the staged video data, can be "all" to upload all stages sequentially, or "logout" to switch to a different YouTube account')
 	
 	args = parser.parse_args()
 

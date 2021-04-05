@@ -36,6 +36,9 @@ class StageData():
 		
 		self.hashdigest = self.hash.hexdigest()[:8]
 	
+	def __repr__(self):
+		return f"StageData(\"{self.title}\", {self.hashdigest})"
+	
 	def __hash__(self):
 		return hash((self.title, self.desc, self.ss, self.to, self.filename))
 	

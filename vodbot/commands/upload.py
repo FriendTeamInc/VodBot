@@ -6,14 +6,20 @@
 from .stage import StageData
 
 import vodbot.util as util
+from vodbot.printer import cprint, colorize
+
 import pickle
 import json
 from datetime import datetime
-from os import listdir as os_listdir
+from os import listdir as os_listdir, environ as os_environ, remove as os_remove
 from os.path import exists as os_exists, isfile as os_isfile
+
+from httplib2.error import HttpLib2Error, HttpLib2ErrorWithResponse
+
 from google_auth_oauthlib.flow import Flow, InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
+from googleapiclient.errors import HttpError, ResumableUploadError
 from google.auth.transport.requests import Request
 
 
@@ -24,6 +30,8 @@ CLIENT_SECRET_FILE = vodbotdir / 'youtube-conf.json'
 API_NAME = "youtube"
 API_VERSION = "v3"
 SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
+
+RETRIABLE_EXCEPTS = (HttpLib2Error, HttpLib2ErrorWithResponse, IOError)
 
 
 def load_stage(stage_id):
@@ -49,7 +57,7 @@ def load_stage(stage_id):
 
 EPOCH = datetime.utcfromtimestamp(0)
 def sort_stagedata(stagedata):
-	date = datetime.strptime(stagedata["datestring"], "%Y/%m/%d")
+	date = datetime.strptime(stagedata.datestring, "%Y/%m/%d")
 	return (date - EPOCH).total_seconds()
 
 
@@ -57,25 +65,85 @@ def upload_video(service, stagedata):
 	# send request to youtube to upload
 	request_body = {
 		"snippet": {
-			"categoryId": 20
+			"categoryId": 20,
+			"title": stagedata.title,
+			"description": stagedata.desc
+		},
+		"status": {
+			"privacyStatus": "private",
+			"selfDeclaredMadeForKids": False
 		}
 	}
 
 	# create media file
-	media_file = MediaFileUpload()
+	media_file = MediaFileUpload(stagedata.filename, chunksize=-1, resumable=True)
 
 	# create upload request and execute
 	response_upload = service.videos().insert(
 		part="snippet,status",
 		body=request_body,
 		media_body=media_file
-	).execute()
+	)
+
+	resp = None
+	retry = 0
+	while resp is None:
+		try:
+			print(f"Uploading stage {stagedata.hashdigest}")
+			status, resp = response_upload.next_chunk()
+			if resp is not None:
+				if "id" in resp:
+					print(f"Video (ID:{resp['id']}) was uploaded.")
+				else:
+					util.exit_prog(99, f"Unexpected upload failure occurred, \"{resp}\"")
+		except ResumableUploadError as err:
+			if err.resp.status == 403:
+				util.exit_prog(403, "API Quota exceeded, you'll have to wait ~24 hours to upload.")
+		except HttpError as err:
+			if err.resp.status in [500, 502, 503, 504]:
+				print(f"An HTTP error has occured, retrying ({err.resp.status},{err.content})")
+			else:
+				raise
+		except RETRIABLE_EXCEPTS as err:
+			print(f"An HTTP error has occured, retrying ({err})")
 
 
 def run(args):
+	# handle logout
+	if args.id == "logout":
+		try:
+			os_remove(str(vodbotdir / pickle_filename))
+		except:
+			util.exit_prog(11, "Failed to remove credentials for YouTube account.")
+		
+		return
+	
+	# load stages, but dont upload
+	# Handle id/all
+	stagedata = None
+	stagedatas = None
+	if args.id == "all":
+		cprint("#dLoading stages...", end=" ")
+		# create a list of all the hashes and sort by date streamed, upload chronologically
+		stages = [d[:-6] for d in os_listdir(str(vodbotdir / "stage"))
+			if os_isfile(str(vodbotdir / "stage" / d)) and d[-5:] == "stage"]
+		stagedatas = [load_stage(stage) for stage in stages]
+		stagedatas.sort(key=sort_stagedata)
+	else:
+		cprint("#dLoading stage...", end=" ")
+		# check if stage exists, and prep it for upload
+		stagedata = load_stage(args.id)
+		cprint(f"About to upload stage {stagedata.hashdigest}.#r")
+
 	# authenticate youtube service
 	if not os_exists(str(vodbotdir / "youtube-conf.json")):
 		util.exit_prog(19, "Missing `youtube-conf.json`.")
+
+	cprint("Authenticating with Google...", end=" ")
+
+	# temporary work around until something more substantial can be figured out.
+	# TODO: make this not garbage
+	os_environ["GOOGLE_APPLICATION_CREDENTIALS"] = str(vodbotdir / "vodbot-credentials.json")
 
 	service = None
 	credentials = None
@@ -100,20 +168,16 @@ def run(args):
 	except Exception as err:
 		util.exit_prog(50, f"Failed to connect to YouTube API, \"{err}\"")
 	
+	cprint("Authenticated.", end=" ")
+	
 	# Handle id/all
 	if args.id == "all":
-		# create a list of all the hashes and sort by date streamed, upload chronologically
-		stages = [d[:-6] for d in os_listdir(str(vodbotdir / "stage"))
-			if os_isfile(str(vodbotdir / "stage" / d)) and d[-5:] == "stage"]
-		
-		stagedatas = [load_stage(stage) for stage in stages]
-		
-		stagedatas.sort(key=sort_stagedata)
-
-		print(stagedatas)
+		# begin to upload
+		cprint(f"About to upload {len(stagedatas)} stages.#r")
+		for stage in stagedatas:
+			upload_video(service, stage)
 	else:
-		# check if stage exists, and prep it for upload
-		if os_exists(str(vodbotdir / "stage" / (args.id+".stage"))):
-			upload_video(service, args.id)
-		else:
-			util.exit_prog(51, f"Could not find stage {args.id}.")
+		# upload stage
+		cprint(f"About to upload stage {stagedata.hashdigest}.#r")
+		upload_video(service, stagedata)
+	

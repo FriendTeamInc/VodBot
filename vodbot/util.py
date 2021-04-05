@@ -142,5 +142,5 @@ def exit_prog(code=0, errmsg=None):
 			msg += " #fR#l" + errmsg + "#r"
 		cprint(msg, end=" ")
 
-	cprint("#dExiting...#r")
+	cprint("#r#dExiting...#r")
 	sys.exit(code)
