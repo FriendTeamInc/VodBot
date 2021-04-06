@@ -6,9 +6,13 @@ This project is a heavy Work-In-Progress, and lots of changes can occur before a
 
 # Installation
 Requirements:
-* [Python 3.5+](https://www.python.org/)
-    * [Requests 2.20+](https://requests.readthedocs.io/en/master/)
-    * [M3U8 0.8+](https://github.com/globocom/m3u8)
+* [Python 3.6+](https://www.python.org/)
+    * [Requests 2.20+](https://pypi.org/project/requests/)
+    * [M3U8 0.8+](https://pypi.org/project/m3u8/)
+    * [pytz 2021.1+](https://pypi.org/project/pytz/)
+    * [Google API Client 2.0+](https://pypi.org/project/google-api-python-client/)
+    * [Google Auth OAuthLib 0.4.4](https://pypi.org/project/google-auth-oauthlib/)
+    * [Google Auth httplib2 0.1.0](https://pypi.org/project/google-auth-httplib2/)
 * [ffmpeg](https://www.ffmpeg.org/) (Must be in your PATH)
 
 VodBot can be installed with `pip install .`.
@@ -18,13 +22,10 @@ The Makefile in the repo simply invokes `pip` to uninstall previous versions of 
 # Usage
 This section will best describe how to use VodBot, however you can always pull up a quick reference with `vodbot -h` or `vodbot <command> -h` on specific functionality.
 
-`vodbot init`: If it hasn't been run before, simply run `vodbot init` to initialize directories and files. Navigate to the path presented and edit the config accordingly. You can use the provided example config below as reference on how to set up VodBot.
-
-`vodbot pull`: This is the downloading functionality of VodBot, which will pull VODs or Clips onto a local drive. Running `vodbot pull vods` or `vodbot pull clips` will download the VODs or Clips of the channels you have set to watch in your config file, as well as some useful metadata into JSON files. Metadata JSON files contain the date (in UTC time), the user that streamed, the title, and the video ID. Clips metadata have all that info in addition to clip author and view count. Running `vodbot pull list [channel]` will list the data available locally of all the VODs and Clips of all channels or any specified channel, sorted chronologically.
-
-`vodbot stage`: This is the staging functionality of VodBot, making it easy to upload sections of VODs or Clips to YouTube. Running `vodbot stage add <video_id>` will begin the process of staging a VOD or Clip, found by the ID given in the command. You will get prompts for a video title, description, and start and stop times of the video (which defaults to the beginning and end of the video file), as well as who was streaming with the main streamer (entered as comma separated values). You can also avoid the prompts by passing arguments This will print out the data staged, as well as a stage ID. This can be used with the rest of the stage commands. Running `vodbot stage list [stage_id]` will print out all of the current stages, or provided a stage ID will print out info on that specific stage. Running `vodbot stage edit <stage_id>` will allow you to edit an existing stage. This will change the stage ID, so keep that in mind. Running `vodbot stage rm <stage_id>` will remove that specific stage.
-
-`vodbot upload`: This is the uploading functionality of VodBot, uploading staged data to a YouTube channel. Simply running `vodbot upload <stage_id>` will begin the uploading process for VodBot (you can also pass "all" in place of an ID to upload all stages). VodBot will load the stage(s), and then require authentication from a Google Account to upload videos to YouTube. VodBot will print a link that the user must open and authenticate the application with, then paste a unique code into a prompt from VodBot given by Google after authorizing VodBot. From there VodBot will attempt to upload the staged data to YouTube with all appropriate fields filled. *You will need to set the video to be public manually, as Google does not allow unapproved applications to upload public videos.*
+* `vodbot init`: If it hasn't been run before, simply run `vodbot init` to initialize directories and files. Navigate to the path presented and edit the config accordingly. You can use the provided example config below as reference on how to set up VodBot.
+* `vodbot pull`: This is the downloading functionality of VodBot, which will pull VODs or Clips onto a local drive. Running `vodbot pull vods` or `vodbot pull clips` will download the VODs or Clips of the channels you have set to watch in your config file, as well as some useful metadata into JSON files. Metadata JSON files contain the date (in UTC time), the user that streamed, the title, and the video ID. Clips metadata have all that info in addition to clip author and view count. Running `vodbot pull list [channel]` will list the data available locally of all the VODs and Clips of all channels or any specified channel, sorted chronologically.
+* `vodbot stage`: This is the staging functionality of VodBot, making it easy to upload sections of VODs or Clips to YouTube. Running `vodbot stage add <video_id>` will begin the process of staging a VOD or Clip, found by the ID given in the command. You will get prompts for a video title, description, and start and stop times of the video (which defaults to the beginning and end of the video file), as well as who was streaming with the main streamer (entered as comma separated values). You can also avoid the prompts by passing arguments This will print out the data staged, as well as a stage ID. This can be used with the rest of the stage commands. Running `vodbot stage list [stage_id]` will print out all of the current stages, or provided a stage ID will print out info on that specific stage. Running `vodbot stage edit <stage_id>` will allow you to edit an existing stage. This will change the stage ID, so keep that in mind. Running `vodbot stage rm <stage_id>` will remove that specific stage.
+* `vodbot upload`: This is the uploading functionality of VodBot, uploading staged data to a YouTube channel. Simply running `vodbot upload <stage_id>` will begin the uploading process for VodBot (you can also pass "all" in place of an ID to upload all stages). VodBot will load the stage(s), and then require authentication from a Google Account to upload videos to YouTube. VodBot will print a link that the user must open and authenticate the application with, then paste a unique code into a prompt from VodBot given by Google after authorizing VodBot. From there VodBot will attempt to upload the staged data to YouTube with all appropriate fields filled. *You will need to set the video to be public manually, as Google does not allow unapproved applications to upload public videos.*
 
 It's recommended that if you plan to use this for the long term to save the videos in some kind of redundant storage array or in multiple locations (or both). It's also recommended that VodBot is run with some kind of scheduling program like `systemd` or `cron` every so often to pull the VODs and clips for you.
 

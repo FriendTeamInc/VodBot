@@ -24,8 +24,6 @@ setup(
 		"m3u8>=0.8",
 	],
 	entry_points={
-		'console_scripts': [
-			'vodbot=vodbot.__main__:deffered_main',
-		],
+		'console_scripts': ['vodbot=vodbot.__main__:deffered_main'],
 	}
 )
