@@ -26,11 +26,13 @@ from google.auth.transport.requests import Request
 
 # Default path
 vodbotdir = util.vodbotdir
+stagedir = stagedir
 
 CLIENT_SECRET_FILE = vodbotdir / 'youtube-conf.json'
 API_NAME = "youtube"
 API_VERSION = "v3"
 SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
+PICKLE_FILE = f"tkn_{API_NAME}_{API_VERSION}.pkl"
 
 RETRIABLE_EXCEPTS = (HttpLib2Error, HttpLib2ErrorWithResponse, IOError)
 
@@ -38,7 +40,7 @@ RETRIABLE_EXCEPTS = (HttpLib2Error, HttpLib2ErrorWithResponse, IOError)
 def load_stage(stage_id):
 	jsonread = None
 	try:
-		with open(str(vodbotdir / "stage" / (stage_id+".stage"))) as f:
+		with open(str(stagedir / (stage_id+".stage"))) as f:
 			jsonread = json.load(f)
 	except FileNotFoundError:
 		util.exit_prog(46, f'Could not find stage "{stage_id}". (FileNotFound)')
@@ -116,16 +118,19 @@ def upload_video(service, stagedata):
 			errn += 1
 			sleep(5)
 		
-		if errn >= 5:
+		if errn >= 10:
 			print("Skipping, errored too many times.")
 			break
 
 
 def run(args):
+	conf = util.load_conf(args.config)
+
 	# handle logout
 	if args.id == "logout":
 		try:
-			os_remove(str(vodbotdir / pickle_filename))
+			os_remove(str(vodbotdir / PICKLE_FILE))
+			cprint("#dLogged out of Google API session#r")
 		except:
 			util.exit_prog(11, "Failed to remove credentials for YouTube account.")
 		
@@ -138,8 +143,8 @@ def run(args):
 	if args.id == "all":
 		cprint("#dLoading stages...", end=" ")
 		# create a list of all the hashes and sort by date streamed, upload chronologically
-		stages = [d[:-6] for d in os_listdir(str(vodbotdir / "stage"))
-			if os_isfile(str(vodbotdir / "stage" / d)) and d[-5:] == "stage"]
+		stages = [d[:-6] for d in os_listdir(str(stagedir))
+			if os_isfile(str(stagedir / d)) and d[-5:] == "stage"]
 		stagedatas = [load_stage(stage) for stage in stages]
 		stagedatas.sort(key=sort_stagedata)
 	else:
@@ -160,10 +165,9 @@ def run(args):
 
 	service = None
 	credentials = None
-	pickle_filename = f"tkn_{API_NAME}_{API_VERSION}.pkl"
 
-	if os_exists(str(vodbotdir / pickle_filename)):
-		with open(str(vodbotdir / pickle_filename), "rb") as f:
+	if os_exists(str(vodbotdir / PICKLE_FILE)):
+		with open(str(vodbotdir / PICKLE_FILE), "rb") as f:
 			credentials = pickle.load(f)
 	
 	if not credentials or not credentials.valid:
@@ -171,9 +175,9 @@ def run(args):
 			credentials.refresh(Request())
 		else:
 			flow = InstalledAppFlow.from_client_secrets_file(str(CLIENT_SECRET_FILE), SCOPES)
-			credentials = flow.run_local_server()
+			credentials = flow.run_console()
 		
-		with open(str(vodbotdir / pickle_filename), "wb") as f:
+		with open(str(vodbotdir / PICKLE_FILE), "wb") as f:
 			pickle.dump(credentials, f)
 	
 	try:

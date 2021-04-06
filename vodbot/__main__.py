@@ -22,8 +22,8 @@ def deffered_main():
 
 
 def main():
-	titletext = colorize('#r#fM#l* VodBot {} (c) 2020-21 Logan "NotQuiteApex" Hickok-Dickson *#r')
-	titletext = titletext.format(__version__)
+	titletext = colorize('#r#fM#l* {} {} (c) 2020-21 Logan "NotQuiteApex" Hickok-Dickson *#r')
+	titletext = titletext.format(__project__, __version__)
 
 	# Process arguments
 	parser = argparse.ArgumentParser(epilog=titletext,
@@ -80,22 +80,17 @@ def main():
 	stager_list.add_argument("id", nargs="?", type=str, help="id of the staged video data", default=None)
 
 	# `vodbot upload <id/all>`
-	download = subparsers.add_parser("upload", epilog=titletext, description="Uploads stages to YouTube.")
+	download = subparsers.add_parser("upload", epilog=titletext, description="Uploads stage(s) to YouTube.")
 	download.add_argument("id", type=str, help='id of the staged video data, can be "all" to upload all stages sequentially, or "logout" to switch to a different YouTube account')
 	
 	args = parser.parse_args()
 
 	print(titletext)
 
-	# Initial error checks
-	if not exists(args.config):
-		util.make_twitch_conf("conf.json")
-		util.exit_prog(39,  f'Edit the config file at "{args.config}" before running again.')
-
 	# Handle commands
 	if args.cmd == "init":
-		init = import_module(".commands.init", "vodbot")
-		init.run(args)
+		# TODO: run checks for overwriting existing confs
+		util.make_conf(args.config)
 	elif args.cmd == "pull":
 		pull = import_module(".commands.pull", "vodbot")
 		pull.run(args)

@@ -452,7 +452,7 @@ def run(args):
 	util.make_dir(vodbotdir)
 	stagedir = vodbotdir / "stage"
 	util.make_dir(stagedir)
-	conf = util.load_twitch_conf(args.config)
+	conf = util.load_conf(args.config)
 
 	if args.action == "add":
 		_add(args, conf, stagedir)
