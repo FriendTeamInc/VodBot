@@ -11,6 +11,7 @@ from vodbot.printer import cprint, colorize
 import pickle
 import json
 from datetime import datetime
+from pathlib import Path
 from os import listdir as os_listdir, environ as os_environ, remove as os_remove
 from os.path import exists as os_exists, isfile as os_isfile
 from time import sleep
@@ -26,13 +27,7 @@ from google.auth.transport.requests import Request
 
 # Default path
 vodbotdir = util.vodbotdir
-stagedir = stagedir
-
-CLIENT_SECRET_FILE = vodbotdir / 'youtube-conf.json'
-API_NAME = "youtube"
-API_VERSION = "v3"
-SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
-PICKLE_FILE = f"tkn_{API_NAME}_{API_VERSION}.pkl"
+stagedir = None
 
 RETRIABLE_EXCEPTS = (HttpLib2Error, HttpLib2ErrorWithResponse, IOError)
 
@@ -101,14 +96,18 @@ def upload_video(service, stagedata):
 				else:
 					util.exit_prog(99, f"Unexpected upload failure occurred, \"{resp}\"")
 		except ResumableUploadError as err:
-			if err.resp.status == 403:
-				util.exit_prog(403, "API Quota exceeded, you'll have to wait ~24 hours to upload.")
-			print(f"A Resumeable error has occured, retrying in 5 sec... ({err.resp.status},{err.content})")
+			if err.resp.status in [400, 401, 402, 403]:
+				try:
+					jsondata = json.loads(err.content)['error']['errors'][0]
+					util.exit_prog(40, f"API Error: `{jsondata['reason']}`. Message: `{jsondata['message']}`")
+				except (json.JSONDecodeError, KeyError):
+					util.exit_prog(40, f"Unknown API Error has occured, ({err.resp.status}, {err.content})")
+			print(f"A Resumeable error has occured, retrying in 5 sec... ({err.resp.status}, {err.content})")
 			errn += 1
 			sleep(5)
 		except HttpError as err:
 			if err.resp.status in [500, 502, 503, 504]:
-				print(f"An HTTP error has occured, retrying in 5 sec... ({err.resp.status},{err.content})")
+				print(f"An HTTP error has occured, retrying in 5 sec... ({err.resp.status}, {err.content})")
 				errn += 1
 				sleep(5)
 			else:
@@ -124,12 +123,23 @@ def upload_video(service, stagedata):
 
 
 def run(args):
+	# load config
 	conf = util.load_conf(args.config)
+
+	# configure variables
+	global stagedir
+	stagedir = Path(conf["stage_dir"])
+	PICKLE_FILE = conf["youtube_pickle_path"]
+	CLIENT_SECRET_FILE = conf["youtube_client_path"]
+	CLIENT_SERVICE_FILE = conf["youtube_service_path"]
+	API_NAME = 'youtube'
+	API_VERSION = 'v3'
+	SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
 
 	# handle logout
 	if args.id == "logout":
 		try:
-			os_remove(str(vodbotdir / PICKLE_FILE))
+			os_remove(PICKLE_FILE)
 			cprint("#dLogged out of Google API session#r")
 		except:
 			util.exit_prog(11, "Failed to remove credentials for YouTube account.")
@@ -154,30 +164,30 @@ def run(args):
 		cprint(f"About to upload stage {stagedata.hashdigest}.#r")
 
 	# authenticate youtube service
-	if not os_exists(str(vodbotdir / "youtube-conf.json")):
-		util.exit_prog(19, "Missing `youtube-conf.json`.")
+	if not os_exists(CLIENT_SECRET_FILE):
+		util.exit_prog(19, "Missing YouTube Client ID/Secret file.")
 
 	cprint("Authenticating with Google...", end=" ")
 
 	# temporary work around until something more substantial can be figured out.
 	# TODO: make this not garbage
-	os_environ["GOOGLE_APPLICATION_CREDENTIALS"] = str(vodbotdir / "vodbot-credentials.json")
+	os_environ["GOOGLE_APPLICATION_CREDENTIALS"] = CLIENT_SERVICE_FILE
 
 	service = None
 	credentials = None
 
-	if os_exists(str(vodbotdir / PICKLE_FILE)):
-		with open(str(vodbotdir / PICKLE_FILE), "rb") as f:
+	if os_exists(PICKLE_FILE):
+		with open(PICKLE_FILE, "rb") as f:
 			credentials = pickle.load(f)
 	
 	if not credentials or not credentials.valid:
 		if credentials and credentials.expired and credentials.refresh_token:
 			credentials.refresh(Request())
 		else:
-			flow = InstalledAppFlow.from_client_secrets_file(str(CLIENT_SECRET_FILE), SCOPES)
+			flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET_FILE, SCOPES)
 			credentials = flow.run_console()
 		
-		with open(str(vodbotdir / PICKLE_FILE), "wb") as f:
+		with open(PICKLE_FILE, "wb") as f:
 			pickle.dump(credentials, f)
 	
 	try:

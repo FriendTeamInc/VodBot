@@ -91,7 +91,7 @@ def load_conf(filename):
 		exit_prog(3, "Please edit your config with your Client ID and Secret.")
 	
 	if conf["youtube_client_path"] == "":
-		cprint("Please edit your config with your Client ID and Secret.")
+		cprint("Please edit your config with your Youtube Client ID and Secret to use the upload command.")
 
 	if len(conf["twitch_channels"]) == 0:
 		exit_prog(40, "No channels listed in config, please edit your config to continue.")
