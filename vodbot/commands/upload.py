@@ -28,6 +28,7 @@ from google.auth.transport.requests import Request
 # Default path
 vodbotdir = util.vodbotdir
 stagedir = None
+tempdir = None
 
 RETRIABLE_EXCEPTS = (HttpLib2Error, HttpLib2ErrorWithResponse, IOError)
 
@@ -60,6 +61,8 @@ def sort_stagedata(stagedata):
 
 
 def upload_video(service, stagedata):
+	print(tempdir)
+
 	# send request to youtube to upload
 	request_body = {
 		"snippet": {
@@ -127,11 +130,11 @@ def run(args):
 	conf = util.load_conf(args.config)
 
 	# configure variables
-	global stagedir
+	global stagedir, tempdir
+	tempdir = Path(conf["temp_dir"])
 	stagedir = Path(conf["stage_dir"])
 	PICKLE_FILE = conf["youtube_pickle_path"]
 	CLIENT_SECRET_FILE = conf["youtube_client_path"]
-	CLIENT_SERVICE_FILE = conf["youtube_service_path"]
 	API_NAME = 'youtube'
 	API_VERSION = 'v3'
 	SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
@@ -169,10 +172,6 @@ def run(args):
 
 	cprint("Authenticating with Google...", end=" ")
 
-	# temporary work around until something more substantial can be figured out.
-	# TODO: make this not garbage
-	os_environ["GOOGLE_APPLICATION_CREDENTIALS"] = CLIENT_SERVICE_FILE
-
 	service = None
 	credentials = None
 
@@ -191,7 +190,7 @@ def run(args):
 			pickle.dump(credentials, f)
 	
 	try:
-		service = build(API_NAME, API_VERSION)
+		service = build(API_NAME, API_VERSION, credentials=credentials)
 	except Exception as err:
 		util.exit_prog(50, f"Failed to connect to YouTube API, \"{err}\"")
 	

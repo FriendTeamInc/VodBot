@@ -54,7 +54,6 @@ Due to the nature of VodBot, application with Twitch and Google must be register
   },
 
   "youtube_client_path": "/root/.vodbot/yt-client.json",
-  "youtube_service_path": "/root/.vodbot/yt-service.json",
   "youtube_pickle_path": "/root/.vodbot/yt-api-keys.pkl",
 
   "vod_dir": "/mnt/md0/vods",
@@ -74,9 +73,8 @@ Due to the nature of VodBot, application with Twitch and Google must be register
     * `streamers`: A list of all the streamers in the video, created when staged.
     * `link`: The link to the twitch of the `streamer`.
     * `links`: A space separated string of all the links of the streamers, created when staged.
-* Below are keys specific to the `vodbot upload` use case. These are specific to a Google Cloud App, you must register your own with Google with the "YouTube Data v3" API, *these should be stored in a secure place.*
+* Below are files specific to the `vodbot upload` use case. These are specific to a Google Cloud App, you must register your own with Google with the "YouTube Data v3" API, *these should be stored in a secure place.*
     * `youtube_client_path`: Full path to the Client OAuth 2.0 JSON.
-    * `youtube_service_path`: Full path to the Service Account Key JSON.
     * `youtube_pickle_path`: Full path to where VodBot should store it's session data.
 * `vod_dir`: Full path to where VOD files are stored. This should be a safe place!
 * `clip_dir`: Full path to where Clip files are stored. This should be a safe place!

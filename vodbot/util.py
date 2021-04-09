@@ -29,7 +29,6 @@ DEFAULT_CONF = OrderedDict([
 	}),
 	
 	("youtube_client_path", str(vodbotdir / "yt-client.json")),
-	("youtube_service_path", str(vodbotdir / "yt-service.json")),
 	("youtube_pickle_path", str(vodbotdir / "yt-api-keys.pkl")),
 	
 	("vod_dir", str(vodbotdir / "vods")),
