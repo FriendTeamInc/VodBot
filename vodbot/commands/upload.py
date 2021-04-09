@@ -8,8 +8,9 @@ from .stage import StageData
 import vodbot.util as util
 from vodbot.printer import cprint, colorize
 
-import pickle
 import json
+import pickle
+import subprocess
 from datetime import datetime
 from pathlib import Path
 from os import listdir as os_listdir, environ as os_environ, remove as os_remove
@@ -61,7 +62,21 @@ def sort_stagedata(stagedata):
 
 
 def upload_video(service, stagedata):
-	print(tempdir)
+	tmpfile = str(tempdir / f"{stagedata.hashdigest}.mkv.tmp")
+	print(f"Slicing stage `{stagedata.hashdigest}` video ({stagedata.ss} - {stagedata.to})")
+	cmd = [
+		"ffmpeg", "-i", stagedata.filename,
+		"-c", "copy", "-i",
+		"-ss", stagedata.ss
+	]
+	if stagedata.to != "EOF":
+		cmd += ["-to", stagedata.to]
+	cmd += [tmpfile, "-y", "-stats", "-loglevel", "warning"]
+	result = subprocess.run(cmd)
+
+	if result.returncode != 0:
+		print("Slice failed, skipping...")
+		return
 
 	# send request to youtube to upload
 	request_body = {
@@ -77,7 +92,7 @@ def upload_video(service, stagedata):
 	}
 
 	# create media file
-	media_file = MediaFileUpload(stagedata.filename, chunksize=-1, resumable=True)
+	media_file = MediaFileUpload(tmpfile, chunksize=-1, resumable=True)
 
 	# create upload request and execute
 	response_upload = service.videos().insert(
@@ -123,6 +138,11 @@ def upload_video(service, stagedata):
 		if errn >= 10:
 			print("Skipping, errored too many times.")
 			break
+	
+	try:
+		os_remove(tmpfile)
+	except:
+		util.exit_prog(90, f"Failed to remove temp slice file of stage `{stagedata.hashdigest}`.")
 
 
 def run(args):
