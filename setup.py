@@ -14,14 +14,16 @@ setup(
 	keywords="twitch vod video download",
 	license="zlib/libpng",
 	packages=find_packages(include=["vodbot", "vodbot.*"]),
-	python_requires='>=3.5',
+	python_requires='>=3.6',
 	install_requires=[
+		"google-api-python-client>=2.0",
+		"google-auth-httplib2>=0.1.0",
+		"google-auth-oauthlib>=0.4.4",
 		"requests>=2.20",
-		"m3u8>=0.8"
+		"pytz>=2021.1",
+		"m3u8>=0.8",
 	],
 	entry_points={
-		'console_scripts': [
-			'vodbot=vodbot.__main__:deffered_main',
-		],
+		'console_scripts': ['vodbot=vodbot.__main__:deffered_main'],
 	}
 )

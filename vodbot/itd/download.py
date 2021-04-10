@@ -1,6 +1,7 @@
 from . import gql, worker
 from vodbot.util import make_dir, vodbotdir
 from vodbot.printer import cprint
+from vodbot.twitch import Vod, Clip
 
 import subprocess
 import requests
@@ -35,7 +36,9 @@ def get_playlist_uris(video_id, access_token):
 	
 	return playlist_uris
 
-def dl_video(video_id, path, max_workers):
+def dl_video(video: Vod, path: str, metapath: str, max_workers: int):
+	video_id = video.id
+
 	# Grab access token
 	access_token = gql.get_access_token(video_id)
 
@@ -82,16 +85,24 @@ def dl_video(video_id, path, max_workers):
 	if result.returncode != 0:
 		raise JoiningFailed()
 
+	# write meta file
+	video.write_meta(metapath)
+
 	# delete temp folder and contents
 	shutil.rmtree(str(tempdir))
 
 
-def dl_clip(clip_id, path):
+def dl_clip(clip: Clip, path: str, metapath: str):
+	clip_id = clip.id
+
 	# Get proper clip file URL
 	source_url = gql.get_clip_source(clip_id)
 
 	# Download file to path
 	size = worker.download_file(source_url, path)
+	
+	# write meta file
+	clip.write_meta(metapath)
 
 	# Print progress
 	cprint(f"#fM#lClip#r `#fM{clip_id}#r` #fB#l~{worker.format_size(size)}#r")
