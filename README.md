@@ -1,4 +1,4 @@
-# <img src="/banner.png" alt="VodBot" height="100" /> by NotQuiteApex & FTI.
+# <img src="/assets/banner.png" alt="VodBot" height="100" /> by NotQuiteApex & FTI.
 A VOD and clip manager for Twitch. Downloads VODs and clips with appropriate metadata for any public channel.
 
 ## Project Status
