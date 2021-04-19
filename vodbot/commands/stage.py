@@ -66,7 +66,7 @@ def create_format_dict(conf, streamers, utcdate=None, truedate=None):
 	datestring = None
 	if truedate == None:
 		try:
-			timezone = pytz.timezone(conf["timezone"])
+			timezone = pytz.timezone(conf["stage_timezone"])
 		except pytz.UnknownTimeZoneError:
 			util.exit_prog(73, f"Unknown timezone {conf['timezone']}")
 		utc = pytz.utc
