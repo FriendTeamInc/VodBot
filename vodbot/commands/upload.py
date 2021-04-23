@@ -143,9 +143,14 @@ def upload_video(service, stagedata):
 			break
 	
 	try:
+		os_remove(str(stagedir / f"{stagedata.hashdigest}.stage"))
+	except:
+		util.exit_prog(90, f"Failed to remove stage `{stagedata.hashdigest}` after upload.")
+	
+	try:
 		os_remove(tmpfile)
 	except:
-		util.exit_prog(90, f"Failed to remove temp slice file of stage `{stagedata.hashdigest}`.")
+		util.exit_prog(90, f"Failed to remove temp slice file of stage `{stagedata.hashdigest}` after upload.")
 
 
 def run(args):
