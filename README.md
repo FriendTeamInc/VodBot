@@ -1,11 +1,11 @@
 # <img src="/assets/banner.png" alt="VodBot" height="100" /> by NotQuiteApex & FTI.
-A VOD and clip manager for Twitch. Downloads VODs and clips with appropriate metadata for any public channel.
+A command line interface VOD and Clip manager for Twitch. Downloads VODs and Clips with appropriate metadata for any public channel, and allows for slicing and reupload to YouTube.
 
 ## Project Status
-This project is a heavy Work-In-Progress, and lots of changes can occur before an inevitable "release". This project is largely for my own uses and needs, and general usage isn't a major consideration in design, please keep this in mind before using. For progress and roadmap, check the [projects page](https://github.com/NotQuiteApex/VodBot/projects).
+This project is a heavy **Work-In-Progress** project, and lots of changes can occur before an inevitable "release". This project is largely for my own uses and needs, and general usage isn't a major consideration in design, please keep this in mind before using. For progress and roadmap, check the [projects page](https://github.com/NotQuiteApex/VodBot/projects).
 
 # Installation
-Requirements:
+Dependencies/Requirements:
 * [Python 3.6+](https://www.python.org/)
     * [Requests 2.20+](https://pypi.org/project/requests/)
     * [M3U8 0.8+](https://pypi.org/project/m3u8/)
@@ -13,7 +13,7 @@ Requirements:
     * [Google API Client 2.0+](https://pypi.org/project/google-api-python-client/)
     * [Google Auth OAuthLib 0.4.4](https://pypi.org/project/google-auth-oauthlib/)
     * [Google Auth httplib2 0.1.0](https://pypi.org/project/google-auth-httplib2/)
-* [ffmpeg](https://www.ffmpeg.org/) (Must be in your PATH)
+* [ffmpeg](https://www.ffmpeg.org/) (Must be in your PATH environment variable)
 
 VodBot can be installed with `pip install .`.
 
@@ -26,8 +26,8 @@ This section will best describe how to use VodBot, however you can always pull u
 * `vodbot pull`: This is the downloading functionality of VodBot, which will pull VODs or Clips onto a local drive. Running `vodbot pull vods` or `vodbot pull clips` will download the VODs or Clips of the channels you have set to watch in your config file, as well as some useful metadata into JSON files. Metadata JSON files contain the date (in UTC time), the user that streamed, the title, and the video ID. Clips metadata have all that info in addition to clip author and view count. Running `vodbot pull list [channel]` will list the data available locally of all the VODs and Clips of all channels or any specified channel, sorted chronologically.
 * `vodbot stage`: This is the staging functionality of VodBot, making it easy to upload sections of VODs or Clips to YouTube. Running `vodbot stage add <video_id>` will begin the process of staging a VOD or Clip, found by the ID given in the command. You will get prompts for a video title, description, and start and stop times of the video (which defaults to the beginning and end of the video file), as well as who was streaming with the main streamer (entered as comma separated values). You can also avoid the prompts by passing arguments This will print out the data staged, as well as a stage ID. This can be used with the rest of the stage commands. Running `vodbot stage list [stage_id]` will print out all of the current stages, or provided a stage ID will print out info on that specific stage. Running `vodbot stage edit <stage_id>` will allow you to edit an existing stage. This will change the stage ID, so keep that in mind. Running `vodbot stage rm <stage_id>` will remove that specific stage.
 * `vodbot upload`: This is the uploading functionality of VodBot, uploading staged data to a YouTube channel. Simply running `vodbot upload <stage_id>` will begin the uploading process for VodBot (you can also pass "all" in place of an ID to upload all stages). VodBot will load the stage(s), and then require authentication from a Google Account to upload videos to YouTube. VodBot will print a link that the user must open and authenticate the application with, then paste a unique code into a prompt from VodBot given by Google after authorizing VodBot. From there VodBot will attempt to upload the staged data to YouTube with all appropriate fields filled.
-    *You will need to set the video to be public manually, as Google does not allow unapproved applications to upload public videos.*
-    * YouTube brand channels cannot use anything other than the desktop website to upload videos, this includes the public API (and by extension VodBot.)
+    *You will need to set the video to be public manually, as VodBot does not upload public videos, this allows for scheduling premieres.*
+    * YouTube brand channels cannot use anything other than the desktop website to upload videos, this includes the public API (and by extension VodBot).
 
 It's recommended that if you plan to use this for the long term to save the videos in some kind of redundant storage array or in multiple locations (or both). It's also recommended that VodBot is run with some kind of scheduling program like `systemd` or `cron` every so often to pull the VODs and clips for you.
 
@@ -37,10 +37,10 @@ Due to the nature of VodBot, application with Twitch and Google must be register
 ### `conf.json` - Example config file. This is the one I use to manage my own VODs/Clips.
 ```json
 {
-  "twitch_channels": [ "46moura",
-    "alkana", "batkigu", "hylianswordsman1"
-    "juicibit", "michiri9", "notquiteapex",
-    "pissyellowcrocs", "percy_creates", "voobo",
+  "twitch_channels": [ "vivicaster",
+    "alkana", "hylianswordsman1"
+    "juicibit", "notquiteapex",
+    "pissyellowcrocs", "percy_creates"
   ],
 
   "twitch_client_id": "[[INSERT CLIENT ID HERE]]",
@@ -72,7 +72,7 @@ Due to the nature of VodBot, application with Twitch and Google must be register
     * `streamer`: The streamer who the video is of.
     * `streamers`: A list of all the streamers in the video, created when staged.
     * `link`: The link to the twitch of the `streamer`.
-    * `links`: A space separated string of all the links of the streamers, created when staged.
+    * `links`: A space delimited string of all the links of the streamers, created when staged.
 * Below are files specific to the `vodbot upload` use case. These are specific to a Google Cloud App, you must register your own with Google with the "YouTube Data v3" API, *these should be stored in a secure place.*
     * `youtube_client_path`: Full path to the Client OAuth 2.0 JSON.
     * `youtube_pickle_path`: Full path to where VodBot should store it's session data.
