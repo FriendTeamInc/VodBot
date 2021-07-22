@@ -41,8 +41,8 @@ def main():
 		description="Runs the setup process for VodBot")
 
 	# `vodbot pull <vods/clips/both> [channel ...]`
-	download = subparsers.add_parser("pull", epilog=titletext,
-		description="Downloads VODs and/or clips.")
+	download = subparsers.add_parser("download", aliases=["pull", "download"],
+		epilog=titletext, description="Downloads VODs and/or clips.")
 	download.add_argument("type", type=str, default="both", nargs="?",
 		help='content type flag, can be "vods", "clips", or "both"; defaults to "both"')
 	download.add_argument("channels", metavar="channel", type=str, default=[], nargs="*",
@@ -80,8 +80,9 @@ def main():
 	stager_list.add_argument("id", nargs="?", type=str, help="id of the staged video data", default=None)
 
 	# `vodbot upload <id/all>`
-	download = subparsers.add_parser("upload", epilog=titletext, description="Uploads stage(s) to YouTube.")
-	download.add_argument("id", type=str, help='id of the staged video data, can be "all" to upload all stages sequentially, or "logout" to switch to a different YouTube account')
+	upload = subparsers.add_parser("upload", aliases=["upload", "push"],
+		epilog=titletext, description="Uploads stage(s) to YouTube.")
+	upload.add_argument("id", type=str, help='id of the staged video data, can be "all" to upload all stages sequentially, or "logout" to switch to a different YouTube account')
 	
 	args = parser.parse_args()
 
