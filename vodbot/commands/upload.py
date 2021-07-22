@@ -105,15 +105,16 @@ def upload_video(service, stagedata):
 	)
 
 	resp = None
-	retry = 0
 	errn = 0
 	while resp is None:
 		try:
-			print(f"Uploading stage {stagedata.hashdigest}")
+			cprint(f"#fCUploading stage #r`{stagedata.hashdigest}`#d...#r\n")
 			status, resp = response_upload.next_chunk()
+			if status:
+				cprint(f"#fM#lUpload progress:#r #fC{(status.progress()*100):.1f}#fY%#r", end="\r")
 			if resp is not None:
 				if "id" in resp:
-					print(f"Video (ID:{resp['id']}) was uploaded.")
+					cprint(f"\n#l#fGVideo was successfully uploaded!#r #dhttps://youtu.be/{resp['id']}#r")
 				else:
 					util.exit_prog(99, f"Unexpected upload failure occurred, \"{resp}\"")
 		except ResumableUploadError as err:
