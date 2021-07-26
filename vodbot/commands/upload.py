@@ -6,22 +6,22 @@
 from .stage import StageData
 
 import vodbot.util as util
-from vodbot.printer import cprint, colorize
+from vodbot.printer import cprint
 
 import json
 import pickle
 import subprocess
 from datetime import datetime
 from pathlib import Path
-from os import listdir as os_listdir, environ as os_environ, remove as os_remove
+from os import listdir as os_listdir, remove as os_remove
 from os.path import exists as os_exists, isfile as os_isfile
 from time import sleep
 
 from httplib2.error import HttpLib2Error, HttpLib2ErrorWithResponse
 
-from google_auth_oauthlib.flow import Flow, InstalledAppFlow
+from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
-from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
+from googleapiclient.http import MediaFileUpload
 from googleapiclient.errors import HttpError, ResumableUploadError
 from google.auth.transport.requests import Request
 
@@ -94,8 +94,8 @@ def upload_video(service, stagedata):
 		}
 	}
 
-	# create media file
-	media_file = MediaFileUpload(tmpfile, chunksize=-1, resumable=True)
+	# create media file, 100 MiB chunks
+	media_file = MediaFileUpload(tmpfile, chunksize=1024*1024*100, resumable=True)
 
 	# create upload request and execute
 	response_upload = service.videos().insert(
@@ -106,15 +106,17 @@ def upload_video(service, stagedata):
 
 	resp = None
 	errn = 0
+	cprint(f"#fCUploading stage #r`{stagedata.hashdigest}`#d...#r")
+	cprint(f"#fM#lUpload progress:#r #fC0.0#fY%#r", end="\r")
 	while resp is None:
 		try:
-			cprint(f"#fCUploading stage #r`{stagedata.hashdigest}`#d...#r\n")
 			status, resp = response_upload.next_chunk()
 			if status:
-				cprint(f"#fM#lUpload progress:#r #fC{(status.progress()*100):.1f}#fY%#r", end="\r")
+				cprint(f"#fM#lUpload progress:#r (#fC{(status.progress()*100):.1f}#fY%#r)#d...#r", end="\r")
 			if resp is not None:
 				if "id" in resp:
-					cprint(f"\n#l#fGVideo was successfully uploaded!#r #dhttps://youtu.be/{resp['id']}#r")
+					cprint(f"#fM#lUpload progress:#r #fC100.0#fY%#r!")
+					cprint(f"#l#fGVideo was successfully uploaded!#r #dhttps://youtu.be/{resp['id']}#r")
 				else:
 					util.exit_prog(99, f"Unexpected upload failure occurred, \"{resp}\"")
 		except ResumableUploadError as err:
