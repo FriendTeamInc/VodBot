@@ -1,4 +1,5 @@
 import requests
+from urllib.parse import urlencode
 
 def gql_query(query=None, data=None):
 	gql_url = "https://gql.twitch.tv/gql"
@@ -75,4 +76,30 @@ def get_clip_source(clip_id):
 
 	resp = gql_query(query=query).json()
 
-	return resp["data"]["clip"]["videoQualities"][0]["sourceURL"]
+	url = resp["data"]["clip"]["videoQualities"][0]["sourceURL"]
+
+	query = """
+	{{
+		"operationName": "VideoAccessToken_Clip",
+		"variables": {{
+			"slug": "{slug}"
+		}},
+		"extensions": {{
+			"persistedQuery": {{
+				"version": 1,
+				"sha256Hash": "36b89d2507fce29e5ca551df756d27c1cfe079e2609642b4390aa4c35796eb11"
+			}}
+		}}
+	}}
+    """
+
+	resp = gql_query(data=query.format(slug=clip_id).strip()).json()
+	token = resp["data"]["clip"]["playbackAccessToken"]
+	token = urlencode({
+		"sig": token["signature"],
+		"token": token["value"]
+	})
+
+	url = f"{url}?{token}"
+
+	return url
