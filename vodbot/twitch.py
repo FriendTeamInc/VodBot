@@ -77,7 +77,7 @@ class Channel:
 		return f"Channel({self.id}, {self.display_name})"
 
 
-def get_channels(channel_ids):
+def get_channels(channel_ids: list):
 	"""
 	Uses a (blocking) HTTP request to retrieve channel information from Twitch's API.
 
@@ -95,68 +95,67 @@ def get_channels(channel_ids):
 	return channels
 
 
-def get_channel_vods(channel: Channel, headers: dict):
+def get_channel_vods(channel: Channel):
 	"""
 	Uses a (blocking) HTTP request to retrieve VOD info for a specific channel.
 
 	:param channel: A Channel object.
-	:param headers: The headers returned from get_access_token.
 	:returns: A list of VOD objects.
 	"""
-	url = "https://api.twitch.tv/helix/videos?user_id={video_id}&first=100&type=archive"
-	return _get_channel_content(url, "VOD", channel, headers)
+
+	vods = []
+	pagination = ""
+	while True:
+		query = gql.GET_CHANNEL_VIDEOS_QUERY.format(
+			channel_id=channel.id,
+			after=pagination, first=100,
+			type="ARCHIVE", sort="TIME"
+		)
+		resp = gql.gql_query(query=query).json()
+		resp = resp ["data"]["user"]["videos"]
+
+		if not resp["edges"]:
+			break
+
+		pagination = resp["edges"][-1]["cursor"]
+		
+		for vod in resp["data"]["edges"]:
+			vods.append(Vod(vod))
+
+		if pagination == "":
+			break;
+
+	return vods
 
 
-def get_channel_clips(channel, headers):
+def get_channel_clips(channel):
 	"""
 	Uses a (blocking) HTTP request to retrieve Clip info for a specific channel.
 
 	:param channel: A Channel object.
-	:param headers: The headers returned from get_access_token.
 	:returns: A list of Clip objects.
 	"""
-	url = "https://api.twitch.tv/helix/clips?broadcaster_id={video_id}&first=100"
-	return _get_channel_content(url, "Clip", channel, headers)
 
-
-def _get_channel_content(video_url, noun, channel, headers):
-	# List of videos to return
-	videos = []
-	# Deal with pagination
+	vods = []
 	pagination = ""
 	while True:
-		# generate URL
-		url = video_url.format(video_id=channel.id)
-		if pagination != "":
-			url += "&after=" + pagination
-		resp = requests.get(url, headers=headers)
+		query = gql.GET_CHANNEL_CLIPS_QUERY.format(
+			channel_id=channel.id,
+			after=pagination, first=100,
+			period="ALL_TIME"
+		)
+		resp = gql.gql_query(query=query).json()
+		resp = resp ["data"]["user"]["videos"]
 
-		# Some basic checks
-		if resp.status_code != 200:
-			util.exit_prog(5, f"Failed to get {noun} data from Twitch. Status: {resp.status_code}")
-		try:
-			resp = resp.json()
-		except ValueError:
-			util.exit_prog(9, f"Could not parse response json for {channel.display_name}'s {contentnoun}s.")
-		
-		# Break out if we went through all the videos
-		if len(resp["data"]) == 0:
+		if not resp["edges"]:
 			break
 
-		# Add VODs to list to download later.
-		for vod in resp["data"]:
-			# We need to ignore live VOD's
-			# Live VODs don't have thumbnails
-			if vod["thumbnail_url"] != "":
-				if noun == "VOD":
-					videos.append(Vod(vod))
-				elif noun == "Clip":
-					videos.append(Clip(vod))
+		pagination = resp["edges"][-1]["cursor"]
 		
-		# If there's no other cursors, let's break.
-		if "cursor" in resp["pagination"]:
-			pagination = resp["pagination"]["cursor"]
-		else:
-			break
-	
-	return videos
+		for vod in resp["data"]["edges"]:
+			vods.append(Clip(vod))
+
+		if pagination == "":
+			break;
+
+	return vods

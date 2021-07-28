@@ -48,13 +48,11 @@ GET_CHANNEL_VIDEOS_QUERY = """
 			type: {type},
 			sort: {sort},
 			after: "{after}",
-			options: {{
-				gameIDs: {game_ids}
-			}}
 		) {{
 			totalCount
 			pageInfo {{
 				hasNextPage
+				hasPreviousPage
 			}}
 			edges {{
 				cursor
@@ -64,6 +62,7 @@ GET_CHANNEL_VIDEOS_QUERY = """
 					publishedAt
 					broadcastType
 					lengthSeconds
+					thumbnailUrl
 					game {{
 						name
 					}}
@@ -78,6 +77,7 @@ GET_CHANNEL_VIDEOS_QUERY = """
 }}
 """
 # Channel Clips query
+# period can be LAST_DAY, LAST_WEEK, LAST_MONTH, or ALL_TIME
 GET_CHANNEL_CLIPS_QUERY = """
 {{
 	user(login: "{channel_id}") {{
@@ -110,6 +110,10 @@ GET_CHANNEL_CLIPS_QUERY = """
 						name
 					}}
 					broadcaster {{
+						displayName
+						login
+					}}
+					creator {{
 						displayName
 						login
 					}}
