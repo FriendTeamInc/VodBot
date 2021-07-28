@@ -1,5 +1,7 @@
 # Module to make API calls to Twitch.tv
 
+from . import TWITCH_CLIENT_ID
+
 import requests
 import json
 

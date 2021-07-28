@@ -1,22 +1,43 @@
+# Module to call GQL queries
+
+from urllib import parse
+from vodbot import TWITCH_CLIENT_ID
+
 import requests
 from urllib.parse import urlencode
 
-def gql_query(query=None, data=None):
-	gql_url = "https://gql.twitch.tv/gql"
 
-	# We use Twitch's private client ID for GQL calls
-	headers = {"Client-ID": "kimne78kx3ncx6brgo4mv6wki5h1ko"}
+GQL_URL = "https://gql.twitch.tv/gql"
+GQL_HEADERS = {"Client-ID": TWITCH_CLIENT_ID} # We use Twitch's private client ID for GQL calls
 
-	resp = requests.post(gql_url, json={"query":query}, data=data, headers=headers)
+
+def _process_query_errors(resp):
 	if 400 <= resp.status_code < 500:
 		data = resp.json()
 		raise Exception(data["message"]) # TODO: make exceptions?
 	resp.raise_for_status()
 
 	if "errors" in resp:
-		raise Exception(response["errors"])
+		raise Exception(resp["errors"])
 
+
+def gql_get(params={}):
+	resp = requests.get(GQL_URL, params=params, headers=GQL_HEADERS)
+	_process_query_errors(resp)
 	return resp
+
+
+def gql_post(data=None, json=None):
+	resp = requests.post(GQL_URL, data=data, json=json, headers=GQL_HEADERS)
+	_process_query_errors(resp)
+	return resp
+
+
+def gql_query(query=None, data=None):
+	resp = requests.post(GQL_URL, json={"query":query}, data=data, headers=GQL_HEADERS)
+	_process_query_errors(resp)
+	return resp
+
 
 VIDEO_ACCESS_QUERY = """
 {{
@@ -43,6 +64,7 @@ def get_access_token(video_id):
 	resp = gql_query(query=query).json()
 
 	return resp["data"]["videoPlaybackAccessToken"]
+
 
 CLIP_SOURCE_QUERY = """
 {{
