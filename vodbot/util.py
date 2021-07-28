@@ -16,9 +16,6 @@ DEFAULT_CONF = OrderedDict([
 		"juicibit", "michiri9", "notquiteapex",
 		"pissyellowcrocs", "percy_creates", "voobo",
 	]),
-	
-	("twitch_client_id", "[[INSERT TWITCH CLIENT ID HERE]]"),
-	("twitch_client_secret", "[[INSERT TWITCH CLIENT SECRET HERE]]"),
 
 	("stage_timezone", "US/Eastern"),
 
@@ -85,9 +82,6 @@ def load_conf(filename):
 	for key in DEFAULT_CONF:
 		if key not in conf:
 			exit_prog(79, f"Missing key \"{key}\" in config, please edit your config to continue.")
-	
-	if conf["twitch_client_id"] == "" or conf["twitch_client_secret"] == "":
-		exit_prog(3, "Please edit your config with your Client ID and Secret.")
 	
 	if conf["youtube_client_path"] == "":
 		cprint("Please edit your config with your Youtube Client ID and Secret to use the upload command.")

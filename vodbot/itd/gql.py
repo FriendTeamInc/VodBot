@@ -38,6 +38,159 @@ def gql_query(query=None, data=None):
 	_process_query_errors(resp)
 	return resp
 
+# GQL Query forms
+# Channel VODs query
+GET_CHANNEL_VIDEOS_QUERY = """
+{{
+	user(login: "{channel_id}") {{
+		videos(
+			first: {limit},
+			type: {type},
+			sort: {sort},
+			after: "{after}",
+			options: {{
+				gameIDs: {game_ids}
+			}}
+		) {{
+			totalCount
+			pageInfo {{
+				hasNextPage
+			}}
+			edges {{
+				cursor
+				node {{
+					id
+					title
+					publishedAt
+					broadcastType
+					lengthSeconds
+					game {{
+						name
+					}}
+					creator {{
+						login
+						displayName
+					}}
+				}}
+			}}
+		}}
+	}}
+}}
+"""
+# Channel Clips query
+GET_CHANNEL_CLIPS_QUERY = """
+{{
+	user(login: "{channel_id}") {{
+		clips(
+			first: {limit},
+			after: "{after}",
+			criteria: {{ period: {period}, sort: VIEWS_DESC }}
+			) {{
+			pageInfo {{
+				hasNextPage
+				hasPreviousPage
+			}}
+			edges {{
+				cursor
+				node {{
+					id
+					slug
+					title
+					createdAt
+					viewCount
+					durationSeconds
+					url
+					videoQualities {{
+						frameRate
+						quality
+						sourceURL
+					}}
+					game {{
+						id
+						name
+					}}
+					broadcaster {{
+						displayName
+						login
+					}}
+				}}
+			}}
+		}}
+	}}
+}}
+"""
+# Single VOD query
+GET_VIDEO_QUERY = """
+{{
+	video(id: "{video_id}") {{
+		id
+		title
+		publishedAt
+		broadcastType
+		lengthSeconds
+		game {{
+			name
+		}}
+		creator {{
+			login
+			displayName
+		}}
+	}}
+}}
+"""
+# Single Clip query
+GET_CLIP_QUERY = """
+{{
+	clip(slug: "{clip_id}") {{
+		id
+		slug
+		title
+		createdAt
+		viewCount
+		durationSeconds
+		url
+		videoQualities {{
+			frameRate
+			quality
+			sourceURL
+		}}
+		game {{
+			id
+			name
+		}}
+		broadcaster {{
+			displayName
+			login
+		}}
+	}}
+}}
+"""
+# Channel info query
+GET_CHANNEL_QUERY = """
+{{
+	user(login: "{channel_id}") {{
+		id
+		login
+		displayName
+		description
+		createdAt
+		roles {{
+			isPartner
+		}}
+		stream {{
+			id
+			title
+			type
+			viewersCount
+			createdAt
+			game {{
+				name
+			}}
+		}}
+	}}
+}}
+"""
+
 
 VIDEO_ACCESS_QUERY = """
 {{
@@ -66,32 +219,7 @@ def get_access_token(video_id):
 	return resp["data"]["videoPlaybackAccessToken"]
 
 
-CLIP_SOURCE_QUERY = """
-{{
-	clip(slug: "{}") {{
-		id
-		slug
-		title
-		createdAt
-		viewCount
-		durationSeconds
-		url
-		videoQualities {{
-			frameRate
-			quality
-			sourceURL
-		}}
-		game {{
-			id
-			name
-		}}
-		broadcaster {{
-			displayName
-			login
-		}}
-	}}
-}}
-"""
+CLIP_SOURCE_QUERY = GET_CLIP_QUERY
 
 def get_clip_source(clip_id):
 	query = CLIP_SOURCE_QUERY.format(clip_id)

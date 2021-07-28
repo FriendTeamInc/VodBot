@@ -18,20 +18,18 @@ def run(args):
 
 def download_twitch_video(args):
 	# Load the config and set up the access token
-	cprint("#r#dLoading config...", end=" ", flush=True)
+	cprint("#r#dLoading config...#r", end=" ", flush=True)
 	conf = util.load_conf(args.config)
 	CHANNEL_IDS = conf["twitch_channels"]
-	CLIENT_ID = conf["twitch_client_id"]
-	CLIENT_SECRET = conf["twitch_client_secret"]
 	VODS_DIR = conf["vod_dir"]
 	CLIPS_DIR = conf["clip_dir"]
 
-	cprint("Logging in to Twitch.tv...", end=" ", flush=True)
-	HEADERS = twitch.get_access_token(CLIENT_ID, CLIENT_SECRET)
-
-	# If command line has channels to watch instead, use those instead of the config ones.
-	if len(args.channels) != 0:
-		CHANNELS = args.channels
+	# If channel arguments are provided, override config
+	if args.channels:
+		CHANNEL_IDS = args.channels
+	
+	cprint("#r#dLoading channel data...#r", end=" ", flush=True)
+	channels = twitch.get_channels(CHANNEL_IDS)
 	
 	contentnoun = "video" # temp contentnoun until the rest is reworked
 	
@@ -42,10 +40,6 @@ def download_twitch_video(args):
 	util.make_dir(voddir)
 	clipdir = Path(CLIPS_DIR)
 	util.make_dir(clipdir)
-
-	# Get user channel objects from Twitch API
-	cprint("Getting User ID's...#r", flush=True)
-	channels = twitch.get_channels(CHANNEL_IDS, HEADERS)
 
 	# Get list of videos using channel object ID's from Twitch API
 	videos = []

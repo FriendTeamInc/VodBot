@@ -111,25 +111,15 @@ def get_access_token(CLIENT_ID, CLIENT_SECRET):
 	return headers
 
 
-def get_channels(channel_ids, headers):
+def get_channels(channel_ids):
 	"""
 	Uses a (blocking) HTTP request to retrieve channel information from Twitch's API.
 
 	:param channel_ids: A list of channel login name strings.
-	:param headers: The headers returned from get_access_token.
 	:returns: A list of Channel objects.
 	"""
 
-	url = "https://api.twitch.tv/helix/users?" + "&".join(f"login={i}" for i in channel_ids)
-	resp = requests.get(url, headers=headers)
-
-	# Some basic checks
-	if resp.status_code != 200:
-		util.exit_prog(5, f"Failed to get user ID's from Twitch. Status: {resp.status_code}")
-	try:
-		resp = resp.json()
-	except ValueError:
-		util.exit_prog(12, f"Could not parse response json for user ID's.")
+	
 	
 	# Make channel objects and store them in a list
 	channels = []
