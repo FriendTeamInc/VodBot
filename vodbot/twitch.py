@@ -7,23 +7,14 @@ import requests
 import json
 
 class Vod:
-	def __init__(self, json, from_gql=False):
-		if from_gql:
-			self.id = json["id"] # url: twitch.tv/videos/{id}
-			self.user_id = json["creator"]["id"]
-			self.user_login = json["creator"]["login"]
-			self.user_name = json["creator"]["displayName"]
-			self.title = json["title"]
-			self.created_at = json["publishedAt"]
-			self.duration = json["lengthSeconds"]
-		else:
-			self.id = json["id"] # url: twitch.tv/videos/{id}
-			self.user_id = json["user_id"]
-			self.user_login = json["user_name"].lower()
-			self.user_name = json["user_name"]
-			self.title = json["title"]
-			self.created_at = json["created_at"]
-			self.duration = json["duration"]
+	def __init__(self, json):
+		self.id = json["id"]
+		self.user_id = json["creator"]["id"]
+		self.user_login = json["creator"]["login"]
+		self.user_name = json["creator"]["displayName"]
+		self.title = json["title"]
+		self.created_at = json["publishedAt"]
+		self.duration = json["lengthSeconds"]
 		
 		self.url = f"twitch.tv/videos/{self.id}"
 	
@@ -46,34 +37,23 @@ class Vod:
 
 
 class Clip:
-	def __init__(self, json, from_gql=False):
-		if from_gql:
-			self.id = json["id"] # url: twitch.tv/videos/{id}
-			self.user_id = json["broadcaster"]["id"]
-			self.user_login = json["broadcaster"]["login"]
-			self.user_name = json["broadcaster"]["displayName"]
-			if not json["curator"]:
-				self.clipper_id = self.user_id
-				self.clipper_login = self.user_login
-				self.clipper_name = self.user_name
-			else:
-				self.clipper_id = json["curator"]["id"]
-				self.clipper_login = json["curator"]["login"]
-				self.clipper_name = json["curator"]["displayName"]
-			self.title = json["title"]
-			self.created_at = json["createdAt"]
-			self.view_count = json["viewCount"]
+	def __init__(self, json):
+		self.id = json["id"]
+		self.slug = json["slug"]
+		self.user_id = json["broadcaster"]["id"]
+		self.user_login = json["broadcaster"]["login"]
+		self.user_name = json["broadcaster"]["displayName"]
+		if not json["curator"]:
+			self.clipper_id = self.user_id
+			self.clipper_login = self.user_login
+			self.clipper_name = self.user_name
 		else:
-			self.id = json["id"] # url: twitch.tv/videos/{id}
-			self.user_id = json["broadcaster_id"]
-			self.user_login = json["broadcaster_name"].lower()
-			self.user_name = json["broadcaster_name"]
-			self.clipper_id = json["creator_id"]
-			self.clipper_login = json["creator_name"].lower()
-			self.clipper_name = json["creator_name"]
-			self.title = json["title"]
-			self.created_at = json["created_at"]
-			self.view_count = json["view_count"]
+			self.clipper_id = json["curator"]["id"]
+			self.clipper_login = json["curator"]["login"]
+			self.clipper_name = json["curator"]["displayName"]
+		self.title = json["title"]
+		self.created_at = json["createdAt"]
+		self.view_count = json["viewCount"]
 		
 		self.url = f"twitch.tv/{self.user_name}/clip/{self.id}"
 	
@@ -83,6 +63,7 @@ class Clip:
 	def write_meta(self, filename):
 		jsondict = {
 			"id": self.id,
+			"slug": self.slug,
 			"user_id": self.user_id,
 			"user_login": self.user_login,
 			"user_name": self.user_name,
@@ -99,17 +80,11 @@ class Clip:
 
 
 class Channel:
-	def __init__(self, json, from_gql=False):
-		if from_gql:
-			self.id = json["id"]
-			self.login = json["login"]
-			self.display_name = json["displayName"]
-			self.created_at = json["createdAt"]
-		else:
-			self.id = json["id"]
-			self.login = json["login"]
-			self.display_name = json["display_name"]
-			self.created_at = json["created_at"]
+	def __init__(self, json):
+		self.id = json["id"]
+		self.login = json["login"]
+		self.display_name = json["displayName"]
+		self.created_at = json["createdAt"]
 	
 	def __repr__(self):
 		return f"Channel({self.id}, {self.display_name})"
@@ -130,7 +105,7 @@ def get_channels(channel_ids: list):
 		resp = gql.gql_query(query=query).json()
 		if resp["data"]["user"] == None:
 			raise Exception(f"Channel `{channel_id}` does not exist!")
-		channels.append(Channel(resp["data"]["user"], from_gql=True))
+		channels.append(Channel(resp["data"]["user"]))
 	
 	return channels
 
@@ -160,7 +135,7 @@ def get_channel_vods(channel: Channel):
 		pagination = resp["edges"][-1]["cursor"]
 		
 		for vod in resp["edges"]:
-			vods.append(Vod(vod["node"], from_gql=True))
+			vods.append(Vod(vod["node"]))
 
 		if pagination == "" or pagination == None:
 			break;
@@ -192,7 +167,7 @@ def get_channel_clips(channel):
 		pagination = resp["edges"][-1]["cursor"]
 		
 		for clip in resp["edges"]:
-			clips.append(Clip(clip["node"], from_gql=True))
+			clips.append(Clip(clip["node"]))
 
 		if pagination == "" or pagination == None:
 			break;

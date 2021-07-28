@@ -150,7 +150,7 @@ GET_VIDEO_QUERY = """
 # Single Clip query
 GET_CLIP_QUERY = """
 {{
-	clip(slug: "{clip_id}") {{
+	clip(slug: "{clip_slug}") {{
 		id
 		slug
 		title
@@ -228,10 +228,8 @@ def get_access_token(video_id):
 	return resp["data"]["videoPlaybackAccessToken"]
 
 
-CLIP_SOURCE_QUERY = GET_CLIP_QUERY
-
-def get_clip_source(clip_id):
-	query = CLIP_SOURCE_QUERY.format(clip_id)
+def get_clip_source(clip_slug):
+	query = GET_CLIP_QUERY.format(clip_slug=clip_slug)
 
 	resp = gql_query(query=query).json()
 
@@ -240,7 +238,7 @@ def get_clip_source(clip_id):
 	query = {
 		"operationName": "VideoAccessToken_Clip",
 		"variables": {
-			"slug": clip_id
+			"slug": clip_slug
 		},
 		"extensions": {
 			"persistedQuery": {
