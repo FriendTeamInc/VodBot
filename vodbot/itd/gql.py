@@ -44,36 +44,17 @@ GET_CHANNEL_VIDEOS_QUERY = """
 {{
 	user(login: "{channel_id}") {{
 		videos(
-			first: {first},
-			type: {type},
-			sort: {sort},
-			after: "{after}",
-			options: {{
-				gameIDs: []
-			}}
+			first: {first}, type: {type},
+			sort: {sort}, after: "{after}"
 		) {{
 			totalCount
-			pageInfo {{
-				hasNextPage
-				hasPreviousPage
-			}}
-			edges {{
-				cursor
-				node {{
-					id
-					title
-					publishedAt
-					broadcastType
-					lengthSeconds
-					thumbnailURLs
-					game {{
-						name
-					}}
-					creator {{
-						id
-						login
-						displayName
-					}}
+			pageInfo {{ hasNextPage hasPreviousPage }}
+			edges {{ cursor
+				node {{ id title
+					publishedAt broadcastType
+					lengthSeconds thumbnailURLs
+					game {{ id name }}
+					creator {{ id login displayName }}
 				}}
 			}}
 		}}
@@ -86,42 +67,18 @@ GET_CHANNEL_CLIPS_QUERY = """
 {{
 	user(login: "{channel_id}") {{
 		clips(
-			first: {first},
-			after: "{after}",
+			first: {first}, after: "{after}",
 			criteria: {{ period: ALL_TIME, sort: VIEWS_DESC }}
-			) {{
-			pageInfo {{
-				hasNextPage
-			}}
-			edges {{
-				cursor
-				node {{
-					id
-					slug
-					title
-					createdAt
-					viewCount
-					durationSeconds
-					url
-					videoQualities {{
-						frameRate
-						quality
-						sourceURL
-					}}
-					game {{
-						id
-						name
-					}}
-					broadcaster {{
-						id
-						displayName
-						login
-					}}
-					curator {{
-						id
-						displayName
-						login
-					}}
+		) {{
+			pageInfo {{ hasNextPage }}
+			edges {{ cursor
+				node {{ id slug title
+					createdAt viewCount
+					durationSeconds url
+					videoQualities {{ frameRate quality sourceURL }}
+					game {{ id name }}
+					broadcaster {{ id displayName login }}
+					curator {{ id displayName login }}
 				}}
 			}}
 		}}
@@ -132,18 +89,10 @@ GET_CHANNEL_CLIPS_QUERY = """
 GET_VIDEO_QUERY = """
 {{
 	video(id: "{video_id}") {{
-		id
-		title
-		publishedAt
-		broadcastType
-		lengthSeconds
-		game {{
-			name
-		}}
-		creator {{
-			login
-			displayName
-		}}
+		id title publishedAt
+		broadcastType lengthSeconds
+		game {{ id name }}
+		creator {{ id login displayName }}
 	}}
 }}
 """
@@ -151,26 +100,11 @@ GET_VIDEO_QUERY = """
 GET_CLIP_QUERY = """
 {{
 	clip(slug: "{clip_slug}") {{
-		id
-		slug
-		title
-		createdAt
-		viewCount
-		durationSeconds
-		url
-		videoQualities {{
-			frameRate
-			quality
-			sourceURL
-		}}
-		game {{
-			id
-			name
-		}}
-		broadcaster {{
-			displayName
-			login
-		}}
+		id slug title createdAt
+		viewCount durationSeconds url
+		videoQualities {{ frameRate quality sourceURL }}
+		game {{ id name }}
+		broadcaster {{ id displayName login }}
 	}}
 }}
 """
@@ -178,23 +112,13 @@ GET_CLIP_QUERY = """
 GET_CHANNEL_QUERY = """
 {{
 	user(login: "{channel_id}") {{
-		id
-		login
-		displayName
-		description
-		createdAt
-		roles {{
-			isPartner
-		}}
+		id login displayName
+		description createdAt
+		roles {{ isPartner }}
 		stream {{
-			id
-			title
-			type
-			viewersCount
-			createdAt
-			game {{
-				name
-			}}
+			id title type
+			viewersCount createdAt
+			game {{ id name }}
 		}}
 	}}
 }}
@@ -210,10 +134,7 @@ VIDEO_ACCESS_QUERY = """
 			playerBackend: "mediaplayer",
 			playerType: "site"
 		}}
-	) {{
-		signature
-		value
-	}}
+	) {{ signature value }}
 }}
 """
 

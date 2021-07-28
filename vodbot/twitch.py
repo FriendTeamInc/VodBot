@@ -12,9 +12,15 @@ class Vod:
 		self.user_id = json["creator"]["id"]
 		self.user_login = json["creator"]["login"]
 		self.user_name = json["creator"]["displayName"]
+		if json["game"]:
+			self.game_id = json["game"]["id"]
+			self.game_name = json["game"]["name"]
+		else:
+			self.game_id = ""
+			self.game_name = ""
 		self.title = json["title"]
 		self.created_at = json["publishedAt"]
-		self.duration = json["lengthSeconds"]
+		self.length = json["lengthSeconds"]
 		
 		self.url = f"twitch.tv/videos/{self.id}"
 	
@@ -27,9 +33,11 @@ class Vod:
 			"user_id": self.user_id,
 			"user_login": self.user_login,
 			"user_name": self.user_name,
+			"game_id": self.game_id,
+			"game_name": self.game_name,
 			"title": self.title,
 			"created_at": self.created_at,
-			"duration": self.duration
+			"length": self.length
 		}
 		
 		with open(filename, "w") as f:
@@ -51,9 +59,16 @@ class Clip:
 			self.clipper_id = json["curator"]["id"]
 			self.clipper_login = json["curator"]["login"]
 			self.clipper_name = json["curator"]["displayName"]
+		if json["game"]:
+			self.game_id = json["game"]["id"]
+			self.game_name = json["game"]["name"]
+		else:
+			self.game_id = ""
+			self.game_name = ""
 		self.title = json["title"]
 		self.created_at = json["createdAt"]
 		self.view_count = json["viewCount"]
+		self.length = json["durationSeconds"]
 		
 		self.url = f"twitch.tv/{self.user_name}/clip/{self.id}"
 	
@@ -70,9 +85,12 @@ class Clip:
 			"clipper_id": self.clipper_id,
 			"clipper_login": self.clipper_login,
 			"clipper_name": self.clipper_name,
+			"game_id": self.game_id,
+			"game_name": self.game_name,
 			"title": self.title,
 			"created_at": self.created_at,
-			"view_count": self.view_count
+			"view_count": self.view_count,
+			"length": self.length
 		}
 		
 		with open(filename, "w") as f:
