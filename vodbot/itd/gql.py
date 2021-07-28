@@ -44,10 +44,13 @@ GET_CHANNEL_VIDEOS_QUERY = """
 {{
 	user(login: "{channel_id}") {{
 		videos(
-			first: {limit},
+			first: {first},
 			type: {type},
 			sort: {sort},
 			after: "{after}",
+			options: {{
+				gameIDs: []
+			}}
 		) {{
 			totalCount
 			pageInfo {{
@@ -62,11 +65,12 @@ GET_CHANNEL_VIDEOS_QUERY = """
 					publishedAt
 					broadcastType
 					lengthSeconds
-					thumbnailUrl
+					thumbnailURLs
 					game {{
 						name
 					}}
 					creator {{
+						id
 						login
 						displayName
 					}}
@@ -82,13 +86,12 @@ GET_CHANNEL_CLIPS_QUERY = """
 {{
 	user(login: "{channel_id}") {{
 		clips(
-			first: {limit},
+			first: {first},
 			after: "{after}",
-			criteria: {{ period: {period}, sort: VIEWS_DESC }}
+			criteria: {{ period: ALL_TIME, sort: VIEWS_DESC }}
 			) {{
 			pageInfo {{
 				hasNextPage
-				hasPreviousPage
 			}}
 			edges {{
 				cursor
@@ -110,10 +113,12 @@ GET_CHANNEL_CLIPS_QUERY = """
 						name
 					}}
 					broadcaster {{
+						id
 						displayName
 						login
 					}}
-					creator {{
+					curator {{
+						id
 						displayName
 						login
 					}}

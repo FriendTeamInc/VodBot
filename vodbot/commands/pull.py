@@ -28,7 +28,7 @@ def download_twitch_video(args):
 	if args.channels:
 		CHANNEL_IDS = args.channels
 	
-	cprint("#r#dLoading channel data...#r", end=" ", flush=True)
+	cprint("#r#dLoading channel data...#r", flush=True)
 	channels = twitch.get_channels(CHANNEL_IDS)
 	
 	contentnoun = "video" # temp contentnoun until the rest is reworked
@@ -63,7 +63,7 @@ def download_twitch_video(args):
 		if args.type == "both" or args.type == "vods":
 			folder = voddir / channel.login
 			util.make_dir(folder)
-			allvods = twitch.get_channel_vods(channel, HEADERS)
+			allvods = twitch.get_channel_vods(channel)
 			vods = compare_existant_file(folder, allvods)
 			totalvods += len(vods)
 
@@ -71,7 +71,7 @@ def download_twitch_video(args):
 		if args.type == "both" or args.type == "clips":
 			folder = clipdir / channel.login
 			util.make_dir(folder)
-			allclips = twitch.get_channel_clips(channel, HEADERS)
+			allclips = twitch.get_channel_clips(channel)
 			clips = compare_existant_file(folder, allclips)
 			totalclips += len(clips)
 
@@ -95,6 +95,8 @@ def download_twitch_video(args):
 		cprint(f"Total #fMVODs#r to download: #fC#l{totalvods}#r")
 	elif args.type == "clips":
 		cprint(f"Total #fMClips#r to download: #fC#l{totalclips}#r")
+
+	return
 
 	# Download all the videos we need.
 	previouschannel = None
