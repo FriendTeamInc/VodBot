@@ -43,9 +43,6 @@ Due to the nature of VodBot, application with Twitch and Google must be register
     "pissyellowcrocs", "percy_creates"
   ],
 
-  "twitch_client_id": "[[INSERT CLIENT ID HERE]]",
-  "twitch_client_secret": "[[INSERT CLIENT SECRET HERE]]",
-
   "stage_timezone": "US/Eastern",
   "stage_format": {
     "watch": "-- Watch live at {links}",
@@ -63,9 +60,7 @@ Due to the nature of VodBot, application with Twitch and Google must be register
 }
 ```
 
-* `twitch_channels`: names of channels on twitch to pull VODs and clips from.
-* `twitch_client_id`: ID string of client app, you must register your own with Twitch [here](https://dev.twitch.tv/console/apps).
-* `twitch_client_secret`: Secret string of client app, you must register your own with Twitch [here](https://dev.twitch.tv/console/apps).
+* `twitch_channels`: names of channels on twitch to pull VODs and clips from, specifically the names at the end of their page URLs.
 * `stage_timezone`: Timezone of the VODs/Clips, used for description formatting. Must be a useable string from the [pytz](http://pytz.sourceforge.net/) library.
 * `stage_format`: A dictionary of strings that can be formatted with special predefined strings, or other strings from the dictionary. The predefined strings are described below.
     * `date`: The date the stream started, formatted as year/month/day.
