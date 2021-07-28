@@ -1,4 +1,4 @@
-# <img src="/assets/banner.png" alt="VodBot" height="100" /> by NotQuiteApex & FTI.
+# <img src="/assets/banner.png" alt="VodBot" height="100" /> by NotQuiteApex
 A command line interface VOD and Clip manager for Twitch. Downloads VODs and Clips with appropriate metadata for any public channel, and allows for slicing and reupload to YouTube.
 
 ## Project Status

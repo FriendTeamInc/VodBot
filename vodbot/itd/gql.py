@@ -38,15 +38,12 @@ def gql_query(query=None, data=None):
 	_process_query_errors(resp)
 	return resp
 
+
 # GQL Query forms
 # Channel VODs query
 GET_CHANNEL_VIDEOS_QUERY = """
-{{
-	user(login: "{channel_id}") {{
-		videos(
-			first: {first}, type: {type},
-			sort: {sort}, after: "{after}"
-		) {{
+{{  user(login: "{channel_id}") {{
+		videos( first: {first}, type: {type}, sort: {sort}, after: "{after}" ) {{
 			totalCount
 			pageInfo {{ hasNextPage hasPreviousPage }}
 			edges {{ cursor
@@ -55,17 +52,12 @@ GET_CHANNEL_VIDEOS_QUERY = """
 					lengthSeconds thumbnailURLs
 					game {{ id name }}
 					creator {{ id login displayName }}
-				}}
-			}}
-		}}
-	}}
-}}
+}}  }}  }}  }}  }}
 """
 # Channel Clips query
 # period can be LAST_DAY, LAST_WEEK, LAST_MONTH, or ALL_TIME
 GET_CHANNEL_CLIPS_QUERY = """
-{{
-	user(login: "{channel_id}") {{
+{{  user(login: "{channel_id}") {{
 		clips(
 			first: {first}, after: "{after}",
 			criteria: {{ period: ALL_TIME, sort: VIEWS_DESC }}
@@ -79,39 +71,30 @@ GET_CHANNEL_CLIPS_QUERY = """
 					game {{ id name }}
 					broadcaster {{ id displayName login }}
 					curator {{ id displayName login }}
-				}}
-			}}
-		}}
-	}}
-}}
+}}  }}  }}  }}  }}
 """
 # Single VOD query
 GET_VIDEO_QUERY = """
-{{
-	video(id: "{video_id}") {{
+{{ video(id: "{video_id}") {{
 		id title publishedAt
 		broadcastType lengthSeconds
 		game {{ id name }}
 		creator {{ id login displayName }}
-	}}
-}}
+}}  }}
 """
 # Single Clip query
 GET_CLIP_QUERY = """
-{{
-	clip(slug: "{clip_slug}") {{
+{{  clip(slug: "{clip_slug}") {{
 		id slug title createdAt
 		viewCount durationSeconds url
 		videoQualities {{ frameRate quality sourceURL }}
 		game {{ id name }}
 		broadcaster {{ id displayName login }}
-	}}
-}}
+}}  }}
 """
 # Channel info query
 GET_CHANNEL_QUERY = """
-{{
-	user(login: "{channel_id}") {{
+{{  user(login: "{channel_id}") {{
 		id login displayName
 		description createdAt
 		roles {{ isPartner }}
@@ -119,15 +102,12 @@ GET_CHANNEL_QUERY = """
 			id title type
 			viewersCount createdAt
 			game {{ id name }}
-		}}
-	}}
-}}
+}}  }}  }}
 """
 
 
 VIDEO_ACCESS_QUERY = """
-{{
-	videoPlaybackAccessToken(
+{{  videoPlaybackAccessToken(
 		id: {video_id},
 		params: {{
 			platform: "web",
