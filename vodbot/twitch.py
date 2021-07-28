@@ -1,6 +1,7 @@
 # Module to make API calls to Twitch.tv
 
 from . import TWITCH_CLIENT_ID
+from .itd import gql
 
 import requests
 import json
@@ -76,41 +77,6 @@ class Channel:
 		return f"Channel({self.id}, {self.display_name})"
 
 
-def get_access_token(CLIENT_ID, CLIENT_SECRET):
-	"""
-	Uses a (blocking) HTTP request to retrieve an access token for use with Twitch's API.
-
-	:param CLIENT_ID: The associated client ID of the Twitch Application, registered at the Twitch Dev Console online and stored in the appropriate vodbot config.
-	:param CLIENT_SECRET: The associate client secret, from the same as client ID.
-	:returns: The string of the access token (not including the "Bearer: " prefix).
-	"""
-
-	url = "https://id.twitch.tv/oauth2/token?client_id={id}&client_secret={secret}&grant_type=client_credentials"
-	resp = requests.post(url.format(id=CLIENT_ID, secret=CLIENT_SECRET))
-	
-	# Some basic checks
-	if resp.status_code != 200:
-		util.exit_prog(33, f"Failed to get access token from Twitch. Status: {resp.status_code}")
-	
-	# Try to decode response
-	accesstoken_json = None
-	try:
-		accesstoken_json = resp.json()
-	except ValueError:
-		util.exit_prog(34, f"Could not parse response json for access token.")
-
-	# Try to pull access token from response
-	accesstoken = None
-	if "access_token" in accesstoken_json:
-		accesstoken = accesstoken_json["access_token"]
-	else:
-		exit_prog(4, "Could not get access token! Check your Client ID/Secret.")
-		
-	headers = {"Client-ID": CLIENT_ID, "Authorization": "Bearer " + accesstoken}
-	
-	return headers
-
-
 def get_channels(channel_ids):
 	"""
 	Uses a (blocking) HTTP request to retrieve channel information from Twitch's API.
@@ -119,12 +85,12 @@ def get_channels(channel_ids):
 	:returns: A list of Channel objects.
 	"""
 
-	
-	
 	# Make channel objects and store them in a list
 	channels = []
-	for i in resp["data"]:
-		channels.append(Channel(i))
+	for channel_id in channel_ids:
+		query = gql.GET_CHANNEL_QUERY.format(channel_id=channel_id)
+		resp = gql.gql_query(query=query).json()
+		channels.append(Channel(resp["data"]["user"]))
 	
 	return channels
 
