@@ -52,9 +52,14 @@ class Clip:
 			self.user_id = json["broadcaster"]["id"]
 			self.user_login = json["broadcaster"]["login"]
 			self.user_name = json["broadcaster"]["displayName"]
-			self.clipper_id = json["curator"]["id"]
-			self.clipper_login = json["curator"]["login"]
-			self.clipper_name = json["curator"]["displayName"]
+			if not json["curator"]:
+				self.clipper_id = self.user_id
+				self.clipper_login = self.user_login
+				self.clipper_name = self.user_name
+			else:
+				self.clipper_id = json["curator"]["id"]
+				self.clipper_login = json["curator"]["login"]
+				self.clipper_name = json["curator"]["displayName"]
 			self.title = json["title"]
 			self.created_at = json["createdAt"]
 			self.view_count = json["viewCount"]

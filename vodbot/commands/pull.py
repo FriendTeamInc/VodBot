@@ -96,8 +96,6 @@ def download_twitch_video(args):
 	elif args.type == "clips":
 		cprint(f"Total #fMClips#r to download: #fC#l{totalclips}#r")
 
-	return
-
 	# Download all the videos we need.
 	previouschannel = None
 	for vod in videos:
