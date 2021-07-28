@@ -100,22 +100,20 @@ def get_clip_source(clip_id):
 
 	url = resp["data"]["clip"]["videoQualities"][0]["sourceURL"]
 
-	query = """
-	{{
+	query = {
 		"operationName": "VideoAccessToken_Clip",
-		"variables": {{
-			"slug": "{slug}"
-		}},
-		"extensions": {{
-			"persistedQuery": {{
+		"variables": {
+			"slug": clip_id
+		},
+		"extensions": {
+			"persistedQuery": {
 				"version": 1,
 				"sha256Hash": "36b89d2507fce29e5ca551df756d27c1cfe079e2609642b4390aa4c35796eb11"
-			}}
-		}}
-	}}
-    """
+			}
+		}
+	}
 
-	resp = gql_query(data=query.format(slug=clip_id).strip()).json()
+	resp = gql_post(json=query).json()
 	token = resp["data"]["clip"]["playbackAccessToken"]
 	token = urlencode({
 		"sig": token["signature"],
