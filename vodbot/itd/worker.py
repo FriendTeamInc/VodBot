@@ -1,5 +1,7 @@
 # Based on https://github.com/ihabunek/twitch-dl/blob/master/twitchdl/download.py
-# Modified to fit the project a bit better, licensed under GPLv3.
+# Modified to fit the project a bit better, originally licensed under GPLv3.
+# Modifications include shortening some functions, removing redundant bits,
+# and changing certain printouts to be more colorful.
 
 from vodbot.printer import cprint
 

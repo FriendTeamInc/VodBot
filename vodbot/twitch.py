@@ -1,16 +1,26 @@
 # Module to make API calls to Twitch.tv
 
+from . import TWITCH_CLIENT_ID
+from .itd import gql
+
 import requests
 import json
 
 class Vod:
 	def __init__(self, json):
-		self.id = json["id"] # url: twitch.tv/videos/{id}
-		self.user_id = json["user_id"]
-		self.user_name = json["user_name"]
+		self.id = json["id"]
+		self.user_id = json["creator"]["id"]
+		self.user_login = json["creator"]["login"]
+		self.user_name = json["creator"]["displayName"]
+		if json["game"]:
+			self.game_id = json["game"]["id"]
+			self.game_name = json["game"]["name"]
+		else:
+			self.game_id = ""
+			self.game_name = ""
 		self.title = json["title"]
-		self.created_at = json["created_at"]
-		self.duration = json["duration"]
+		self.created_at = json["publishedAt"]
+		self.length = json["lengthSeconds"]
 		
 		self.url = f"twitch.tv/videos/{self.id}"
 	
@@ -21,10 +31,13 @@ class Vod:
 		jsondict = {
 			"id": self.id,
 			"user_id": self.user_id,
+			"user_login": self.user_login,
 			"user_name": self.user_name,
+			"game_id": self.game_id,
+			"game_name": self.game_name,
 			"title": self.title,
 			"created_at": self.created_at,
-			"duration": self.duration
+			"length": self.length
 		}
 		
 		with open(filename, "w") as f:
@@ -33,14 +46,29 @@ class Vod:
 
 class Clip:
 	def __init__(self, json):
-		self.id = json["id"] # url: twitch.tv/videos/{id}
-		self.user_id = json["broadcaster_id"]
-		self.user_name = json["broadcaster_name"]
-		self.clipper_id = json["creator_id"]
-		self.clipper_name = json["creator_name"]
+		self.id = json["id"]
+		self.slug = json["slug"]
+		self.user_id = json["broadcaster"]["id"]
+		self.user_login = json["broadcaster"]["login"]
+		self.user_name = json["broadcaster"]["displayName"]
+		if not json["curator"]:
+			self.clipper_id = self.user_id
+			self.clipper_login = self.user_login
+			self.clipper_name = self.user_name
+		else:
+			self.clipper_id = json["curator"]["id"]
+			self.clipper_login = json["curator"]["login"]
+			self.clipper_name = json["curator"]["displayName"]
+		if json["game"]:
+			self.game_id = json["game"]["id"]
+			self.game_name = json["game"]["name"]
+		else:
+			self.game_id = ""
+			self.game_name = ""
 		self.title = json["title"]
-		self.created_at = json["created_at"]
-		self.view_count = json["view_count"]
+		self.created_at = json["createdAt"]
+		self.view_count = json["viewCount"]
+		self.length = json["durationSeconds"]
 		
 		self.url = f"twitch.tv/{self.user_name}/clip/{self.id}"
 	
@@ -50,13 +78,19 @@ class Clip:
 	def write_meta(self, filename):
 		jsondict = {
 			"id": self.id,
+			"slug": self.slug,
 			"user_id": self.user_id,
+			"user_login": self.user_login,
 			"user_name": self.user_name,
 			"clipper_id": self.clipper_id,
+			"clipper_login": self.clipper_login,
 			"clipper_name": self.clipper_name,
+			"game_id": self.game_id,
+			"game_name": self.game_name,
 			"title": self.title,
 			"created_at": self.created_at,
-			"view_count": self.view_count
+			"view_count": self.view_count,
+			"length": self.length
 		}
 		
 		with open(filename, "w") as f:
@@ -67,138 +101,93 @@ class Channel:
 	def __init__(self, json):
 		self.id = json["id"]
 		self.login = json["login"]
-		self.display_name = json["display_name"]
-		self.created_at = json["created_at"]
+		self.display_name = json["displayName"]
+		self.created_at = json["createdAt"]
 	
 	def __repr__(self):
 		return f"Channel({self.id}, {self.display_name})"
 
 
-def get_access_token(CLIENT_ID, CLIENT_SECRET):
-	"""
-	Uses a (blocking) HTTP request to retrieve an access token for use with Twitch's API.
-
-	:param CLIENT_ID: The associated client ID of the Twitch Application, registered at the Twitch Dev Console online and stored in the appropriate vodbot config.
-	:param CLIENT_SECRET: The associate client secret, from the same as client ID.
-	:returns: The string of the access token (not including the "Bearer: " prefix).
-	"""
-
-	url = "https://id.twitch.tv/oauth2/token?client_id={id}&client_secret={secret}&grant_type=client_credentials"
-	resp = requests.post(url.format(id=CLIENT_ID, secret=CLIENT_SECRET))
-	
-	# Some basic checks
-	if resp.status_code != 200:
-		util.exit_prog(33, f"Failed to get access token from Twitch. Status: {resp.status_code}")
-	
-	# Try to decode response
-	accesstoken_json = None
-	try:
-		accesstoken_json = resp.json()
-	except ValueError:
-		util.exit_prog(34, f"Could not parse response json for access token.")
-
-	# Try to pull access token from response
-	accesstoken = None
-	if "access_token" in accesstoken_json:
-		accesstoken = accesstoken_json["access_token"]
-	else:
-		exit_prog(4, "Could not get access token! Check your Client ID/Secret.")
-		
-	headers = {"Client-ID": CLIENT_ID, "Authorization": "Bearer " + accesstoken}
-	
-	return headers
-
-
-def get_channels(channel_ids, headers):
+def get_channels(channel_ids: list):
 	"""
 	Uses a (blocking) HTTP request to retrieve channel information from Twitch's API.
 
 	:param channel_ids: A list of channel login name strings.
-	:param headers: The headers returned from get_access_token.
 	:returns: A list of Channel objects.
 	"""
 
-	url = "https://api.twitch.tv/helix/users?" + "&".join(f"login={i}" for i in channel_ids)
-	resp = requests.get(url, headers=headers)
-
-	# Some basic checks
-	if resp.status_code != 200:
-		util.exit_prog(5, f"Failed to get user ID's from Twitch. Status: {resp.status_code}")
-	try:
-		resp = resp.json()
-	except ValueError:
-		util.exit_prog(12, f"Could not parse response json for user ID's.")
-	
 	# Make channel objects and store them in a list
 	channels = []
-	for i in resp["data"]:
-		channels.append(Channel(i))
+	for channel_id in channel_ids:
+		query = gql.GET_CHANNEL_QUERY.format(channel_id=channel_id)
+		resp = gql.gql_query(query=query).json()
+		if resp["data"]["user"] == None:
+			raise Exception(f"Channel `{channel_id}` does not exist!")
+		channels.append(Channel(resp["data"]["user"]))
 	
 	return channels
 
 
-def get_channel_vods(channel: Channel, headers: dict):
+def get_channel_vods(channel: Channel):
 	"""
 	Uses a (blocking) HTTP request to retrieve VOD info for a specific channel.
 
 	:param channel: A Channel object.
-	:param headers: The headers returned from get_access_token.
 	:returns: A list of VOD objects.
 	"""
-	url = "https://api.twitch.tv/helix/videos?user_id={video_id}&first=100&type=archive"
-	return _get_channel_content(url, "VOD", channel, headers)
+
+	vods = []
+	pagination = ""
+	while True:
+		query = gql.GET_CHANNEL_VIDEOS_QUERY.format(
+			channel_id=channel.login,
+			after=pagination, first=100,
+			type="ARCHIVE", sort="TIME"
+		)
+		resp = gql.gql_query(query=query).json()
+		resp = resp ["data"]["user"]["videos"]
+
+		if not resp or not resp["edges"]:
+			break
+
+		pagination = resp["edges"][-1]["cursor"]
+		
+		for vod in resp["edges"]:
+			vods.append(Vod(vod["node"]))
+
+		if pagination == "" or pagination == None:
+			break;
+
+	return vods
 
 
-def get_channel_clips(channel, headers):
+def get_channel_clips(channel):
 	"""
 	Uses a (blocking) HTTP request to retrieve Clip info for a specific channel.
 
 	:param channel: A Channel object.
-	:param headers: The headers returned from get_access_token.
 	:returns: A list of Clip objects.
 	"""
-	url = "https://api.twitch.tv/helix/clips?broadcaster_id={video_id}&first=100"
-	return _get_channel_content(url, "Clip", channel, headers)
 
-
-def _get_channel_content(video_url, noun, channel, headers):
-	# List of videos to return
-	videos = []
-	# Deal with pagination
+	clips = []
 	pagination = ""
 	while True:
-		# generate URL
-		url = video_url.format(video_id=channel.id)
-		if pagination != "":
-			url += "&after=" + pagination
-		resp = requests.get(url, headers=headers)
+		query = gql.GET_CHANNEL_CLIPS_QUERY.format(
+			channel_id=channel.login,
+			after=pagination, first=100
+		)
+		resp = gql.gql_query(query=query).json()
+		resp = resp["data"]["user"]["clips"]
 
-		# Some basic checks
-		if resp.status_code != 200:
-			util.exit_prog(5, f"Failed to get {noun} data from Twitch. Status: {resp.status_code}")
-		try:
-			resp = resp.json()
-		except ValueError:
-			util.exit_prog(9, f"Could not parse response json for {channel.display_name}'s {contentnoun}s.")
-		
-		# Break out if we went through all the videos
-		if len(resp["data"]) == 0:
+		if not resp or not resp["edges"]:
 			break
 
-		# Add VODs to list to download later.
-		for vod in resp["data"]:
-			# We need to ignore live VOD's
-			# Live VODs don't have thumbnails
-			if vod["thumbnail_url"] != "":
-				if noun == "VOD":
-					videos.append(Vod(vod))
-				elif noun == "Clip":
-					videos.append(Clip(vod))
+		pagination = resp["edges"][-1]["cursor"]
 		
-		# If there's no other cursors, let's break.
-		if "cursor" in resp["pagination"]:
-			pagination = resp["pagination"]["cursor"]
-		else:
-			break
-	
-	return videos
+		for clip in resp["edges"]:
+			clips.append(Clip(clip["node"]))
+
+		if pagination == "" or pagination == None:
+			break;
+
+	return clips

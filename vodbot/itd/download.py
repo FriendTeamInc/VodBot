@@ -93,10 +93,10 @@ def dl_video(video: Vod, path: str, metapath: str, max_workers: int):
 
 
 def dl_clip(clip: Clip, path: str, metapath: str):
-	clip_id = clip.id
+	clip_slug = clip.slug
 
 	# Get proper clip file URL
-	source_url = gql.get_clip_source(clip_id)
+	source_url = gql.get_clip_source(clip_slug)
 
 	# Download file to path
 	size = worker.download_file(source_url, path)
@@ -105,4 +105,4 @@ def dl_clip(clip: Clip, path: str, metapath: str):
 	clip.write_meta(metapath)
 
 	# Print progress
-	cprint(f"#fM#lClip#r `#fM{clip_id}#r` #fB#l~{worker.format_size(size)}#r")
+	cprint(f"#fM#lClip#r `#fM{clip_slug}#r` #fB#l~{worker.format_size(size)}#r")
