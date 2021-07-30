@@ -62,19 +62,19 @@ def sort_stagedata(stagedata):
 
 
 def upload_video(service, stagedata):
-	tmpfile = str(tempdir / f"{stagedata.hashdigest}.mkv")
-	print(f"Slicing stage `{stagedata.hashdigest}` video ({stagedata.ss} - {stagedata.to})")
-	cmd = [
-		"ffmpeg", "-ss", stagedata.ss,
-	]
+	tmpfile = str(tempdir / f"{stagedata.hashdigest}.mp4")
+	cprint(f"#rSlicing stage `#fM{stagedata.hashdigest}#r` #d({stagedata.ss} - {stagedata.to})#r")
+
+	cmd = [ "ffmpeg", "-ss", stagedata.ss ]
+
 	if stagedata.to != "EOF":
 		cmd += ["-to", stagedata.to]
+
 	cmd += [
-		"-i", stagedata.filename,
-		"-c", "copy",
-		tmpfile, "-y", "-stats",
-		"-loglevel", "warning"
+		"-i", stagedata.filename, "-c", "copy",
+		tmpfile, "-y", "-stats", "-loglevel", "warning"
 	]
+	
 	result = subprocess.run(cmd)
 
 	if result.returncode != 0:

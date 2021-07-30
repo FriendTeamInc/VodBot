@@ -47,21 +47,21 @@ def load_stage(stage_id):
 
 def export_video(pathout: Path, stagedata: StageData):
 	tmpfile = str(pathout / f"{stagedata.title}.mp4")
-	print(f"Slicing stage `{stagedata.hashdigest}` video ({stagedata.ss} - {stagedata.to})")
-	cmd = [
-		"ffmpeg", "-ss", stagedata.ss,
-	]
+	cprint(f"#rSlicing stage `#fM{stagedata.hashdigest}#r` #d({stagedata.ss} - {stagedata.to})#r")
+
+	cmd = [ "ffmpeg", "-ss", stagedata.ss ]
+
 	if stagedata.to != "EOF":
 		cmd += ["-to", stagedata.to]
+
 	cmd += [
-		"-i", stagedata.filename,
-		"-c", "copy",
-		tmpfile, "-y", "-stats",
-		"-loglevel", "warning"
+		"-i", stagedata.filename, "-c", "copy",
+		tmpfile, "-y", "-stats", "-loglevel", "warning"
 	]
+
 	result = subprocess.run(cmd)
 
-	return result == 0
+	return result.returncode == 0
 
 
 def run(args):
