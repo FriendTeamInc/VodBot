@@ -6,10 +6,11 @@ import vodbot.util as util
 from vodbot.printer import cprint
 
 import json
+import subprocess
 from datetime import datetime
 from pathlib import Path
 from os import listdir as os_listdir, remove as os_remove
-from os.path import exists as os_exists, isfile as os_isfile
+from os.path import exists as os_exists, isfile as os_isfile, mkdir as os_mkdir
 
 
 # Default path
@@ -45,6 +46,23 @@ def load_stage(stage_id):
 	return StageData(_title, _desc, _ss, _to, _streamers, _datestring, _filename)
 
 
+def export_video(pathout: Path, stagedata: StageData):
+	tmpfile = str(pathout / f"{stagedata.title}.mp4")
+	print(f"Slicing stage `{stagedata.hashdigest}` video ({stagedata.ss} - {stagedata.to})")
+	cmd = [
+		"ffmpeg", "-ss", stagedata.ss,
+	]
+	if stagedata.to != "EOF":
+		cmd += ["-to", stagedata.to]
+	cmd += [
+		"-i", stagedata.filename,
+		"-c", "copy",
+		tmpfile, "-y", "-stats",
+		"-loglevel", "warning"
+	]
+	result = subprocess.run(cmd)
+
+
 def run(args):
 	conf = util.load_conf(args.conf)
 	
@@ -53,7 +71,7 @@ def run(args):
 	stagedata = None
 	stagedatas = None
 	if args.id == "all":
-		cprint("#dLoading stages...", end=" ")
+		cprint("#dLoading and slicing stages...#r")
 		# create a list of all the hashes and sort by date streamed, slice chronologically
 		stages = [d[:-6] for d in os_listdir(str(stagedir))
 			if os_isfile(str(stagedir / d)) and d[-5:] == "stage"]
@@ -66,5 +84,14 @@ def run(args):
 		cprint(f"About to slice stage {stagedata.hashdigest}.#r")
 	
 	# export with ffmpeg
+	if args.id == "all":
+		os_mkdir(args.path)
+		args.path = Path(args.path)
+		for stage in stagedatas:
+			export_video(args.path, stage)
+	else:
+		args.path = Path(args.path)
+		export_video(args.path, stagedata)
 
 	# say "Done!"
+	cprint("#fG#lDone!#r")
