@@ -24,6 +24,8 @@ def deffered_main():
 def main():
 	titletext = colorize('#r#fM#l* {} {} (c) 2020-21 Logan "NotQuiteApex" Hickok-Dickson *#r')
 	titletext = titletext.format(__project__, __version__)
+	
+	print(titletext)
 
 	# Process arguments
 	parser = argparse.ArgumentParser(epilog=titletext,
@@ -58,10 +60,14 @@ def main():
 	stager_add = stager_subparser.add_parser("add", epilog=titletext,
 		description="adds a VOD or Clip to the staging area")
 	stager_add.add_argument("id", type=str, help="id of the VOD or Clip to stage")
-	stager_add.add_argument("--title", help="title of video", type=str, required=False, default=None)
-	stager_add.add_argument("--desc", help="description of video", type=str, required=False, default=None)
-	stager_add.add_argument("--ss", help="start time of video", type=str, required=False, default=None)
-	stager_add.add_argument("--to", help="end time of video", type=str, required=False, default=None)
+	stager_add.add_argument("--title", help="title of video",
+		type=str, required=False, default=None)
+	stager_add.add_argument("--desc", help="description of video",
+		type=str, required=False, default=None)
+	stager_add.add_argument("--ss", help="start time of video",
+		type=str, required=False, default=None)
+	stager_add.add_argument("--to", help="end time of video",
+		type=str, required=False, default=None)
 	# `vodbot stage rm <id>`
 	stager_rm = stager_subparser.add_parser("rm", epilog=titletext,
 		description="removes a VOD or Clip from the staging area")
@@ -70,10 +76,14 @@ def main():
 	stager_rm = stager_subparser.add_parser("edit", epilog=titletext,
 		description="edits data of a VOD or Clip in the staging area")
 	stager_rm.add_argument("id", type=str, help="id of the staged video data")
-	stager_rm.add_argument("--title", help="title of video, defaults to original", type=str, required=False, default=None)
-	stager_rm.add_argument("--desc", help="description of video, defaults to original", type=str, required=False, default=None)
-	stager_rm.add_argument("--ss", help="start time of video, defaults to original", type=str, required=False, default=None)
-	stager_rm.add_argument("--to", help="end time of video, defaults to original", type=str, required=False, default=None)
+	stager_rm.add_argument("--title", help="title of video, defaults to original",
+		type=str, required=False, default=None)
+	stager_rm.add_argument("--desc", help="description of video, defaults to original",
+		type=str, required=False, default=None)
+	stager_rm.add_argument("--ss", help="start time of video, defaults to original",
+		type=str, required=False, default=None)
+	stager_rm.add_argument("--to", help="end time of video, defaults to original",
+		type=str, required=False, default=None)
 	# `vodbot stage list [id]`
 	stager_list = stager_subparser.add_parser("list", epilog=titletext,
 		description="lists info on staging area or staged items")
@@ -82,11 +92,16 @@ def main():
 	# `vodbot upload <id/all>`
 	upload = subparsers.add_parser("upload", aliases=["upload", "push"],
 		epilog=titletext, description="Uploads stage(s) to YouTube.")
-	upload.add_argument("id", type=str, help='id of the staged video data, can be "all" to upload all stages sequentially, or "logout" to switch to a different YouTube account')
+	upload.add_argument("id", type=str,
+		help='id of the staged video data, "all" to upload all stages, or "logout" to remove existing YouTube credentials')
 	
-	args = parser.parse_args()
+	# `vodbot upload <id/all>`
+	export = subparsers.add_parser("export", aliases=["export", "slice"],
+		epilog=titletext, description="Uploads stage(s) to YouTube.")
+	export.add_argument("id", type=str, help="id of the staged video data, or `all` for all stages")
+	export.add_argument("path", type=str, help="directory to expor the video(s) to")
 
-	print(titletext)
+	args = parser.parse_args()
 
 	# Handle commands
 	if args.cmd == "init":
@@ -101,6 +116,9 @@ def main():
 	elif args.cmd == "upload":
 		upload = import_module(".commands.upload", "vodbot")
 		upload.run(args)
+	elif args.cmd == "export":
+		export = import_module(".commands.export", "vodbot")
+		export.run(args)
 
 
 if __name__ == "__main__":
