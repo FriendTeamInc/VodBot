@@ -78,7 +78,7 @@ def upload_video(service, stagedata):
 	result = subprocess.run(cmd)
 
 	if result.returncode != 0:
-		print("Slice failed, skipping...")
+		cprint(f"#r#fRSkipping stage `{stagedata.hashdigest}` due to error.#r\n")
 		return
 
 	# send request to youtube to upload

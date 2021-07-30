@@ -98,6 +98,7 @@ def run(args):
 		stagedata = load_stage(args.id)
 		
 		# Export with ffmpeg
+		os_mkdir(args.path, exist_ok=True)
 		args.path = Path(args.path)
 		if export_video(args.path, stagedata) == True:
 			# delete stage on success
