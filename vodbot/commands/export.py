@@ -9,7 +9,7 @@ import json
 import subprocess
 from datetime import datetime
 from pathlib import Path
-from os import listdir as os_listdir, mkdir as os_mkdir
+from os import listdir as os_listdir, makedirs as os_mkdir, remove as os_remove
 from os.path import isfile as os_isfile
 
 
@@ -61,6 +61,8 @@ def export_video(pathout: Path, stagedata: StageData):
 	]
 	result = subprocess.run(cmd)
 
+	return result == 0
+
 
 def run(args):
 	global stagedir
@@ -80,21 +82,29 @@ def run(args):
 		stagedatas.sort(key=sort_stagedata)
 
 		# Export with ffmpeg
-		os_mkdir(args.path)
+		os_mkdir(args.path, exist_ok=True)
 		args.path = Path(args.path)
 		for stage in stagedatas:
-			cprint(f"\rAbout to slice stage {stage.hashdigest}.#r")
-			export_video(args.path, stage)
+			if export_video(args.path, stage) == True:
+				# delete stage on success
+				os_remove(str(stagedir / f"{stage.hashdigest}.stage"))
+			else:
+				# have warning message
+				cprint(f"#r#fRSkipping stage `{stage.hashdigest}` due to error.#r\n")
 	else:
 		cprint("#dLoading stage...", end=" ")
 		
 		# check if stage exists, and prep it for slice
 		stagedata = load_stage(args.id)
-		cprint(f"About to slice stage {stagedata.hashdigest}.#r")
 		
 		# Export with ffmpeg
 		args.path = Path(args.path)
-		export_video(args.path, stagedata)
+		if export_video(args.path, stagedata) == True:
+			# delete stage on success
+			os_remove(str(stagedir / f"{stagedata.hashdigest}.stage"))
+		else:
+			# have warning message
+			cprint(f"#r#fRSkipping stage `{stagedata.hashdigest}` due to error.")
 
 	# say "Done!"
 	cprint("#fG#lDone!#r")
