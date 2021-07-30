@@ -84,6 +84,12 @@ def main():
 		epilog=titletext, description="Uploads stage(s) to YouTube.")
 	upload.add_argument("id", type=str, help='id of the staged video data, can be "all" to upload all stages sequentially, or "logout" to switch to a different YouTube account')
 	
+	# `vodbot upload <id/all>`
+	export = subparsers.add_parser("export", aliases=["export", "slice"],
+		epilog=titletext, description="Uploads stage(s) to YouTube.")
+	export.add_argument("id", type=str, help="id of the staged video data, or `all` for all stages")
+	export.add_argument("path", type=str, help="path to export video to, or the directory to export all staged items to")
+
 	args = parser.parse_args()
 
 	print(titletext)
