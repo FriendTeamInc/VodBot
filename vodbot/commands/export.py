@@ -9,14 +9,13 @@ import json
 import subprocess
 from datetime import datetime
 from pathlib import Path
-from os import listdir as os_listdir, remove as os_remove
-from os.path import exists as os_exists, isfile as os_isfile, mkdir as os_mkdir
+from os import listdir as os_listdir, mkdir as os_mkdir
+from os.path import isfile as os_isfile
 
 
 # Default path
 vodbotdir = util.vodbotdir
 stagedir = None
-tempdir = None
 
 
 EPOCH = datetime.utcfromtimestamp(0)
@@ -64,7 +63,10 @@ def export_video(pathout: Path, stagedata: StageData):
 
 
 def run(args):
-	#conf = util.load_conf(args.conf)
+	global stagedir
+
+	conf = util.load_conf(args.config)
+	stagedir = Path(conf["stage_dir"])
 	
 	# load stages, but dont slice
 	# Handle id/all
@@ -81,6 +83,7 @@ def run(args):
 		os_mkdir(args.path)
 		args.path = Path(args.path)
 		for stage in stagedatas:
+			cprint(f"\rAbout to slice stage {stage.hashdigest}.#r")
 			export_video(args.path, stage)
 	else:
 		cprint("#dLoading stage...", end=" ")
