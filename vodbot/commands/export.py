@@ -64,32 +64,32 @@ def export_video(pathout: Path, stagedata: StageData):
 
 
 def run(args):
-	conf = util.load_conf(args.conf)
+	#conf = util.load_conf(args.conf)
 	
 	# load stages, but dont slice
 	# Handle id/all
-	stagedata = None
-	stagedatas = None
 	if args.id == "all":
 		cprint("#dLoading and slicing stages...#r")
+
 		# create a list of all the hashes and sort by date streamed, slice chronologically
 		stages = [d[:-6] for d in os_listdir(str(stagedir))
 			if os_isfile(str(stagedir / d)) and d[-5:] == "stage"]
 		stagedatas = [load_stage(stage) for stage in stages]
 		stagedatas.sort(key=sort_stagedata)
-	else:
-		cprint("#dLoading stage...", end=" ")
-		# check if stage exists, and prep it for slice
-		stagedata = load_stage(args.id)
-		cprint(f"About to slice stage {stagedata.hashdigest}.#r")
-	
-	# export with ffmpeg
-	if args.id == "all":
+
+		# Export with ffmpeg
 		os_mkdir(args.path)
 		args.path = Path(args.path)
 		for stage in stagedatas:
 			export_video(args.path, stage)
 	else:
+		cprint("#dLoading stage...", end=" ")
+		
+		# check if stage exists, and prep it for slice
+		stagedata = load_stage(args.id)
+		cprint(f"About to slice stage {stagedata.hashdigest}.#r")
+		
+		# Export with ffmpeg
 		args.path = Path(args.path)
 		export_video(args.path, stagedata)
 
