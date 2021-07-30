@@ -101,6 +101,9 @@ def main():
 	elif args.cmd == "upload":
 		upload = import_module(".commands.upload", "vodbot")
 		upload.run(args)
+	elif args.cmd == "export":
+		export = import_module(".commands.export", "vodbot")
+		export.run(args)
 
 
 if __name__ == "__main__":
