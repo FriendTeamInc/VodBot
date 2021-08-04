@@ -106,16 +106,15 @@ def upload_video(service, stagedata):
 
 	resp = None
 	errn = 0
-	cprint(f"#fCUploading stage #r`{stagedata.hashdigest}`#d...#r")
-	cprint(f"#fM#lUpload progress:#r #fC0.0#fY%#r", end="\r")
+	cprint(f"#fCUploading stage #r`#fM{stagedata.hashdigest}#r`, progress: #fC0#fY%#r #d...#r", end="\r")
 	while resp is None:
 		try:
 			status, resp = response_upload.next_chunk()
 			if status:
-				cprint(f"#fM#lUpload progress:#r (#fC{(status.progress()*100):.1f}#fY%#r)#d...#r", end="\r")
+				cprint(f"#fCUploading stage #r`#fM{stagedata.hashdigest}#r`, progress: #fC{int(status.progress()*100)}#fY%#r #d...#r", end="\r")
 			if resp is not None:
 				if "id" in resp:
-					cprint(f"#fM#lUpload progress:#r #fC100.0#fY%#r!")
+					cprint(f"#fCUploading stage #r`#fM{stagedata.hashdigest}#r`, progress: #fC100#fY%#r!")
 					cprint(f"#l#fGVideo was successfully uploaded!#r #dhttps://youtu.be/{resp['id']}#r")
 				else:
 					util.exit_prog(99, f"Unexpected upload failure occurred, \"{resp}\"")
