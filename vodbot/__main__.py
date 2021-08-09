@@ -41,6 +41,18 @@ def main():
 	# `vodbot init`
 	initparse = subparsers.add_parser("init", epilog=titletext,
 		description="Runs the setup process for VodBot")
+	initparse.add_argument("channels", metavar="channel", type=str, default=[], nargs="*",
+		help="twitch.tv channel login to pull VODs/Clips from")
+	initparse.add_argument("--timezone", help="Timezone for datetime referencing, from pytz",
+		type=str, required=False, default=None)
+	initparse.add_argument("--vod-dir", help="location to store VOD data",
+		type=str, required=False, default=None, dest="voddir")
+	initparse.add_argument("--clip-dir", help="location to store Clip data",
+		type=str, required=False, default=None, dest="clipdir")
+	initparse.add_argument("--temp-dir", help="location to store temporary data",
+		type=str, required=False, default=None, dest="tempdir")
+	initparse.add_argument("--stage-dir", help="location to store staged data",
+		type=str, required=False, default=None, dest="stagedir")
 
 	# `vodbot pull <vods/clips/both> [channel ...]`
 	download = subparsers.add_parser("download", aliases=["pull", "download"],
