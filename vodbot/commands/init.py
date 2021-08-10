@@ -65,7 +65,18 @@ def run(args):
 	# ready to write it all, go!
 	cp.cprint("Writing config...")
 	conf = {
-		
+		"twitch_channels": channels,
+
+		"stage_timezone": timezone,
+		"stage_format": {},
+
+		"youtube_client_path": "", # add prompt asking for these?
+		"youtube_pickle_path": "", # at the very least say they need to be filled in
+
+		"vod_dir": voddir,
+		"clip_dir": clipdir,
+		"temp_dir": tempdir,
+		"stage_dir": stagedir
 	}
 
 	# list the location of the config and say what can be edited outside this command
