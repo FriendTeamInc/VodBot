@@ -41,9 +41,11 @@ def main():
 	# `vodbot init`
 	initparse = subparsers.add_parser("init", epilog=titletext,
 		description="Runs the setup process for VodBot")
-	initparse.add_argument("channels", metavar="channel", type=str, default=[], nargs="*",
+	initparse.add_argument("--channel", type=str, default=[], nargs="?",
 		help="twitch.tv channel login to pull VODs/Clips from")
-	initparse.add_argument("--timezone", help="Timezone for datetime referencing, from pytz",
+	initparse.add_argument("--default", help="argument switch to write default config",
+		nargs="?", const=True, default=False, type=util.str2bool)
+	initparse.add_argument("--timezone", help="timezone for datetime referencing, from pytz",
 		type=str, required=False, default=None)
 	initparse.add_argument("--vod-dir", help="location to store VOD data",
 		type=str, required=False, default=None, dest="voddir")

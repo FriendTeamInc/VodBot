@@ -5,17 +5,14 @@ from .printer import cprint
 import os
 import sys
 import json
+import argparse
 from pathlib import Path
 from collections import OrderedDict
 
 
 vodbotdir = Path.home() / ".vodbot"
 DEFAULT_CONF = OrderedDict([
-	("twitch_channels", ["46moura",
-		"alkana", "batkigu", "hylianswordsman1"
-		"juicibit", "michiri9", "notquiteapex",
-		"pissyellowcrocs", "percy_creates", "voobo",
-	]),
+	("twitch_channels", []),
 
 	("stage_timezone", "US/Eastern"),
 
@@ -110,3 +107,15 @@ def exit_prog(code=0, errmsg=None):
 
 	cprint("#r#dExiting...#r")
 	sys.exit(code)
+
+
+# https://stackoverflow.com/a/43357954/13977827
+def str2bool(v):
+    if isinstance(v, bool):
+        return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
