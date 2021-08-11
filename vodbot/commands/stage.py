@@ -5,7 +5,6 @@ from vodbot.printer import cprint, colorize
 
 import re
 import json
-import pytz
 import hashlib
 from datetime import datetime, timezone
 from pathlib import Path
@@ -67,15 +66,13 @@ def create_format_dict(conf, streamers, utcdate=None, truedate=None):
 	datestring = None
 	if truedate == None:
 		try:
-			#timezone = pytz.timezone(conf["stage_timezone"])
 			sign, hours, minutes = re.match('([+\-]?)(\d{2})(\d{2})', '+0530').groups()
 			sign = -1 if sign == '-' else 1
 			hours, minutes = int(hours), int(minutes)
 
 			timezone = datetime.timezone(sign * datetime.timedelta(hours=hours, minutes=minutes))
-		except pytz.UnknownTimeZoneError:
+		except:
 			util.exit_prog(73, f"Unknown timezone {conf['stage_timezone']}")
-		utc = pytz.utc
 		date = datetime.strptime(utcdate, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
 		datestring = date.astimezone(timezone).strftime("%Y/%m/%d")
 	else:

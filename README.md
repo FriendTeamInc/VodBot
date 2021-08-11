@@ -62,7 +62,7 @@ Due to the nature of VodBot, application with Twitch and Google must be register
 ```
 
 * `twitch_channels`: names of channels on twitch to pull VODs and clips from, specifically the names at the end of their page URLs.
-* `stage_timezone`: Timezone of the VODs/Clips, used for description formatting. Must be a useable string from the [pytz](http://pytz.sourceforge.net/) library.
+* `stage_timezone`: Timezone of the VODs/Clips, used for description formatting. Must be a UTC string like '+0000' or '-0530'.
 * `stage_format`: A dictionary of strings that can be formatted with special predefined strings, or other strings from the dictionary. The predefined strings are described below.
     * `date`: The date the stream started, formatted as year/month/day.
     * `streamer`: The streamer who the video is of.
