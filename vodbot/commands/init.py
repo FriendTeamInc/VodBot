@@ -10,11 +10,8 @@ import vodbot.printer as cp
 vodbotdir = util.vodbotdir
 DEFAULT_CONF = util.DEFAULT_CONF
 
-def run(args):
-	pass
-	# TODO: should run a bunch of input() prompts asking for info to set up VodBot
-	# TODO: allow passing of arguments to not require input
 
+def create_config(args):
 	channels = []
 	timezone = "" # switch to UTC only
 
@@ -85,6 +82,18 @@ def run(args):
 
 	with open(str(vodbotdir / "conf.json")) as f:
 		json.dump(DEFAULT_CONF, f, indent=4)
+
+
+def run(args):
+	if args.default:
+		# generate default config
+		cp.cprint("Creating default config...")
+
+		with open(str(vodbotdir / "conf.json")) as f:
+			json.dump(DEFAULT_CONF, f, indent=4)
+	else:
+		# generate config from inputs
+		create_config(args)
 
 	# list the location of the config and say what can be edited outside this command
 	cp.cprint(f"Finished, the config can be edited at `{str(vodbotdir / 'conf.json')}`.")

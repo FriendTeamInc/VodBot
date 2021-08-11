@@ -14,7 +14,7 @@ vodbotdir = Path.home() / ".vodbot"
 DEFAULT_CONF = OrderedDict([
 	("twitch_channels", []),
 
-	("stage_timezone", "US/Eastern"),
+	("stage_timezone", "+0000"),
 
 	("stage_format", {
 		"watch": "-- Watch live at {links}",
