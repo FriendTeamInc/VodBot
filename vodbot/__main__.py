@@ -119,8 +119,8 @@ def main():
 
 	# Handle commands
 	if args.cmd == "init":
-		# TODO: run checks for overwriting existing confs
-		util.make_conf(args.config)
+		init = import_module(".commands.init", "vodbot")
+		init.run(args)
 	elif args.cmd == "pull":
 		pull = import_module(".commands.pull", "vodbot")
 		pull.run(args)

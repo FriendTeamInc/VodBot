@@ -17,32 +17,33 @@ def create_config(args):
 	timezone = "" # switch to UTC only
 
 	# Ask for channels
-	if not args.channels:
+	if not args.channel:
 		cp.cprint("Enter the login names of the Twitch channels you'd like to have archived.")
 		cp.cprint("When you're done, just leave the input empty and press enter.")
 		cp.cprint("Example: the url is `https://twitch.tv/notquiteapex`, enter `notquiteapex`")
 		while True:
 			channel = input("> ")
-			if channel == "":
+			if channel == "" and len(channels) > 0:
 				break
-			elif channel.isalnum():
-				cp.cprint("Error, channel names must be alphanumeric.")
+			elif channel == "" and len(channels) == 0:
+				cp.cprint("Error, no channels given.")
+			elif not re.match(r"^[a-zA-Z0-9][\w]{0,24}$", channel): # https://discuss.dev.twitch.tv/t/3855/4
+				cp.cprint("Error, channel names only contain characters A-Z, 0-9, and '_'. They also can't start with '_'.")
 			else:
 				channels += [channel]
 	else:
-		channels = args.channels
+		channels = args.channel
 
 	# Ask for timezone as UTC string
 	if not args.timezone:
 		cp.cprint("Enter the UTC timezone for timedate referencing. Only use +, -, and numbers.")
 		cp.cprint("Example: `+0000` for UTC, `-0500` for America's EST. Default: `+0000`")
-		regex = re.compile(r"^[+-]\d\d\d\d$")
 		while True:
 			tz = input("> ")
 			if tz == "":
 				tz = "+0000"
 				break
-			elif not regex.match(tz):
+			elif not re.match(r"^[+-]\d\d\d\d$", tz):
 				cp.cprint("Error, UTC string not recognized.")
 			else:
 				break
@@ -54,26 +55,27 @@ def create_config(args):
 	cp.cprint("Now let's get some directories to store data. The entered paths must be absolute, not relative.")
 	cp.cprint("If you'd like to use the default location listed, just leave the input blank and press enter.")
 
-	parts = (
-		[args.voddir, "VODs", DEFAULT_CONF['vod_dir']]
-		[args.clipdir, "Clips", DEFAULT_CONF['clip_dir']]
-		[args.tempdir, "temporary data", DEFAULT_CONF['temp_dir']]
+	parts = [
+		[args.voddir, "VODs", DEFAULT_CONF['vod_dir']],
+		[args.clipdir, "Clips", DEFAULT_CONF['clip_dir']],
+		[args.tempdir, "temporary data", DEFAULT_CONF['temp_dir']],
 		[args.stagedir, "staged data", DEFAULT_CONF['stage_dir']]
-	)
+	]
 
 	for part in parts:
 		if not part[0]:
 			cp.cprint(f"Enter where {part[1]} should be stored.\nDefault: `{part[2]}`")
-			inpdir = input("> ")
-			if inpdir == "":
-				part[3] = part[2]
-				break
-			elif isabs(inpdir):
-				# TODO: check if directory can be created? a file might already exist?
-				part[3] = inpdir
-				break
-			else:
-				cp.cprint(f"Error, directory `{inpdir}` is not an absolute path for a directory.")
+			while True:
+				inpdir = input("> ")
+				if inpdir == "":
+					part.append(part[2])
+					break
+				elif isabs(inpdir):
+					# TODO: check if directory can be created? a file might already exist?
+					part.append(inpdir)
+					break
+				else:
+					cp.cprint(f"Error, directory `{inpdir}` is not an absolute path for a directory.")
 		else:
 			part[3] = part[0]
 
@@ -103,7 +105,7 @@ def run(args):
 	makedirs(DEFAULT_CONF['stage_dir'], exist_ok=True)
 
 	# now write the config
-	with open(str(vodbotdir / "conf.json")) as f:
+	with open(str(vodbotdir / "conf.json"), "w") as f:
 		json.dump(DEFAULT_CONF, f, indent=4)
 
 	# list the location of the config and say what can be edited outside this command
