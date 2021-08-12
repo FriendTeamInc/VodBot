@@ -42,23 +42,6 @@ def make_dir(directory):
 	os.makedirs(str(directory), exist_ok=True)
 
 
-def make_conf(filename, conf):
-	"""
-	Writes the configuration JSON that defines VodBot's Twitch.tv operation.
-
-	:param filename: A string of where the configuration json should be written to.
-	"""
-
-	filedata = json.dumps(conf, indent=4)
-
-	try:
-		make_dir(Path(filename).parent)
-		with open(filename, "w") as f:
-			f.write(filedata)
-	except FileNotFoundError:
-		exit_prog(67, f"Cannot create file at \"{filename}\".")
-
-
 def load_conf(filename):
 	"""
 	Loads the config of VodBot at a specific directory.

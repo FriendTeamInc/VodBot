@@ -2,7 +2,6 @@
 
 import json
 import re
-from os import makedirs
 from os.path import isabs
 
 import vodbot.util as util
@@ -100,13 +99,18 @@ def run(args):
 		create_config(args)
 	
 	# create directories now
-	makedirs(DEFAULT_CONF['vod_dir'], exist_ok=True)
-	makedirs(DEFAULT_CONF['clip_dir'], exist_ok=True)
-	makedirs(DEFAULT_CONF['temp_dir'], exist_ok=True)
-	makedirs(DEFAULT_CONF['stage_dir'], exist_ok=True)
+	util.make_dir(DEFAULT_CONF['vod_dir'], exist_ok=True)
+	util.make_dir(DEFAULT_CONF['clip_dir'], exist_ok=True)
+	util.make_dir(DEFAULT_CONF['temp_dir'], exist_ok=True)
+	util.make_dir(DEFAULT_CONF['stage_dir'], exist_ok=True)
 
 	# now write the config
-	util.make_conf(str(DEFAULT_CONF_PATH), DEFAULT_CONF)
+	try:
+		util.make_dir(DEFAULT_CONF_PATH.parent)
+		with open(str(DEFAULT_CONF_PATH), "w") as f:
+			json.dump(f, DEFAULT_CONF, indent=4)
+	except FileNotFoundError:
+		util.exit_prog(67, f"Cannot create file at \"{DEFAULT_CONF_PATH}\".")
 
 	# list the location of the config and say what can be edited outside this command
 	cp.cprint(f"Finished, the config can be edited at `{str(vodbotdir / 'conf.json')}`.")
