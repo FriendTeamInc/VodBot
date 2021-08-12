@@ -9,7 +9,7 @@ import json
 import subprocess
 from datetime import datetime
 from pathlib import Path
-from os import listdir as os_listdir, makedirs as os_mkdir, remove as os_remove
+from os import listdir as os_listdir, remove as os_remove
 from os.path import isfile as os_isfile
 
 
@@ -82,7 +82,7 @@ def run(args):
 		stagedatas.sort(key=sort_stagedata)
 
 		# Export with ffmpeg
-		os_mkdir(args.path, exist_ok=True)
+		util.make_dir(args.path)
 		args.path = Path(args.path)
 		for stage in stagedatas:
 			if export_video(args.path, stage) == True:
@@ -98,7 +98,7 @@ def run(args):
 		stagedata = load_stage(args.id)
 		
 		# Export with ffmpeg
-		os_mkdir(args.path, exist_ok=True)
+		util.make_dir(args.path)
 		args.path = Path(args.path)
 		if export_video(args.path, stagedata) == True:
 			# delete stage on success

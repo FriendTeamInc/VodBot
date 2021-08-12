@@ -3,10 +3,10 @@
 import vodbot.util as util
 from vodbot.printer import cprint, colorize
 
+import re
 import json
-import pytz
 import hashlib
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from os import walk as os_walk, remove as os_remove, listdir as os_listdir
 from os.path import isfile, isdir
@@ -62,16 +62,20 @@ class CouldntFindVideo(Exception):
 
 
 def create_format_dict(conf, streamers, utcdate=None, truedate=None):
-	timezone = None
+	thistz = None
 	datestring = None
 	if truedate == None:
 		try:
-			timezone = pytz.timezone(conf["stage_timezone"])
-		except pytz.UnknownTimeZoneError:
-			util.exit_prog(73, f"Unknown timezone {conf['timezone']}")
-		utc = pytz.utc
-		date = datetime.strptime(utcdate, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=utc)
-		datestring = date.astimezone(timezone).strftime("%Y/%m/%d")
+			# https://stackoverflow.com/a/37097784/13977827
+			sign, hours, minutes = re.match('([+\-]?)(\d{2})(\d{2})', '+0530').groups()
+			sign = -1 if sign == '-' else 1
+			hours, minutes = int(hours), int(minutes)
+
+			thistz = datetime.timezone(sign * datetime.timedelta(hours=hours, minutes=minutes))
+		except:
+			util.exit_prog(73, f"Unknown timezone {conf['stage_timezone']}")
+		date = datetime.strptime(utcdate, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+		datestring = date.astimezone(thistz).strftime("%Y/%m/%d")
 	else:
 		datestring = truedate
 	
@@ -89,7 +93,7 @@ def create_format_dict(conf, streamers, utcdate=None, truedate=None):
 			try:
 				string = string.format(**formatdict)
 				formatdict[item] = string
-			except KeyError:
+			except KeyError as err:
 				# ignore errors on first pass
 				if x == 1:
 					util.exit_prog(81, f"Format failed: {err}")

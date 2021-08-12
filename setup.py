@@ -20,7 +20,6 @@ setup(
 		"google-auth-httplib2>=0.1.0",
 		"google-auth-oauthlib>=0.4.4",
 		"requests>=2.20",
-		"pytz>=2021.1",
 		"m3u8>=0.8",
 	],
 	entry_points={
