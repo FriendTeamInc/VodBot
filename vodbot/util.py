@@ -11,6 +11,7 @@ from collections import OrderedDict
 
 
 vodbotdir = Path.home() / ".vodbot"
+DEFAULT_CONF_PATH = vodbotdir / "conf.json"
 DEFAULT_CONF = OrderedDict([
 	("twitch_channels", []),
 
@@ -41,14 +42,14 @@ def make_dir(directory):
 	os.makedirs(str(directory), exist_ok=True)
 
 
-def make_conf(filename):
+def make_conf(filename, conf):
 	"""
 	Writes the configuration JSON that defines VodBot's Twitch.tv operation.
 
 	:param filename: A string of where the configuration json should be written to.
 	"""
 
-	filedata = json.dumps(DEFAULT_CONF, indent=4)
+	filedata = json.dumps(conf, indent=4)
 
 	try:
 		make_dir(Path(filename).parent)
@@ -71,8 +72,7 @@ def load_conf(filename):
 		with open(filename) as f:
 			conf = json.load(f)
 	except FileNotFoundError:
-		make_conf(filename)
-		exit_prog(2, f"Config not found. A new one has been made at \"{filename}\".")
+		exit_prog(2, f"Config not found. You can configure VodBot with the init command.")
 	except json.decoder.JSONDecodeError as e:
 		exit_prog(98, f"Failed to decode config. \"{e.msg}\"")
 		

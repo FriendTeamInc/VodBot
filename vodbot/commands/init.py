@@ -10,6 +10,7 @@ import vodbot.printer as cp
 
 vodbotdir = util.vodbotdir
 DEFAULT_CONF = util.DEFAULT_CONF
+DEFAULT_CONF_PATH = util.DEFAULT_CONF_PATH
 
 
 def create_config(args):
@@ -105,8 +106,7 @@ def run(args):
 	makedirs(DEFAULT_CONF['stage_dir'], exist_ok=True)
 
 	# now write the config
-	with open(str(vodbotdir / "conf.json"), "w") as f:
-		json.dump(DEFAULT_CONF, f, indent=4)
+	util.make_conf(str(DEFAULT_CONF_PATH), DEFAULT_CONF)
 
 	# list the location of the config and say what can be edited outside this command
 	cp.cprint(f"Finished, the config can be edited at `{str(vodbotdir / 'conf.json')}`.")
