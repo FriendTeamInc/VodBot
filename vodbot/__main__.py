@@ -1,8 +1,8 @@
 from . import util, __project__, __version__
-from .printer import cprint, colorize
+from .printer import colorize
 
 import argparse
-from os.path import exists
+from pathlib import Path
 from importlib import import_module
 from requests.exceptions import ConnectionError
 
@@ -31,9 +31,8 @@ def main():
 	parser = argparse.ArgumentParser(epilog=titletext,
 		description="Downloads and processes VODs and clips from Twitch.tv channels.")
 	parser.add_argument("-v","--version", action="version", version=titletext)
-	parser.add_argument("-c", type=str, dest="config",
-		help="location of the Twitch config file",
-		default=str(vodbotdir / "conf.json"))
+	parser.add_argument("-c","--config", type=Path, dest="config",
+		help="location of the Twitch config file to use", default=util.DEFAULT_CONF_PATH)
 
 	# Subparsers for different commands
 	subparsers = parser.add_subparsers(title="command", dest="cmd", help="command to run.")
@@ -41,20 +40,22 @@ def main():
 	# `vodbot init`
 	initparse = subparsers.add_parser("init", epilog=titletext,
 		description="Runs the setup process for VodBot")
-	initparse.add_argument("--channel", type=str, default=[], nargs="?",
-		help="twitch.tv channel login to pull VODs/Clips from")
-	initparse.add_argument("--default", help="argument switch to write default config",
-		nargs="?", const=True, default=False, type=util.str2bool)
-	initparse.add_argument("--timezone", help="timezone for datetime referencing, as a UTC string",
-		type=str, required=False, default=None)
-	initparse.add_argument("--vod-dir", help="location to store VOD data",
-		type=str, required=False, default=None, dest="voddir")
-	initparse.add_argument("--clip-dir", help="location to store Clip data",
-		type=str, required=False, default=None, dest="clipdir")
-	initparse.add_argument("--temp-dir", help="location to store temporary data",
-		type=str, required=False, default=None, dest="tempdir")
-	initparse.add_argument("--stage-dir", help="location to store staged data",
-		type=str, required=False, default=None, dest="stagedir")
+	initparse.add_argument("--output", help="path to save the config to; defaults to ~/.vodbot/conf.json",
+		type=Path, required=False, default=util.DEFAULT_CONF_PATH, dest="output", metavar="PATH")
+	initparse.add_argument("--default", action="store_true",
+		help="argument switch to write default config; overrides all subsequent options")
+	initparse.add_argument("--channels", type=str, default=[], nargs="+",
+		help="twitch.tv channel login to pull VODs/Clips from", metavar="CHL")
+	initparse.add_argument("--timezone", type=str, required=False, default=None,
+		help="timezone for datetime referencing, as a UTC string")
+	initparse.add_argument("--vod-dir", help="absolute path to store VOD data",
+		type=Path, required=False, default=None, dest="voddir", metavar="PATH")
+	initparse.add_argument("--clip-dir", help="absolute path to store Clip data",
+		type=Path, required=False, default=None, dest="clipdir", metavar="PATH")
+	initparse.add_argument("--temp-dir", help="absolute path to store temporary data",
+		type=Path, required=False, default=None, dest="tempdir", metavar="PATH")
+	initparse.add_argument("--stage-dir", help="absolute path to store staged data",
+		type=Path, required=False, default=None, dest="stagedir", metavar="PATH")
 
 	# `vodbot pull <vods/clips/both> [channel ...]`
 	download = subparsers.add_parser("download", aliases=["pull", "download"],
@@ -113,7 +114,7 @@ def main():
 	export = subparsers.add_parser("export", aliases=["export", "slice"],
 		epilog=titletext, description="Uploads stage(s) to YouTube.")
 	export.add_argument("id", type=str, help="id of the staged video data, or `all` for all stages")
-	export.add_argument("path", type=str, help="directory to expor the video(s) to")
+	export.add_argument("path", type=Path, help="directory to export the video(s) to")
 
 	args = parser.parse_args()
 
