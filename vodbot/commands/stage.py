@@ -62,19 +62,20 @@ class CouldntFindVideo(Exception):
 
 
 def create_format_dict(conf, streamers, utcdate=None, truedate=None):
-	timezone = None
+	thistz = None
 	datestring = None
 	if truedate == None:
 		try:
+			# https://stackoverflow.com/a/37097784/13977827
 			sign, hours, minutes = re.match('([+\-]?)(\d{2})(\d{2})', '+0530').groups()
 			sign = -1 if sign == '-' else 1
 			hours, minutes = int(hours), int(minutes)
 
-			timezone = datetime.timezone(sign * datetime.timedelta(hours=hours, minutes=minutes))
+			thistz = datetime.timezone(sign * datetime.timedelta(hours=hours, minutes=minutes))
 		except:
 			util.exit_prog(73, f"Unknown timezone {conf['stage_timezone']}")
 		date = datetime.strptime(utcdate, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
-		datestring = date.astimezone(timezone).strftime("%Y/%m/%d")
+		datestring = date.astimezone(thistz).strftime("%Y/%m/%d")
 	else:
 		datestring = truedate
 	

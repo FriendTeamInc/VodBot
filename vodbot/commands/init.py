@@ -2,6 +2,7 @@
 
 import json
 import re
+from os import makedirs
 from os.path import isabs
 
 import vodbot.util as util
@@ -65,8 +66,14 @@ def create_config(args):
 			cp.cprint(f"Enter where {part[1]} should be stored.\nDefault: `{part[2]}`")
 			inpdir = input("> ")
 			if inpdir == "":
+				part[3] = part[2]
+				break
+			elif isabs(inpdir):
+				# TODO: check if directory can be created? a file might already exist?
 				part[3] = inpdir
 				break
+			else:
+				cp.cprint(f"Error, directory `{inpdir}` is not an absolute path for a directory.")
 		else:
 			part[3] = part[0]
 
@@ -80,20 +87,24 @@ def create_config(args):
 	DEFAULT_CONF['temp_dir'] = parts[2][3]
 	DEFAULT_CONF['stage_dir'] = parts[3][3]
 
-	with open(str(vodbotdir / "conf.json")) as f:
-		json.dump(DEFAULT_CONF, f, indent=4)
-
 
 def run(args):
 	if args.default:
 		# generate default config
 		cp.cprint("Creating default config...")
-
-		with open(str(vodbotdir / "conf.json")) as f:
-			json.dump(DEFAULT_CONF, f, indent=4)
 	else:
 		# generate config from inputs
 		create_config(args)
+	
+	# create directories now
+	makedirs(DEFAULT_CONF['vod_dir'], exist_ok=True)
+	makedirs(DEFAULT_CONF['clip_dir'], exist_ok=True)
+	makedirs(DEFAULT_CONF['temp_dir'], exist_ok=True)
+	makedirs(DEFAULT_CONF['stage_dir'], exist_ok=True)
+
+	# now write the config
+	with open(str(vodbotdir / "conf.json")) as f:
+		json.dump(DEFAULT_CONF, f, indent=4)
 
 	# list the location of the config and say what can be edited outside this command
 	cp.cprint(f"Finished, the config can be edited at `{str(vodbotdir / 'conf.json')}`.")
