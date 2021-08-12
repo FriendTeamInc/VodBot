@@ -24,6 +24,7 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from googleapiclient.errors import HttpError, ResumableUploadError
 from google.auth.transport.requests import Request
+from google.auth.exceptions import RefreshError
 
 
 # Default path
@@ -209,10 +210,14 @@ def run(args):
 		with open(PICKLE_FILE, "rb") as f:
 			credentials = pickle.load(f)
 	
-	if not credentials or not credentials.valid:
-		if credentials and credentials.expired and credentials.refresh_token:
-			credentials.refresh(Request())
-		else:
+	if not credentials or credentials.invalid:
+		try:
+			if credentials and credentials.expired and credentials.refresh_token:
+				credentials.refresh(Request())
+			else:
+				flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET_FILE, SCOPES)
+				credentials = flow.run_console()
+		except RefreshError:
 			flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET_FILE, SCOPES)
 			credentials = flow.run_console()
 		
