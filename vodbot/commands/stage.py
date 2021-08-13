@@ -5,7 +5,8 @@ from vodbot.printer import cprint, colorize
 
 import re
 import json
-import hashlib
+import string
+import random
 from datetime import datetime, timezone
 from pathlib import Path
 from os import walk as os_walk, remove as os_remove, listdir as os_listdir
@@ -17,7 +18,7 @@ vodbotdir = util.vodbotdir
 
 
 class StageData():
-	def __init__(self, title, desc, ss, to, streamers, datestring, filename):
+	def __init__(self, title, desc, ss, to, streamers, datestring, filename, cid=None):
 		self.title = title
 		self.desc = desc
 		self.ss = ss
@@ -26,21 +27,16 @@ class StageData():
 		self.datestring = datestring
 		self.filename = filename
 
-		self.hash = hashlib.sha1()
-		self.hash.update(self.title.encode("utf-8"))
-		self.hash.update(self.desc.encode("utf-8"))
-		self.hash.update(self.ss.encode("utf-8"))
-		self.hash.update(self.to.encode("utf-8"))
-		self.hash.update(self.datestring.encode("utf-8"))
-		self.hash.update(self.filename.encode("utf-8"))
-		
-		self.hashdigest = self.hash.hexdigest()[:8]
+		if cid is None:
+			self.gen_new_hash()
+		else:
+			self.id = cid
 	
 	def __repr__(self):
-		return f"StageData(\"{self.title}\", {self.hashdigest})"
+		return f"StageData(\"{self.title}\", {self.id})"
 	
 	def __hash__(self):
-		return hash((self.title, self.desc, self.ss, self.to, self.filename))
+		return self.id
 	
 	def write_stage(self, filename):
 		with open(filename, "w") as f:
@@ -52,9 +48,14 @@ class StageData():
 				"filename": self.filename,
 				"streamers": self.streamers,
 				"datestring": self.datestring,
-				"hash": self.hash.hexdigest()
+				"hash": self.id
 			}
 			json.dump(jsondump, f)
+	
+	def gen_new_hash(self):
+		self.id = ""
+		for _ in range(4):
+			self.id += random.choice(string.ascii_lowercase + string.digits)
 
 
 class CouldntFindVideo(Exception):
@@ -276,10 +277,10 @@ def _add(args, conf, stagedir):
 
 	print()
 	cprint(f"#r`#fC{stage.title}#r` #d({stage.ss} - {stage.to})#r")
-	cprint(f"#d''' {shortfile}#r\n#fG{stage.desc}#r\n#d''' {stage.hashdigest}#r")
+	cprint(f"#d''' {shortfile}#r\n#fG{stage.desc}#r\n#d''' {stage.id}#r")
 	cprint(f"#d#fM{' '.join(stage.streamers)}#r")
 	
-	stagename = str(stagedir / (stage.hashdigest + ".stage"))
+	stagename = str(stagedir / (stage.id + ".stage"))
 	stage.write_stage(stagename)
 
 	# Done!
@@ -336,7 +337,7 @@ def _list(args, conf, stagedir):
 
 		print()
 		cprint(f"#r`#fC{stage.title}#r` #d({stage.ss} - {stage.to})#r")
-		cprint(f"#d''' {shortfile}#r\n#fG{stage.desc}#r\n#d''' #fYHash: {stage.hashdigest}#r")
+		cprint(f"#d''' {shortfile}#r\n#fG{stage.desc}#r\n#d''' #fYHash: {stage.id}#r")
 		cprint(f"#d#fM{' '.join(stage.streamers)}#r")
 
 
@@ -369,7 +370,7 @@ def _edit(args, conf, stagedir):
 
 	cprint("#l#fRCurrent stage:")
 	cprint(f"#r`#fC{old_stage.title}#r` #d({old_stage.ss} - {old_stage.to})#r")
-	cprint(f"#d''' {shortfile}#r\n#fG{old_stage.desc}#r\n#d''' #fYHash: {old_stage.hashdigest}#r")
+	cprint(f"#d''' {shortfile}#r\n#fG{old_stage.desc}#r\n#d''' #fYHash: {old_stage.id}#r")
 	cprint(f"#d#fM{' '.join(old_stage.streamers)}#r")
 	
 	# Now to take the edits, where blank responses are defaulted to the original value.
@@ -432,7 +433,7 @@ def _edit(args, conf, stagedir):
 
 	cprint("#l#fRNew stage:")
 	cprint(f"#r`#fC{new_stage.title}#r` #d({new_stage.ss} - {new_stage.to})#r")
-	cprint(f"#d''' {shortfile}#r\n#fG{new_stage.desc}#r\n#d''' #fYHash: {new_stage.hashdigest}#r")
+	cprint(f"#d''' {shortfile}#r\n#fG{new_stage.desc}#r\n#d''' #fYHash: {new_stage.id}#r")
 	cprint(f"#d#fM{' '.join(new_stage.streamers)}#r")
 
 	color_input = colorize("#l#fRSave changes and remove old stage?#r (y/N) ")
@@ -445,8 +446,8 @@ def _edit(args, conf, stagedir):
 	if new_input == "n":
 		cprint("#l#fRNot writing new stage.#r #dExiting...#r")
 	elif new_input == "y":
-		new_stagename = str(stagedir / (new_stage.hashdigest + ".stage"))
-		old_stagename = str(stagedir / (old_stage.hashdigest + ".stage"))
+		new_stagename = str(stagedir / (new_stage.id + ".stage"))
+		old_stagename = str(stagedir / (old_stage.id + ".stage"))
 		new_stage.write_stage(new_stagename)
 		os_remove(old_stagename) # TODO: exception check this
 		cprint("#l#fRWrote new stage.#r")
