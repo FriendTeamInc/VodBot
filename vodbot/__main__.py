@@ -116,6 +116,11 @@ def main():
 	export.add_argument("id", type=str, help="id of the staged video data, or `all` for all stages")
 	export.add_argument("path", type=Path, help="directory to export the video(s) to")
 
+	# `vodbot upload <id/all>`
+	info = subparsers.add_parser("info", epilog=titletext,
+		description="Prints out info on the Channel, Clip, or VOD given.")
+	info.add_argument("id", type=str, help="id/url of the Channel, Clip, or VOD")
+	
 	args = parser.parse_args()
 
 	# Handle commands
@@ -134,6 +139,9 @@ def main():
 	elif args.cmd == "export":
 		export = import_module(".commands.export", "vodbot")
 		export.run(args)
+	elif args.cmd == "info":
+		info = import_module(".commands.info", "vodbot")
+		info.run(args)
 
 
 if __name__ == "__main__":
