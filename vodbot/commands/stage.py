@@ -280,7 +280,7 @@ def _add(args, conf, stagedir):
 	cprint(f"#d''' {shortfile}#r\n#fG{stage.desc}#r\n#d''' {stage.id}#r")
 	cprint(f"#d#fM{' '.join(stage.streamers)}#r")
 	
-	stagename = str(stagedir / (stage.id + ".stage"))
+	stagename = str(stagedir / stage.id)
 	stage.write_stage(stagename)
 
 	# Done!
@@ -312,7 +312,7 @@ def _list(args, conf, stagedir):
 		if len(stages) == 0:
 			cprint("#fBNothing staged right now.#r")
 	else:
-		if not isfile(str(stagedir / (args.id + ".stage"))):
+		if not isfile(str(stagedir / args.id)):
 			util.exit_prog(45, f'Could not find stage "{args.id}".')
 		
 		jsonread = None
@@ -345,7 +345,7 @@ def _edit(args, conf, stagedir):
 	VODS_DIR = conf["vod_dir"]
 	CLIPS_DIR = conf["clip_dir"]
 
-	if not isfile(str(stagedir / (args.id + ".stage"))):
+	if not isfile(str(stagedir / args.id)):
 		util.exit_prog(45, f'Could not find stage "{args.id}".')
 	
 	jsonread = None
@@ -446,8 +446,8 @@ def _edit(args, conf, stagedir):
 	if new_input == "n":
 		cprint("#l#fRNot writing new stage.#r #dExiting...#r")
 	elif new_input == "y":
-		new_stagename = str(stagedir / (new_stage.id + ".stage"))
-		old_stagename = str(stagedir / (old_stage.id + ".stage"))
+		new_stagename = str(stagedir / new_stage.id)
+		old_stagename = str(stagedir / old_stage.id)
 		new_stage.write_stage(new_stagename)
 		os_remove(old_stagename) # TODO: exception check this
 		cprint("#l#fRWrote new stage.#r")
@@ -464,11 +464,11 @@ def run(args):
 	elif args.action == "edit":
 		_edit(args, conf, stagedir)
 	elif args.action == "rm":
-		if not isfile(str(stagedir / (args.id + ".stage"))):
+		if not isfile(str(stagedir / args.id)):
 			util.exit_prog(45, f'Could not find stage "{args.id}".')
 		
 		try:
-			os_remove(str(stagedir / (args.id + ".stage")))
+			os_remove(str(stagedir / args.id))
 			cprint(f'Stage "#fY#l{args.id}#r" has been #fRremoved#r.')
 		except OSError as err:
 			util.exit_prog(88, f'Stage "{args.id}" could not be removed due to an error. {err}')
