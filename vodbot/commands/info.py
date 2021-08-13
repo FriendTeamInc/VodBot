@@ -1,6 +1,7 @@
 # Info, command to inspect a piece of media from Twitch
 
 import re
+from vodbot.printer import cprint
 
 from vodbot import util
 from vodbot.itd import gql
@@ -36,6 +37,7 @@ def run(args):
 	tid = args.id
 
 	# Get the proper id and type of content we need to pull
+	cprint("#dDetermining type...#r")
 	cid, ctype = get_type(tid)
 
 	# The call the appropriate info query for GQL
@@ -48,19 +50,21 @@ def run(args):
 		query = gql.GET_CHANNEL_QUERY.format(channel_id=cid)
 	else:
 		util.exit_prog(92, "Could not determine content type from input.")
+		
+	cprint(f"#dQuerying `{ctype}` content for `{cid}`...#r")
 	
 	# run the query
 	resp = gql.gql_query(query=query).json()
-	if resp["data"]["user"] == None:
+	resp = resp["data"]
+	if resp.get("video") == None and resp.get("clip") == None and resp.get("user") == None:
 		util.exit_prog(93, "Could not query info on content from input.")
-	resp = resp["data"]["user"]
 	
 	# Read the data back and out to the terminal
 	if ctype == "vod":
-		print(resp)
+		print(resp["video"])
 	elif ctype == "clip":
-		print(resp)
+		print(resp["clip"])
 	elif ctype == "channel":
-		print(resp)
+		print(resp["user"])
 
 	# Done!
