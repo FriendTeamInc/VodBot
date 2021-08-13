@@ -122,16 +122,16 @@ def main():
 	if args.cmd == "init":
 		init = import_module(".commands.init", "vodbot")
 		init.run(args)
-	elif args.cmd == "pull":
+	elif args.cmd == "pull" or args.cmd == "download":
 		pull = import_module(".commands.pull", "vodbot")
 		pull.run(args)
 	elif args.cmd == "stage":
 		stage = import_module(".commands.stage", "vodbot")
 		stage.run(args)
-	elif args.cmd == "upload":
+	elif args.cmd == "upload" or args.cmd == "push":
 		upload = import_module(".commands.upload", "vodbot")
 		upload.run(args)
-	elif args.cmd == "export":
+	elif args.cmd == "export" or args.cmd == "slice":
 		export = import_module(".commands.export", "vodbot")
 		export.run(args)
 
