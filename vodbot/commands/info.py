@@ -69,7 +69,7 @@ def run(args):
 	
 	# Read the data back and out to the terminal
 	if ctype == "vod":
-		r = resp["video"]
+		r = resp['video']
 		c = r['creator']
 		g = r['game']
 		cprint(f"Title: `{r['title']}`")
@@ -77,7 +77,15 @@ def run(args):
 		cprint(f"Playing: {g['name']} ({g['id']})")
 		cprint(f"At: {r['publishedAt']} - For: {r['lengthSeconds']} seconds")
 	elif ctype == "clip":
-		print(resp["clip"])
+		r = resp['clip']
+		c = r['curator']
+		b = r['broadcaster']
+		g = r['game']
+		cprint(f"Title: `{r['title']}`")
+		cprint(f"Clipper: {c['displayName']} - {c['login']} ({c['id']})")
+		cprint(f"Broadcaster: {b['displayName']} - {b['login']} ({b['id']})")
+		cprint(f"Playing: {g['name']} ({g['id']})")
+		cprint(f"At: {r['createdAt']} - For: {r['durationSeconds']} seconds - With: {r['viewCount']} views")
 	elif ctype == "channel":
 		print(resp["user"])
 

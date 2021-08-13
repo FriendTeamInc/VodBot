@@ -90,6 +90,7 @@ GET_CLIP_QUERY = """
 		videoQualities {{ frameRate quality sourceURL }}
 		game {{ id name }}
 		broadcaster {{ id displayName login }}
+		curator {{ id displayName login }}
 }}  }}
 """
 # Channel info query
