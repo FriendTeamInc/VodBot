@@ -5,7 +5,7 @@ import re
 from os.path import isabs
 
 import vodbot.util as util
-import vodbot.printer as cp
+from vodbot.printer import cprint
 
 vodbotdir = util.vodbotdir
 DEFAULT_CONF = util.DEFAULT_CONF
@@ -35,17 +35,17 @@ def create_config(args):
 
 	# Ask for channels
 	if not args.channels:
-		cp.cprint("Enter the login names of the Twitch channels you'd like to have archived.")
-		cp.cprint("When you're done, just leave the input empty and press enter.")
-		cp.cprint("Example: the url is `https://twitch.tv/notquiteapex`, enter `notquiteapex`")
+		cprint("Enter the login names of the Twitch channels you'd like to have archived.")
+		cprint("When you're done, just leave the input empty and press enter.")
+		cprint("Example: the url is `https://twitch.tv/notquiteapex`, enter `notquiteapex`")
 		while True:
 			channel = input("> ")
 			if channel == "" and len(channels) > 0:
 				break
 			elif channel == "" and len(channels) == 0:
-				cp.cprint("Error, no channels given.")
+				cprint("#fRError#r, no channels given.")
 			elif not re.match(r"^[a-zA-Z0-9][\w]{0,24}$", channel): # https://discuss.dev.twitch.tv/t/3855/4
-				cp.cprint("Error, channel names only contain characters A-Z, 0-9, and '_'. They also can't start with '_'.")
+				cprint("#fRError#r, channel names only contain characters A-Z, 0-9, and '_'. They also can't start with '_'.")
 			else:
 				channels += [channel]
 	else:
@@ -54,15 +54,15 @@ def create_config(args):
 	# Ask for timezone as UTC string
 	# We only absolutely need the hours and minutes offset, and we regex it out of the string.
 	if not args.timezone:
-		cp.cprint("Enter the UTC timezone for timedate referencing. Only use +, -, and numbers.")
-		cp.cprint("Example: `+0000` for UTC, `-0500` for America's EST. Default: `+0000`")
+		cprint("Enter the UTC timezone for timedate referencing. Only use +, -, and numbers.")
+		cprint("#dExample: `+0000` for UTC, `-0500` for America's EST. Default: `+0000`#r")
 		while True:
 			tz = input("> ")
 			if tz == "":
 				tz = "+0000"
 				break
 			elif not re.match(r"^[+-]\d\d\d\d$", tz):
-				cp.cprint("Error, UTC string not recognized.")
+				cprint("Error, UTC string not recognized.")
 			else:
 				break
 	else:
@@ -70,12 +70,12 @@ def create_config(args):
 		# check that entered timezone is valid
 
 	# ask for directories (any provided by the terminal arguments are already handeled.)
-	cp.cprint("Now let's get some directories to store data. The entered paths must be absolute, not relative.")
-	cp.cprint("If you'd like to use the default location listed, just leave the input blank and press enter.")
+	cprint("Now let's get some directories to store data. The entered paths must be absolute, not relative.")
+	cprint("If you'd like to use the default location listed, just leave the input blank and press enter.")
 
 	for part in parts:
 		if not part[0]:
-			cp.cprint(f"Enter where {part[1]} should be stored.\nDefault: `{part[2]}`")
+			cprint(f"Enter where {part[1]} should be stored.\n#dDefault: `#l{part[2]}`#r")
 			while True:
 				inpdir = input("> ")
 				if inpdir == "":
@@ -86,10 +86,10 @@ def create_config(args):
 					part.append(inpdir)
 					break
 				else:
-					cp.cprint(f"Error, directory `{inpdir}` is not an absolute path for a directory.")
+					cprint(f"#fRError#r, directory `#l{inpdir}#r` is not an absolute path for a directory.")
 
 	# ready to write it all, go!
-	cp.cprint("Writing config...")
+	cprint("#dWriting config...#r")
 	# Edit default config variable.
 	DEFAULT_CONF['twitch_channels'] = channels
 	DEFAULT_CONF['stage_timezone'] = timezone
@@ -112,7 +112,7 @@ def run(args):
 	# see which config we should make
 	if args.default:
 		# generate default config
-		cp.cprint("Creating default config...")
+		cprint("#dCreating default config...#r")
 	else:
 		# generate config from inputs
 		create_config(args)
@@ -129,7 +129,7 @@ def run(args):
 		with open(str(args.output), "w") as f:
 			json.dump(DEFAULT_CONF, f, indent=4)
 	except FileNotFoundError:
-		util.exit_prog(67, f"Cannot create file at \"{args.output}\".")
+		util.exit_prog(68, f"Cannot create file at \"{args.output}\" despite being able to before.")
 
 	# list the location of the config and say what can be edited outside this command
-	cp.cprint(f"Finished, the config can be edited at `{str(vodbotdir / 'conf.json')}`.")
+	cprint(f"#fGFinished#r, the config can be edited at `#l{str(vodbotdir / 'conf.json')}#r`.")
