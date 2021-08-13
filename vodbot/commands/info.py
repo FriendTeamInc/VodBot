@@ -22,6 +22,12 @@ PATTERNS = {
 	]
 }
 
+keytrans = {
+	"vod": "VOD",
+	"clip": "Clip",
+	"channel": "channel"
+}
+
 
 def get_type(cid):
 	for ctype, clist in PATTERNS.items():
@@ -39,7 +45,7 @@ def run(args):
 	tid = args.id
 
 	# Get the proper id and type of content we need to pull
-	cprint("#dDetermining type...#r")
+	cprint("#dDetermining type...#r", end=" ")
 	cid, ctype = get_type(tid)
 
 	# The call the appropriate info query for GQL
@@ -53,7 +59,7 @@ def run(args):
 	else:
 		util.exit_prog(92, "Could not determine content type from input.")
 		
-	cprint(f"#dQuerying `{ctype}` content for `{cid}`...#r")
+	cprint(f"#dQuerying {keytrans[ctype]} content for `{cid}`...#r")
 	
 	# run the query
 	resp = gql.gql_query(query=query).json()
