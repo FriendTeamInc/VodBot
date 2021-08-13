@@ -25,7 +25,7 @@ PATTERNS = {
 keytrans = {
 	"vod": "VOD",
 	"clip": "Clip",
-	"channel": "channel"
+	"channel": "Channel"
 }
 
 
@@ -72,27 +72,27 @@ def run(args):
 		r = resp['video']
 		c = r['creator']
 		g = r['game']
-		cprint(f"Title: `{r['title']}`")
-		cprint(f"Broadcaster: {c['displayName']} - {c['login']} ({c['id']})")
-		cprint(f"Playing: {g['name']} ({g['id']})")
-		cprint(f"At: {r['publishedAt']} - For: {r['lengthSeconds']} seconds")
+		cprint(f"#fGTitle: `{r['title']}`#r")
+		cprint(f"#fMBroadcaster: {c['displayName']} - {c['login']} ({c['id']})#r")
+		cprint(f"#fCPlaying: {g['name']} ({g['id']})#r")
+		cprint(f"#fYAt: {r['publishedAt']} - For: {r['lengthSeconds']} seconds#r")
 	elif ctype == "clip":
 		r = resp['clip']
 		c = r['curator']
 		b = r['broadcaster']
 		g = r['game']
-		cprint(f"Title: `{r['title']}`")
-		cprint(f"Clipper: {c['displayName']} - {c['login']} ({c['id']})")
-		cprint(f"Broadcaster: {b['displayName']} - {b['login']} ({b['id']})")
-		cprint(f"Playing: {g['name']} ({g['id']})")
-		cprint(f"At: {r['createdAt']} - For: {r['durationSeconds']} seconds - With: {r['viewCount']} views")
+		cprint(f"#fGTitle: `{r['title']}`#r")
+		cprint(f"#fBClipper: {c['displayName']} - {c['login']} ({c['id']})#r")
+		cprint(f"#fMBroadcaster: {b['displayName']} - {b['login']} ({b['id']})#r")
+		cprint(f"#fCPlaying: {g['name']} ({g['id']})#r")
+		cprint(f"#fYAt: {r['createdAt']} - For: {r['durationSeconds']} seconds - With: {r['viewCount']} views#r")
 	elif ctype == "channel":
 		r = resp['user']
-		cprint(f"Broadcaster: {r['displayName']} - {r['login']} ({r['id']})")
-		cprint(f"Description: {r['description']}")
-		cprint(f"Channel Created At: {r['createdAt']}")
+		cprint(f"#fMBroadcaster: {r['displayName']} - {r['login']} ({r['id']})#r")
+		cprint(f"#fRDescription: {r['description']}#r")
+		cprint(f"#fYChannel Created At: {r['createdAt']}#r")
 		r = r['roles']
-		cprint(f"Roles: Affiliate={r['isAffiliate']} - Partner={r['isPartner']}")
+		cprint(f"#fBRoles: Affiliate={r['isAffiliate']} - Partner={r['isPartner']}#r")
 		#cprint(f"Site Roles: Staff={r['isStaff']} - GlobalMod={r['isGlobalMod']} - SiteAdmin={r['isSiteAdmin']}")
 
 	# Done!
