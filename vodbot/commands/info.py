@@ -87,6 +87,12 @@ def run(args):
 		cprint(f"Playing: {g['name']} ({g['id']})")
 		cprint(f"At: {r['createdAt']} - For: {r['durationSeconds']} seconds - With: {r['viewCount']} views")
 	elif ctype == "channel":
-		print(resp["user"])
+		r = resp['user']
+		cprint(f"Broadcaster: {r['displayName']} - {r['login']} ({r['id']})")
+		cprint(f"Description: {r['description']}")
+		cprint(f"Channel Created At: {r['createdAt']}")
+		r = r['roles']
+		cprint(f"Roles: Affiliate={r['isAffiliate']} - Partner={r['isPartner']}")
+		#cprint(f"Site Roles: Staff={r['isStaff']} - GlobalMod={r['isGlobalMod']} - SiteAdmin={r['isSiteAdmin']}")
 
 	# Done!

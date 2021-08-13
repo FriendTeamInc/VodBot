@@ -98,7 +98,7 @@ GET_CHANNEL_QUERY = """
 {{  user(login: "{channel_id}") {{
 		id login displayName
 		description createdAt
-		roles {{ isPartner }}
+		roles {{ isAffiliate isPartner }}
 		stream {{
 			id title type
 			viewersCount createdAt
