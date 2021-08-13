@@ -2,6 +2,8 @@
 
 import re
 
+from vodbot import util
+from vodbot.itd import gql
 
 PATTERNS = {
 	"vod": [
@@ -31,14 +33,34 @@ def get_type(cid):
 def run(args):
 	# First determine what kind of data it is...
 	# We should allow people to paste full links or just the ID too.
-	cid = args.id
+	tid = args.id
 
 	# Get the proper id and type of content we need to pull
-	cid, ctype = get_type(cid)
+	cid, ctype = get_type(tid)
 
 	# The call the appropriate info query for GQL
-
+	query = None
+	if ctype == "vod":
+		query = gql.GET_VIDEO_QUERY.format(video_id=cid)
+	elif ctype == "clip":
+		query = gql.GET_CLIP_QUERY.format(clip_slug=cid)
+	elif ctype == "channel":
+		query = gql.GET_CHANNEL_QUERY.format(channel_id=cid)
+	else:
+		util.exit_prog(92, "Could not determine content type from input.")
+	
+	# run the query
+	resp = gql.gql_query(query=query).json()
+	if resp["data"]["user"] == None:
+		util.exit_prog(93, "Could not query info on content from input.")
+	resp = resp["data"]["user"]
+	
 	# Read the data back and out to the terminal
+	if ctype == "vod":
+		print(resp)
+	elif ctype == "clip":
+		print(resp)
+	elif ctype == "channel":
+		print(resp)
 
 	# Done!
-	pass
