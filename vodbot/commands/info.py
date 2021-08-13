@@ -9,12 +9,12 @@ from vodbot.itd import gql
 PATTERNS = {
 	"vod": [
 		r"^(?P<id>\d+)?$",
-		r"^(https?://)?(www\.)?twitch.tv/videos/(?P<id>\d+)(\?\.+)?$"
+		r"^(https?://)?(www\.)?twitch.tv/videos/(?P<id>\d+)(\?.*)?$"
 	],
 	"clip": [
 		r"^(?P<id>[A-Za-z0-9]+(?:-[A-Za-z0-9_-]{16})?)$",
-		r"^(https?://)?(www\.)?twitch.tv/\w+/clip/(?P<id>[A-Za-z0-9]+(?:-[A-Za-z0-9_-]{16})?)(\?\.+)?$",
-		r"^(https?://)?clips\.twitch.tv/(?P<id>[A-Za-z0-9]+(?:-[A-Za-z0-9_-]{16})?)(\?\.+)?$"
+		r"^(https?://)?(www\.)?twitch.tv/\w+/clip/(?P<id>[A-Za-z0-9]+(?:-[A-Za-z0-9_-]{16})?)(\?.*)?$",
+		r"^(https?://)?clips\.twitch.tv/(?P<id>[A-Za-z0-9]+(?:-[A-Za-z0-9_-]{16})?)(\?.*)?$"
 	],
 	"channel": [
 		r"^[a-zA-Z0-9][\w]{0,24}$",
@@ -29,6 +29,8 @@ def get_type(cid):
 			match = re.match(pattern, cid)
 			if match:
 				return match.group("id"), ctype
+	
+	return None, None
 
 
 def run(args):
@@ -61,7 +63,13 @@ def run(args):
 	
 	# Read the data back and out to the terminal
 	if ctype == "vod":
-		print(resp["video"])
+		r = resp["video"]
+		c = r['creator']
+		g = r['game']
+		cprint(f"Title: `{r['title']}`")
+		cprint(f"Broadcaster: {c['displayName']} - {c['login']} ({c['id']})")
+		cprint(f"Playing: {g['name']} ({g['id']})")
+		cprint(f"At: {r['publishedAt']} - For: {r['lengthSeconds']} seconds")
 	elif ctype == "clip":
 		print(resp["clip"])
 	elif ctype == "channel":
