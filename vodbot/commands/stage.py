@@ -28,15 +28,12 @@ class StageData():
 		self.filename = filename
 
 		if cid is None:
-			self.gen_new_hash()
+			self.gen_new_id()
 		else:
 			self.id = cid
 	
 	def __repr__(self):
 		return f"StageData(\"{self.title}\", {self.id})"
-	
-	def __hash__(self):
-		return self.id
 	
 	def write_stage(self, filename):
 		with open(filename, "w") as f:
@@ -48,11 +45,11 @@ class StageData():
 				"filename": self.filename,
 				"streamers": self.streamers,
 				"datestring": self.datestring,
-				"hash": self.id
+				"id": self.id
 			}
 			json.dump(jsondump, f)
 	
-	def gen_new_hash(self):
+	def gen_new_id(self):
 		self.id = ""
 		for _ in range(4):
 			self.id += random.choice(string.ascii_lowercase + string.digits)
@@ -273,6 +270,7 @@ def _add(args, conf, stagedir):
 			args.desc = ""
 
 	stage = StageData(args.title, args.desc, args.ss, args.to, args.streamers, datestring, str(filename))
+	# TODO: Check that new "id" does not collide
 	shortfile = stage.filename.replace(VODS_DIR, "...").replace(CLIPS_DIR, "...")
 
 	print()
@@ -337,7 +335,7 @@ def _list(args, conf, stagedir):
 
 		print()
 		cprint(f"#r`#fC{stage.title}#r` #d({stage.ss} - {stage.to})#r")
-		cprint(f"#d''' {shortfile}#r\n#fG{stage.desc}#r\n#d''' #fYHash: {stage.id}#r")
+		cprint(f"#d''' {shortfile}#r\n#fG{stage.desc}#r\n#d''' #fYid: {stage.id}#r")
 		cprint(f"#d#fM{' '.join(stage.streamers)}#r")
 
 
@@ -364,13 +362,14 @@ def _edit(args, conf, stagedir):
 	old_streamers = jsonread['streamers']
 	old_datestring = jsonread['datestring']
 	old_filename = jsonread['filename']
+	old_id = jsonread['id']
 
-	old_stage = StageData(old_title, old_desc, old_ss, old_to, old_streamers, old_datestring, old_filename)
+	old_stage = StageData(old_title, old_desc, old_ss, old_to, old_streamers, old_datestring, old_filename, old_id)
 	shortfile = old_stage.filename.replace(VODS_DIR, "...").replace(CLIPS_DIR, "...")
 
 	cprint("#l#fRCurrent stage:")
 	cprint(f"#r`#fC{old_stage.title}#r` #d({old_stage.ss} - {old_stage.to})#r")
-	cprint(f"#d''' {shortfile}#r\n#fG{old_stage.desc}#r\n#d''' #fYHash: {old_stage.id}#r")
+	cprint(f"#d''' {shortfile}#r\n#fG{old_stage.desc}#r\n#d''' #fYID: {old_stage.id}#r")
 	cprint(f"#d#fM{' '.join(old_stage.streamers)}#r")
 	
 	# Now to take the edits, where blank responses are defaulted to the original value.
@@ -429,11 +428,12 @@ def _edit(args, conf, stagedir):
 			args.desc = ""
 
 	new_stage = StageData(args.title, args.desc, args.ss, args.to, args.streamers, old_datestring, old_filename)
+	# TODO: Check that new "id" does not collide
 	shortfile = new_stage.filename.replace(VODS_DIR, "...").replace(CLIPS_DIR, "...")
 
 	cprint("#l#fRNew stage:")
 	cprint(f"#r`#fC{new_stage.title}#r` #d({new_stage.ss} - {new_stage.to})#r")
-	cprint(f"#d''' {shortfile}#r\n#fG{new_stage.desc}#r\n#d''' #fYHash: {new_stage.id}#r")
+	cprint(f"#d''' {shortfile}#r\n#fG{new_stage.desc}#r\n#d''' #fYID: {new_stage.id}#r")
 	cprint(f"#d#fM{' '.join(new_stage.streamers)}#r")
 
 	color_input = colorize("#l#fRSave changes and remove old stage?#r (y/N) ")
