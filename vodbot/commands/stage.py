@@ -113,7 +113,6 @@ def find_video_by_id(vid_id, VODS_DIR, CLIPS_DIR):
 	clip_dirs = [d for d in os_listdir(CLIPS_DIR) if isdir(str(CLIPS_DIR_PATH / d))]
 
 	filename = None
-	metaname = None
 	
 	directories = [(vod_dirs, VODS_DIR_PATH), (clip_dirs, CLIPS_DIR_PATH)]
 
@@ -202,6 +201,26 @@ def check_time(prefix, inputstring, resp, default=None):
 		break
 
 	return output
+
+
+def _new(args, conf, stagedir):
+	# find the videos by their ids to confirm they exist
+
+	# get title
+
+	# get description
+
+	# get timestamps for each video through input
+
+	# make stage object
+
+	# write stage
+
+	# done
+
+	print(args)
+	print(conf)
+	print(stagedir)
 
 
 def _add(args, conf, stagedir):
@@ -454,19 +473,21 @@ def _edit(args, conf, stagedir):
 
 
 def run(args):
-	util.make_dir(vodbotdir)
-	stagedir = vodbotdir / "stage"
-	util.make_dir(stagedir)
 	conf = util.load_conf(args.config)
+	
+	util.make_dir(vodbotdir)
+	stagedir = conf["stage_dir"]
+	util.make_dir(stagedir)
 
-	if args.action == "add":
-		_add(args, conf, stagedir)
+	# if args.action == "add":
+	# 	_add(args, conf, stagedir)
+	if args.action == "new":
+		_new(args, conf, stagedir)
 	elif args.action == "edit":
 		_edit(args, conf, stagedir)
 	elif args.action == "rm":
 		if not isfile(str(stagedir / args.id)):
 			util.exit_prog(45, f'Could not find stage "{args.id}".')
-		
 		try:
 			os_remove(str(stagedir / args.id))
 			cprint(f'Stage "#fY#l{args.id}#r" has been #fRremoved#r.')
