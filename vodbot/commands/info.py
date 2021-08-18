@@ -22,7 +22,7 @@ PATTERNS = {
 	]
 }
 
-keytrans = {
+KEYTRANS = {
 	"vod": "VOD",
 	"clip": "Clip",
 	"channel": "Channel"
@@ -58,14 +58,15 @@ def run(args):
 		query = gql.GET_CHANNEL_QUERY.format(channel_id=cid)
 	else:
 		util.exit_prog(92, "Could not determine content type from input.")
+	cword = KEYTRANS[ctype]
 		
-	cprint(f"#dQuerying {keytrans[ctype]} content for `{cid}`...#r")
+	cprint(f"#dQuerying {cword} content for `{cid}`...#r")
 	
 	# run the query
 	resp = gql.gql_query(query=query).json()
 	resp = resp["data"]
-	if resp.get("video") == None and resp.get("clip") == None and resp.get("user") == None:
-		util.exit_prog(93, "Could not query info on content from input.")
+	if not any(resp.get("video"), resp.get("clip"), resp.get("user")):
+		util.exit_prog(93, f"Could not query info on {cword} content from input.")
 	
 	# Read the data back and out to the terminal
 	if ctype == "vod":
