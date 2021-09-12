@@ -7,7 +7,7 @@ import re
 import json
 import hashlib
 import datetime
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from os import walk as os_walk, remove as os_remove, listdir as os_listdir
 from os.path import isfile, isdir
@@ -72,7 +72,7 @@ def create_format_dict(conf, streamers, utcdate=None, truedate=None):
 			sign = -1 if sign == '-' else 1
 			hours, minutes = int(hours), int(minutes)
 
-			thistz = timezone(sign * datetime.timedelta(hours=hours, minutes=minutes))
+			thistz = timezone(sign * timedelta(hours=hours, minutes=minutes))
 		except:
 			util.exit_prog(73, f"Unknown timezone {conf['stage_timezone']}")
 		date = datetime.strptime(utcdate, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
