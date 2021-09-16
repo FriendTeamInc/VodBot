@@ -244,6 +244,39 @@ def check_title(default=None, default_orig=False):
 	return title
 
 
+def check_description(formatdict, inputdefault=None, original=None, default_orig=False):
+	desc = ""
+
+	if inputdefault:
+		try:
+			inputdefault = inputdefault.format(**formatdict).replace("\\n", "\n")
+			desc = inputdefault
+		except KeyError as err:
+			cprint(f"#fRDescription format error from default: {err}.#r")
+			desc = ""
+	
+	while desc == "" or default_orig:
+		if not default_orig:
+			desc = input(colorize("#fW#lDescription of Video#r #d(--desc)#r: "))
+			if desc == "":
+				cprint("#fRDescription cannot be blank.#r")
+				continue
+		else:
+			desc = input(colorize("#fW#lDescription of Video#r #d(--desc, default to original)#r: "))
+			if desc == "":
+				desc = original
+				break
+
+		# Format the description
+		try:
+			desc = desc.format(**formatdict).replace("\\n", "\n")
+		except KeyError as err:
+			cprint(f"#fRDescription format error: {err}.#r")
+			desc = ""
+	
+	return desc
+
+
 def _new(args, conf, stagedir):
 	# find the videos by their ids to confirm they exist
 
@@ -295,27 +328,7 @@ def _add(args, conf, stagedir):
 	formatdict, datestring = create_format_dict(conf, args.streamers, utcdate=metadata["created_at"])
 
 	# Grab description
-	if args.desc == None:
-		args.desc = ""
-	else:
-		# Format the description
-		try:
-			args.desc = args.desc.format(**formatdict).replace("\\n", "\n")
-		except KeyError as err:
-			cprint(f"#fRDescription format error: {err}.#r")
-			args.desc = ""
-
-	while args.desc == "":
-		args.desc = input(colorize("#fW#lDescription of Video#r #d(--desc)#r: "))
-		if args.desc == "":
-			cprint("#fRDescription cannot be blank.#r")
-
-		# Format the description
-		try:
-			args.desc = args.desc.format(**formatdict).replace("\\n", "\n")
-		except KeyError as err:
-			cprint(f"#fRDescription format error: {err}.#r")
-			args.desc = ""
+	args.desc = check_description(formatdict, inputdefault=args.desc, default_orig=False)
 
 	stage = StageData(args.title, args.desc, args.ss, args.to, args.streamers, datestring, str(filename))
 	# TODO: Check that new "id" does not collide
@@ -435,28 +448,8 @@ def _edit(args, conf, stagedir):
 	# Generate dict to use for formatting
 	formatdict = create_format_dict(conf, args.streamers, truedate=old_datestring)
 
-	if args.desc != None:
-		# Format the description
-		try:
-			args.desc = args.desc.format(**formatdict).replace("\\n", "\n")
-		except KeyError as err:
-			cprint(f"#fRDescription format error: {err}.#r")
-			args.desc = ""
-	
-	while args.desc == "" or args.desc == None:
-		args.desc = input(colorize("#fW#lDescription of Video#r #d(--desc, default to original)#r: "))
-		print(args.desc)
-		if args.desc == "":
-			args.desc = old_desc
-			print("hmm")
-			break
-
-		# Format the description
-		try:
-			args.desc = args.desc.format(**formatdict).replace("\\n", "\n")
-		except KeyError as err:
-			cprint(f"#fRDescription format error: {err}.#r")
-			args.desc = ""
+	# Grab description
+	args.desc = check_description(formatdict, inputdefault=args.desc, original=old_desc, default_orig=True)
 
 	new_stage = StageData(args.title, args.desc, args.ss, args.to, args.streamers, old_datestring, old_filename)
 	# TODO: Check that new "id" does not collide
