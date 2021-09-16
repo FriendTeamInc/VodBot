@@ -400,83 +400,6 @@ def _list(args, conf, stagedir):
 		cprint(f"#d#fM{' '.join(stage.streamers)}#r")
 
 
-def _edit(args, conf, stagedir):
-	VODS_DIR = conf["vod_dir"]
-	CLIPS_DIR = conf["clip_dir"]
-
-	if not isfile(str(stagedir / args.id)):
-		util.exit_prog(45, f'Could not find stage "{args.id}".')
-	
-	jsonread = None
-	try:
-		with open(str(stagedir / (args.id+".stage"))) as f:
-			jsonread = json.load(f)
-	except FileNotFoundError:
-		util.exit_prog(46, f'Could not find stage "{args.id}". (FileNotFound)')
-	except KeyError:
-		util.exit_prog(46, f'Could not parse stage "{args.id}" as JSON. Is this file corrupted?')
-	
-	old_title = jsonread['title']
-	old_desc = jsonread['desc']
-	old_ss = jsonread['ss']
-	old_to = jsonread['to']
-	old_streamers = jsonread['streamers']
-	old_datestring = jsonread['datestring']
-	old_filename = jsonread['filename']
-	old_id = jsonread['id']
-
-	old_stage = StageData(old_title, old_desc, old_ss, old_to, old_streamers, old_datestring, old_filename, old_id)
-	shortfile = old_stage.filename.replace(VODS_DIR, "...").replace(CLIPS_DIR, "...")
-
-	cprint("#l#fRCurrent stage:")
-	cprint(f"#r`#fC{old_stage.title}#r` #d({old_stage.ss} - {old_stage.to})#r")
-	cprint(f"#d''' {shortfile}#r\n#fG{old_stage.desc}#r\n#d''' #fYID: {old_stage.id}#r")
-	cprint(f"#d#fM{' '.join(old_stage.streamers)}#r")
-	
-	# Now to take the edits, where blank responses are defaulted to the original value.
-	# Get what streamers were involved (usernames)
-	args.streamers = check_streamers(default=old_streamers, default_orig=True)
-
-	# Grab the title
-	if args.title == None:
-		args.title = check_title(default=old_title, default_orig=True)
-
-	# Grab times
-	args.ss = check_time("Start time", "#fW#lStart time of the Video#r #d(--ss, default to original)#r: ", args.ss, old_ss)
-	args.to = check_time("End time", "#fW#lEnd time of the Video#r #d(--to, default to original)#r: ", args.to, old_to)
-
-	# Generate dict to use for formatting
-	formatdict = create_format_dict(conf, args.streamers, truedate=old_datestring)
-
-	# Grab description
-	args.desc = check_description(formatdict, inputdefault=args.desc, original=old_desc, default_orig=True)
-
-	new_stage = StageData(args.title, args.desc, args.ss, args.to, args.streamers, old_datestring, old_filename)
-	# TODO: Check that new "id" does not collide
-	shortfile = new_stage.filename.replace(VODS_DIR, "...").replace(CLIPS_DIR, "...")
-
-	cprint("#l#fRNew stage:")
-	cprint(f"#r`#fC{new_stage.title}#r` #d({new_stage.ss} - {new_stage.to})#r")
-	cprint(f"#d''' {shortfile}#r\n#fG{new_stage.desc}#r\n#d''' #fYID: {new_stage.id}#r")
-	cprint(f"#d#fM{' '.join(new_stage.streamers)}#r")
-
-	color_input = colorize("#l#fRSave changes and remove old stage?#r (y/N) ")
-	new_input = ""
-	while new_input == "":
-		new_input = input(color_input).lower().strip()
-		if new_input != "y" and new_input != "n":
-			new_input = ""
-
-	if new_input == "n":
-		cprint("#l#fRNot writing new stage.#r #dExiting...#r")
-	elif new_input == "y":
-		new_stagename = str(stagedir / new_stage.id)
-		old_stagename = str(stagedir / old_stage.id)
-		new_stage.write_stage(new_stagename)
-		os_remove(old_stagename) # TODO: exception check this
-		cprint("#l#fRWrote new stage.#r")
-
-
 def run(args):
 	conf = util.load_conf(args.config)
 	
@@ -484,12 +407,8 @@ def run(args):
 	stagedir = conf["stage_dir"]
 	util.make_dir(stagedir)
 
-	# if args.action == "add":
-	# 	_add(args, conf, stagedir)
 	if args.action == "new":
 		_new(args, conf, stagedir)
-	elif args.action == "edit":
-		_edit(args, conf, stagedir)
 	elif args.action == "rm":
 		if not isfile(str(stagedir / args.id)):
 			util.exit_prog(45, f'Could not find stage "{args.id}".')
