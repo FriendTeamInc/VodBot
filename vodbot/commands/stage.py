@@ -203,6 +203,47 @@ def check_time(prefix, inputstring, resp, default=None):
 	return output
 
 
+def check_streamers(default=None, default_orig=False):
+	streamers = None
+	if streamers == None:
+		streamers = ""
+		while streamers == "":
+			if not default_orig:
+				streamers = input(colorize(f"#fW#lWho was in the VOD#r #d(default `{default}`, csv)#r: "))
+			else:
+				args.streamers = input(colorize(f"#fW#lWho was in the VOD#r #d(default to original, csv)#r: "))
+
+			if streamers == "":
+				streamers = [default]
+			else:
+				streamers = streamers.replace(" ", "").split(",")
+				for streamer in streamers:
+					if len(streamer) == 0:
+						cprint("#l#fRMissing streamer name!#r")
+						streamers = ""
+						break
+	
+	return streamers
+
+
+def check_title(default=None, default_orig=False):
+	title = None
+	if title == None:
+		title = ""
+		while title == "":
+			if not default_orig:
+				title = input(colorize("#fW#lTitle of the Video#r #d(--title)#r: "))
+			else:
+				title = input(colorize("#fW#lTitle of the Video#r #d(--title, default to original)#r: "))
+			if title == "":
+				if not default_orig:
+					cprint("#fRTitle cannot be blank.#r")
+				else:
+					title = default
+	
+	return title
+
+
 def _new(args, conf, stagedir):
 	# find the videos by their ids to confirm they exist
 
@@ -240,23 +281,11 @@ def _add(args, conf, stagedir):
 
 	# Get any necessary input
 	# Get what streamers were involved (usernames), always asked
-	args.streamers = None
-	if args.streamers == None:
-		args.streamers = ""
-		while args.streamers == "":
-			args.streamers = input(colorize(f"#fW#lWho was in the VOD#r #d(default `{metadata['user_name']}`, csv)#r: "))
-			if args.streamers == "":
-				args.streamers = [metadata["user_name"]]
-			else:
-				args.streamers = args.streamers.replace(" ", "").split(",")
+	args.streamers = check_streamers(default=metadata["user_name"])
 				
 	# Grab the title
 	if args.title == None:
-		args.title = ""
-		while args.title == "":
-			args.title = input(colorize("#fW#lTitle of the Video#r #d(--title)#r: "))
-			if args.title == "":
-				cprint("#fRTitle cannot be blank.#r")
+		args.title = check_title(default=None, default_orig=False)
 
 	# Grab times
 	args.ss = check_time("Start time", "#fW#lStart time of the Video#r #d(--ss, default 0:0:0)#r: ", args.ss)
@@ -393,28 +422,11 @@ def _edit(args, conf, stagedir):
 	
 	# Now to take the edits, where blank responses are defaulted to the original value.
 	# Get what streamers were involved (usernames)
-	args.streamers = None
-	if args.streamers == None:
-		args.streamers = ""
-		while args.streamers == "":
-			args.streamers = input(colorize(f"#fW#lWho was in the VOD#r #d(default to original, csv)#r: "))
-			if args.streamers == "":
-				args.streamers = old_streamers
-			else:
-				args.streamers = args.streamers.replace(" ", "").split(",")
-				for streamer in args.streamers:
-					if len(streamer) == 0:
-						cprint("#l#fRMissing streamer name!#r")
-						args.streamers = ""
-						break
+	args.streamers = check_streamers(default=old_streamers, default_orig=True)
 
 	# Grab the title
 	if args.title == None:
-		args.title = ""
-		while args.title == "":
-			args.title = input(colorize("#fW#lTitle of the Video#r #d(--title, default to original)#r: "))
-			if args.title == "":
-				args.title = old_title
+		args.title = check_title(default=old_title, default_orig=True)
 
 	# Grab times
 	args.ss = check_time("Start time", "#fW#lStart time of the Video#r #d(--ss, default to original)#r: ", args.ss, old_ss)
