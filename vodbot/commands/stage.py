@@ -278,22 +278,52 @@ def check_description(formatdict, inputdefault=None, original=None, default_orig
 
 
 def _new(args, conf, stagedir):
+	VODS_DIR = conf["vod_dir"]
+	CLIPS_DIR = conf["clip_dir"]
+
 	# find the videos by their ids to confirm they exist
+	videos = []
+	for video in args.id:
+		try:
+			(filename, metadata, videotype) = find_video_by_id(video, VODS_DIR, CLIPS_DIR)
+			videos += [{"id":video, "file":filename, "meta":metadata, "type":videotype}]
+		except CouldntFindVideo:
+			util.exit_prog(13, f'Could not find video with ID "{args.id}"')
+	
+	# Get what streamers were involved (usernames), always asked
+	# TODO: aggregate all the names from every video
+	args.streamers = check_streamers(default=videos[0]["meta"]["user_name"])
 
 	# get title
+	# TODO: remove all the default orig stuff, since we removed edit
+	if args.title == None:
+		args.title = check_title(default=None, default_orig=False)
 
 	# get description
+	formatdict, datestring = create_format_dict(conf, args.streamers, utcdate=metadata["created_at"])
+	args.desc = check_description(formatdict, inputdefault=args.desc, default_orig=False)
 
 	# get timestamps for each video through input
+	#args.ss = check_time("Start time", "#fW#lStart time of the Video#r #d(--ss, default 0:0:0)#r: ", args.ss)
+	#args.to = check_time("End time", "#fW#lEnd time of the Video#r #d(--to, default EOF)#r: ", args.to)
 
 	# make stage object
+	stage = StageData(args.title, args.desc, args.ss, args.to, args.streamers, datestring, str(filename))
+	# TODO: Check that new "id" does not collide
+	shortfile = stage.filename.replace(VODS_DIR, "...").replace(CLIPS_DIR, "...")
 
+	print()
+	cprint(f"#r`#fC{stage.title}#r` #d({stage.ss} - {stage.to})#r")
+	cprint(f"#d''' {shortfile}#r\n#fG{stage.desc}#r\n#d''' {stage.id}#r")
+	cprint(f"#d#fM{' '.join(stage.streamers)}#r")
+	
 	# write stage
+	stagename = str(stagedir / stage.id)
+	stage.write_stage(stagename)
 
-	# done
+	# Done!
 
 	print(args)
-	print(conf)
 	print(stagedir)
 
 
