@@ -9,7 +9,7 @@ import string
 import random
 from datetime import datetime, timezone
 from pathlib import Path
-from os import walk as os_walk, remove as os_remove, listdir as os_listdir
+from os import remove as os_remove, listdir as os_listdir
 from os.path import isfile, isdir
 
 
@@ -17,15 +17,24 @@ from os.path import isfile, isdir
 vodbotdir = util.vodbotdir
 
 
-class StageData():
-	def __init__(self, title, desc, ss, to, streamers, datestring, filename, cid=None):
-		self.title = title
-		self.desc = desc
+class VideoSlice():
+	def __init__(self, video_id: str, ss: str, to: str, filepath: str):
+		self.video_id = video_id
 		self.ss = ss
 		self.to = to
+		self.filepath = filepath
+	
+	def get_as_dict(self):
+		return {"id":self.id, "ss":self.ss, "to":self.to, "path":self.filepath}
+
+
+class StageData():
+	def __init__(self, streamers: str, title: str, desc: str, slices: list, datestring: str, cid=None):
+		self.title = title
+		self.desc = desc
 		self.streamers = streamers
 		self.datestring = datestring
-		self.filename = filename
+		self.slices = slices
 
 		if cid is None:
 			self.gen_new_id()
@@ -38,15 +47,17 @@ class StageData():
 	def write_stage(self, filename):
 		with open(filename, "w") as f:
 			jsondump = {
+				"streamers": self.streamers,
 				"title": self.title,
 				"desc": self.desc,
-				"ss": self.ss,
-				"to": self.to,
-				"filename": self.filename,
-				"streamers": self.streamers,
 				"datestring": self.datestring,
-				"id": self.id
+				"id": self.id,
+				"slices": []
 			}
+
+			for vid in self.slices:
+				jsondump["slices"] += [vid.get_as_dict()]
+
 			json.dump(jsondump, f)
 	
 	def gen_new_id(self):
@@ -304,11 +315,26 @@ def _new(args, conf, stagedir):
 	args.desc = check_description(formatdict, inputdefault=args.desc, default_orig=False)
 
 	# get timestamps for each video through input
-	#args.ss = check_time("Start time", "#fW#lStart time of the Video#r #d(--ss, default 0:0:0)#r: ", args.ss)
-	#args.to = check_time("End time", "#fW#lEnd time of the Video#r #d(--to, default EOF)#r: ", args.to)
+	for x in range(len(videos)):
+		# skip times we dont need because we already have them
+		if x < len(args.ss):
+			continue
+		
+		vid = videos[x]
+		# grab times for this specific stream
+		cprint(f"Timestamps for `{vid['meta']['title']}` ({vid['meta']['id']})")
+		args.ss += [check_time("Start time", "#fW#lStart time of the Video#r #d(--ss, default 0:0:0)#r: ", args.ss)]
+		args.to += [check_time("End time", "#fW#lEnd time of the Video#r #d(--to, default EOF)#r: ", args.to)]
+
+	# make slice objects
+	slices = []
+	for x in range(len(videos)):
+		vid = videos[x]
+		vidslice = VideoSlice(video_id=vid["id"], ss=args.ss[x], to=args.to[x], filepath=vid["file"])
+		slices += [vidslice]
 
 	# make stage object
-	stage = StageData(args.title, args.desc, args.ss, args.to, args.streamers, datestring, str(filename))
+	stage = StageData(streamers=args.streamers, title=args.title, desc=args.desc, datestring=datestring, slices=slices)
 	# TODO: Check that new "id" does not collide
 	shortfile = stage.filename.replace(VODS_DIR, "...").replace(CLIPS_DIR, "...")
 
@@ -325,54 +351,6 @@ def _new(args, conf, stagedir):
 
 	print(args)
 	print(stagedir)
-
-
-def _add(args, conf, stagedir):
-	VODS_DIR = conf["vod_dir"]
-	CLIPS_DIR = conf["clip_dir"]
-
-	filename = None
-	metadata = None
-	videotype = None
-
-	try:
-		(filename, metadata, videotype) = find_video_by_id(args.id, VODS_DIR, CLIPS_DIR)
-	except CouldntFindVideo:
-		util.exit_prog(13, f'Could not find video with ID "{args.id}"')
-	
-	cprint(f"Found #fM#l{videotype}#r #fM{args.id}#r from #fY#l{metadata['user_name']}#r.")
-
-	# Get any necessary input
-	# Get what streamers were involved (usernames), always asked
-	args.streamers = check_streamers(default=metadata["user_name"])
-				
-	# Grab the title
-	if args.title == None:
-		args.title = check_title(default=None, default_orig=False)
-
-	# Grab times
-	args.ss = check_time("Start time", "#fW#lStart time of the Video#r #d(--ss, default 0:0:0)#r: ", args.ss)
-	args.to = check_time("End time", "#fW#lEnd time of the Video#r #d(--to, default EOF)#r: ", args.to)
-
-	# Generate dict to use for formatting
-	formatdict, datestring = create_format_dict(conf, args.streamers, utcdate=metadata["created_at"])
-
-	# Grab description
-	args.desc = check_description(formatdict, inputdefault=args.desc, default_orig=False)
-
-	stage = StageData(args.title, args.desc, args.ss, args.to, args.streamers, datestring, str(filename))
-	# TODO: Check that new "id" does not collide
-	shortfile = stage.filename.replace(VODS_DIR, "...").replace(CLIPS_DIR, "...")
-
-	print()
-	cprint(f"#r`#fC{stage.title}#r` #d({stage.ss} - {stage.to})#r")
-	cprint(f"#d''' {shortfile}#r\n#fG{stage.desc}#r\n#d''' {stage.id}#r")
-	cprint(f"#d#fM{' '.join(stage.streamers)}#r")
-	
-	stagename = str(stagedir / stage.id)
-	stage.write_stage(stagename)
-
-	# Done!
 
 
 def _list(args, conf, stagedir):
