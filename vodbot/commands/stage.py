@@ -410,19 +410,18 @@ def _list(args, conf, stagedir):
 		
 		title = jsonread['title']
 		desc = jsonread['desc']
-		ss = jsonread['ss']
-		to = jsonread['to']
+		slices = jsonread['slices']
 		streamers = jsonread['streamers']
 		datestring = jsonread['datestring']
-		filename = jsonread['filename']
 
-		stage = StageData(title, desc, ss, to, streamers, datestring, filename)
-		shortfile = stage.filename.replace(VODS_DIR, "...").replace(CLIPS_DIR, "...")
+		stage = StageData(title=title, desc=desc, streamers=streamers, datestring=datestring, slices=slices)
+		#shortfile = stage.filename.replace(VODS_DIR, "...").replace(CLIPS_DIR, "...")
 
 		print()
-		cprint(f"#r`#fC{stage.title}#r` #d({stage.ss} - {stage.to})#r")
-		cprint(f"#d''' {shortfile}#r\n#fG{stage.desc}#r\n#d''' #fYid: {stage.id}#r")
-		cprint(f"#d#fM{' '.join(stage.streamers)}#r")
+		cprint(f"#r`#fC{stage.title}#r` #fM{' '.join(stage.streamers)}#r #d({stage.id})#r")
+		cprint(f"#d'''#fG{stage.desc}#r#d'''#r")
+		for vid in stage.slices:
+			cprint(f"#fM{vid['id']}#r > #fY{vid['ss']}#r - #fY{vid['to']}#r")
 
 
 def run(args):
