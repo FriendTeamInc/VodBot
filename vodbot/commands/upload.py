@@ -210,7 +210,7 @@ def run(args):
 		with open(PICKLE_FILE, "rb") as f:
 			credentials = pickle.load(f)
 	
-	if not credentials or credentials.invalid:
+	if not credentials or credentials.expired:
 		try:
 			if credentials and credentials.expired and credentials.refresh_token:
 				credentials.refresh(Request())

@@ -7,16 +7,16 @@ COLOR_CODES = {
 	"l": "\033[1m", # light
 	"d": "\033[2m", # dim
 
-	"fK": "\033[30m",
-	"fR": "\033[31m",
-	"fG": "\033[32m",
-	"fY": "\033[33m",
-	"fB": "\033[34m",
-	"fM": "\033[35m",
-	"fC": "\033[36m",
-	"fW": "\033[37m",
+	"fK": "\033[30m", # foreground blacK
+	"fR": "\033[31m", # Red
+	"fG": "\033[32m", # Green
+	"fY": "\033[33m", # Yellow
+	"fB": "\033[34m", # Blue
+	"fM": "\033[35m", # Magenta
+	"fC": "\033[36m", # Cyan
+	"fW": "\033[37m", # White
 
-	"bK": "\033[40m",
+	"bK": "\033[40m", # background blacK
 	"bR": "\033[41m",
 	"bG": "\033[42m",
 	"bY": "\033[43m",

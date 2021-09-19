@@ -7,7 +7,8 @@ import re
 import json
 import string
 import random
-from datetime import datetime, timezone
+import datetime
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from os import remove as os_remove, listdir as os_listdir
 from os.path import isfile, isdir
@@ -76,11 +77,11 @@ def create_format_dict(conf, streamers, utcdate=None, truedate=None):
 	if truedate == None:
 		try:
 			# https://stackoverflow.com/a/37097784/13977827
-			sign, hours, minutes = re.match('([+\-]?)(\d{2})(\d{2})', '+0530').groups()
+			sign, hours, minutes = re.match('([+\-]?)(\d{2})(\d{2})', conf['stage_timezone']).groups()
 			sign = -1 if sign == '-' else 1
 			hours, minutes = int(hours), int(minutes)
 
-			thistz = datetime.timezone(sign * datetime.timedelta(hours=hours, minutes=minutes))
+			thistz = timezone(sign * timedelta(hours=hours, minutes=minutes))
 		except:
 			util.exit_prog(73, f"Unknown timezone {conf['stage_timezone']}")
 		date = datetime.strptime(utcdate, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
@@ -230,7 +231,7 @@ def check_streamers(default=None, default_orig=False):
 			if not default_orig:
 				streamers = input(colorize(f"#fW#lWho was in the VOD#r #d(default `{default}`, csv)#r: "))
 			else:
-				args.streamers = input(colorize(f"#fW#lWho was in the VOD#r #d(default to original, csv)#r: "))
+				streamers = input(colorize(f"#fW#lWho was in the VOD#r #d(default to original, csv)#r: "))
 
 			if streamers == "":
 				streamers = [default]
