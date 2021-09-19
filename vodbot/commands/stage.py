@@ -26,7 +26,7 @@ class VideoSlice():
 		self.filepath = filepath
 	
 	def get_as_dict(self):
-		return {"id":self.id, "ss":self.ss, "to":self.to, "path":self.filepath}
+		return {"id":self.video_id, "ss":self.ss, "to":self.to, "path":str(self.filepath)}
 
 
 class StageData():
@@ -155,19 +155,22 @@ def check_stage_id(stage_id, STAGE_DIR):
 	return stage_id in stages
 
 
-def check_time(prefix, inputstring, resp, default=None):
+def check_time(prefix, resp, default=None):
 	output = resp
 	checkedonce = False
 
 	while True:
-		if checkedonce or output == None:
-			output = input(colorize(inputstring))
+		if checkedonce or not output:
+			a = 'ss' if prefix=='Start' else 'to'
+			t = '0:0:0' if prefix=='Start' else 'EOF'
+			f = f"#fW#l{prefix} time of the Video#r #d(--{a}, default {t})#r: "
+			output = input(colorize(f))
 		checkedonce = True
 
 		if output == "":
-			if prefix == "Start time":
+			if prefix == "Start":
 				return default if default != None else "0:0:0"
-			elif prefix == "End time":
+			elif prefix == "End":
 				return default if default != None else "EOF"
 
 		intime = output.split(":")
@@ -177,7 +180,7 @@ def check_time(prefix, inputstring, resp, default=None):
 		hours = None
 
 		if len(intime) > 3:
-			cprint(f"#fR{prefix}: Time cannot have more than 3 units.#r")
+			cprint(f"#fR{prefix} time: Time cannot have more than 3 units.#r")
 			continue
 		
 		if len(intime) >= 1:
@@ -185,10 +188,10 @@ def check_time(prefix, inputstring, resp, default=None):
 			try:
 				seconds = int(seconds)
 			except ValueError:
-				cprint(f"#fR{prefix}: Seconds does not appear to be a number.#r")
+				cprint(f"#fR{prefix} time: Seconds does not appear to be a number.#r")
 				continue
 			if seconds > 59 or seconds < 0:
-				cprint(f"#fR{prefix}: Seconds must be in the range of 0 to 59.#r")
+				cprint(f"#fR{prefix} time: Seconds must be in the range of 0 to 59.#r")
 				continue
 			timelist.insert(0, str(seconds))
 		
@@ -197,10 +200,10 @@ def check_time(prefix, inputstring, resp, default=None):
 			try:
 				minutes = int(minutes)
 			except ValueError:
-				cprint(f"#fR{prefix}: Minutes does not appear to be a number.#r")
+				cprint(f"#fR{prefix} time: Minutes does not appear to be a number.#r")
 				continue
 			if minutes > 59 or minutes < 0:
-				cprint(f"#fR{prefix}: Minutes must be in the range of 0 to 59.#r")
+				cprint(f"#fR{prefix} time: Minutes must be in the range of 0 to 59.#r")
 				continue
 			timelist.insert(0, str(minutes))
 		else:
@@ -211,7 +214,7 @@ def check_time(prefix, inputstring, resp, default=None):
 			try:
 				hours = int(hours)
 			except ValueError:
-				cprint(f"#fR{prefix}: Hours does not appear to be a number.#r")
+				cprint(f"#fR{prefix} time: Hours does not appear to be a number.#r")
 				continue
 			timelist.insert(0, str(hours))
 		else:
@@ -301,6 +304,7 @@ def _new(args, conf, stagedir):
 	VODS_DIR = conf["vod_dir"]
 	CLIPS_DIR = conf["clip_dir"]
 	STAGE_DIR = conf["stage_dir"]
+	stagedir = Path(STAGE_DIR)
 
 	# find the videos by their ids to confirm they exist
 	videos = []
@@ -317,7 +321,7 @@ def _new(args, conf, stagedir):
 
 	# get title
 	# TODO: remove all the default orig stuff, since we removed edit
-	if args.title == None:
+	if not args.title:
 		args.title = check_title(default=None, default_orig=False)
 
 	# get description
@@ -333,8 +337,8 @@ def _new(args, conf, stagedir):
 		vid = videos[x]
 		# grab times for this specific stream
 		cprint(f"Timestamps for `{vid['meta']['title']}` ({vid['meta']['id']})")
-		args.ss += [check_time("Start time", "#fW#lStart time of the Video#r #d(--ss, default 0:0:0)#r: ", args.ss)]
-		args.to += [check_time("End time", "#fW#lEnd time of the Video#r #d(--to, default EOF)#r: ", args.to)]
+		args.ss += [check_time("Start", args.ss[x] if x < len(args.ss) else None)]
+		args.to += [check_time("End", args.to[x] if x < len(args.to) else None)]
 
 	# make slice objects
 	slices = []
@@ -369,6 +373,8 @@ def _new(args, conf, stagedir):
 def _list(args, conf, stagedir):
 	VODS_DIR = conf["vod_dir"]
 	CLIPS_DIR = conf["clip_dir"]
+	STAGE_DIR = conf["stage_dir"]
+	stagedir = Path(STAGE_DIR)
 	
 	if args.id == None:
 		stages = [d[:-6] for d in os_listdir(str(stagedir))
