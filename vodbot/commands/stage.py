@@ -249,25 +249,19 @@ def check_streamers(default=None, default_orig=False):
 	return streamers
 
 
-def check_title(default=None, default_orig=False):
-	title = None
-	if title == None:
+def check_title(default=None):
+	title = default
+	if not title:
 		title = ""
 		while title == "":
-			if not default_orig:
-				title = input(colorize("#fW#lTitle of the Video#r #d(--title)#r: "))
-			else:
-				title = input(colorize("#fW#lTitle of the Video#r #d(--title, default to original)#r: "))
+			title = input(colorize("#fW#lTitle of the Video#r #d(--title)#r: "))
 			if title == "":
-				if not default_orig:
-					cprint("#fRTitle cannot be blank.#r")
-				else:
-					title = default
+				cprint("#fRTitle cannot be blank.#r")
 	
 	return title
 
 
-def check_description(formatdict, inputdefault=None, original=None, default_orig=False):
+def check_description(formatdict, inputdefault=None):
 	desc = ""
 
 	if inputdefault:
@@ -278,17 +272,11 @@ def check_description(formatdict, inputdefault=None, original=None, default_orig
 			cprint(f"#fRDescription format error from default: {err}.#r")
 			desc = ""
 	
-	while desc == "" or default_orig:
-		if not default_orig:
-			desc = input(colorize("#fW#lDescription of Video#r #d(--desc)#r: "))
-			if desc == "":
-				cprint("#fRDescription cannot be blank.#r")
-				continue
-		else:
-			desc = input(colorize("#fW#lDescription of Video#r #d(--desc, default to original)#r: "))
-			if desc == "":
-				desc = original
-				break
+	while desc == "":
+		desc = input(colorize("#fW#lDescription of Video#r #d(--desc)#r: "))
+		if desc == "":
+			cprint("#fRDescription cannot be blank.#r")
+			continue
 
 		# Format the description
 		try:
@@ -319,13 +307,12 @@ def _new(args, conf, stagedir):
 	args.streamers = check_streamers(default=[f["meta"]["user_login"] for f in videos])
 
 	# get title
-	# TODO: remove all the default orig stuff, since we removed edit
 	if not args.title:
-		args.title = check_title(default=None, default_orig=False)
+		args.title = check_title(default=None)
 
 	# get description
 	formatdict, datestring = create_format_dict(conf, args.streamers, utcdate=metadata["created_at"])
-	args.desc = check_description(formatdict, inputdefault=args.desc, default_orig=False)
+	args.desc = check_description(formatdict, inputdefault=args.desc)
 
 	# get timestamps for each video through input
 	for x in range(len(videos)):
