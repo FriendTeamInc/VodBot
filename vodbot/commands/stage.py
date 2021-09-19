@@ -146,6 +146,14 @@ def find_video_by_id(vid_id, VODS_DIR, CLIPS_DIR):
 	raise CouldntFindVideo()
 
 
+def check_stage_id(stage_id, STAGE_DIR):
+	STAGE_DIR_PATH = Path(STAGE_DIR)
+
+	stages = [m[:-6] for m in os_listdir(STAGE_DIR) if isfile(str(STAGE_DIR_PATH / Path(m))) and m[-5:]=="stage"]
+
+	return stage_id in stages
+
+
 def check_time(prefix, inputstring, resp, default=None):
 	output = resp
 	checkedonce = False
@@ -291,6 +299,7 @@ def check_description(formatdict, inputdefault=None, original=None, default_orig
 def _new(args, conf, stagedir):
 	VODS_DIR = conf["vod_dir"]
 	CLIPS_DIR = conf["clip_dir"]
+	STAGE_DIR = conf["stage_dir"]
 
 	# find the videos by their ids to confirm they exist
 	videos = []
@@ -335,22 +344,25 @@ def _new(args, conf, stagedir):
 
 	# make stage object
 	stage = StageData(streamers=args.streamers, title=args.title, desc=args.desc, datestring=datestring, slices=slices)
-	# TODO: Check that new "id" does not collide
-	shortfile = stage.filename.replace(VODS_DIR, "...").replace(CLIPS_DIR, "...")
+	# Check that new "id" does not collide
+	while check_stage_id(stage.id, STAGE_DIR):
+		stage.gen_new_id()
+
+	# shorter file name
+	#shortfile = stage.filename.replace(VODS_DIR, "$vods").replace(CLIPS_DIR, "$clips")
 
 	print()
-	cprint(f"#r`#fC{stage.title}#r` #d({stage.ss} - {stage.to})#r")
-	cprint(f"#d''' {shortfile}#r\n#fG{stage.desc}#r\n#d''' {stage.id}#r")
+	cprint(f"#r`#fC{stage.title}#r` #d({stage.id})#r")
+	cprint(f"#d'''#fG{stage.desc}#r#d'''#r")
 	cprint(f"#d#fM{' '.join(stage.streamers)}#r")
+	for vid in stage.slices:
+		cprint(f"{vid.video_id} > {vid.ss} - {vid.to}")
 	
 	# write stage
 	stagename = str(stagedir / stage.id)
 	stage.write_stage(stagename)
 
 	# Done!
-
-	print(args)
-	print(stagedir)
 
 
 def _list(args, conf, stagedir):
