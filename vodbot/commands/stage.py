@@ -336,7 +336,7 @@ def _new(args, conf, stagedir):
 		
 		vid = videos[x]
 		# grab times for this specific stream
-		cprint(f"Timestamps for `{vid['meta']['title']}` ({vid['meta']['id']})")
+		cprint(f"#dTimestamps for `#r#fM{vid['meta']['title']}#r` #d({vid['meta']['id']})#r")
 		args.ss += [check_time("Start", args.ss[x] if x < len(args.ss) else None)]
 		args.to += [check_time("End", args.to[x] if x < len(args.to) else None)]
 
@@ -357,11 +357,10 @@ def _new(args, conf, stagedir):
 	#shortfile = stage.filename.replace(VODS_DIR, "$vods").replace(CLIPS_DIR, "$clips")
 
 	print()
-	cprint(f"#r`#fC{stage.title}#r` #d({stage.id})#r")
+	cprint(f"#r`#fC{stage.title}#r` #fM{' '.join(stage.streamers)}#r #d({stage.id})#r")
 	cprint(f"#d'''#fG{stage.desc}#r#d'''#r")
-	cprint(f"#d#fM{' '.join(stage.streamers)}#r")
 	for vid in stage.slices:
-		cprint(f"{vid.video_id} > {vid.ss} - {vid.to}")
+		cprint(f"#fM{vid.video_id}#r > #fY{vid.ss}#r - #fY{vid.to}#r")
 	
 	# write stage
 	stagename = str(stagedir / stage.id)
@@ -377,13 +376,12 @@ def _list(args, conf, stagedir):
 	stagedir = Path(STAGE_DIR)
 	
 	if args.id == None:
-		stages = [d[:-6] for d in os_listdir(str(stagedir))
-			if isfile(str(stagedir / d)) and d[-5:] == "stage"]
+		stages = [d for d in os_listdir(str(stagedir)) if isfile(str(stagedir / d))]
 
 		for stage in stages:
 			jsonread = None
 			try:
-				with open(str(stagedir / (stage+".stage"))) as f:
+				with open(str(stagedir / stage)) as f:
 					jsonread = json.load(f)
 			except FileNotFoundError:
 				# Throw error?
@@ -391,9 +389,9 @@ def _list(args, conf, stagedir):
 			except KeyError:
 				continue
 			
-			cprint(f'#r#fY#l{stage}#r -- `#fC{jsonread["title"]}#r` #d(', end="")
-			cprint(f'{jsonread["ss"]} - {jsonread["to"]})#r -- ', end="")
-			cprint(f'#fM{", ".join(jsonread["streamers"])}#r')
+			cprint(f'#r#fY#l{stage}#r -- `#fC{jsonread["title"]}#r` ', end="")
+			cprint(f'(#fM{" ".join([d["id"] for d in jsonread["slices"]])}#r) -- ', end="")
+			cprint(f'#l#fM{", ".join(jsonread["streamers"])}#r')
 		
 		if len(stages) == 0:
 			cprint("#fBNothing staged right now.#r")
@@ -403,7 +401,7 @@ def _list(args, conf, stagedir):
 		
 		jsonread = None
 		try:
-			with open(str(stagedir / (args.id+".stage"))) as f:
+			with open(str(stagedir / args.id)) as f:
 				jsonread = json.load(f)
 		except FileNotFoundError:
 			util.exit_prog(46, f'Could not find stage "{args.id}". (FileNotFound)')
