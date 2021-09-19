@@ -230,14 +230,14 @@ def check_streamers(default=None, default_orig=False):
 	streamers = None
 	if streamers == None:
 		streamers = ""
-		while streamers == "":
+		while not streamers:
 			if not default_orig:
-				streamers = input(colorize(f"#fW#lWho was in the VOD#r #d(default `{default}`, csv)#r: "))
+				streamers = input(colorize(f"#fW#lWho was in the VOD#r #d(default `{', '.join(default)}`, csv)#r: "))
 			else:
 				streamers = input(colorize(f"#fW#lWho was in the VOD#r #d(default to original, csv)#r: "))
 
 			if streamers == "":
-				streamers = [default]
+				streamers = default
 			else:
 				streamers = streamers.replace(" ", "").split(",")
 				for streamer in streamers:
@@ -316,8 +316,7 @@ def _new(args, conf, stagedir):
 			util.exit_prog(13, f'Could not find video with ID "{args.id}"')
 	
 	# Get what streamers were involved (usernames), always asked
-	# TODO: aggregate all the names from every video
-	args.streamers = check_streamers(default=videos[0]["meta"]["user_name"])
+	args.streamers = check_streamers(default=[f["meta"]["user_login"] for f in videos])
 
 	# get title
 	# TODO: remove all the default orig stuff, since we removed edit
