@@ -51,7 +51,7 @@ def concat_video(TEMP_DIR: Path, stage_id: str, slice_paths: List[str]) -> Path:
 	# first create file list in temp dir
 	list_path = TEMP_DIR / f"concat-{stage_id}.txt"
 	with open(str(list_path), "w") as f:
-		pass
+		pass # TODO
 
 	# then do subprocess for concat list
 	concat_path = TEMP_DIR / f"concat-{stage_id}.mp4"
@@ -60,6 +60,8 @@ def concat_video(TEMP_DIR: Path, stage_id: str, slice_paths: List[str]) -> Path:
 		"-safe", "0", "-i", str(list_path),
 		"-c", "copy", str(concat_path)
 	]
+	
+	cprint(f"#rConcatentating videos for `#fM{stage_id}#r`")
 	
 	# we need to hop directories real fast to perform this function.
 	# we'll come back when we're done.
@@ -72,6 +74,8 @@ def concat_video(TEMP_DIR: Path, stage_id: str, slice_paths: List[str]) -> Path:
 		raise FailedToConcat()
 
 	os.chdir(cwd)
+
+	cprint(f"Cleaning up after stage `#fM{stage_id}#r`...")
 
 	try:
 		os.remove(str(list_path))

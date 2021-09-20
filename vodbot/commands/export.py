@@ -76,9 +76,7 @@ def run(args):
 		cprint("#dLoading and slicing stages...#r")
 
 		# create a list of all the hashes and sort by date streamed, slice chronologically
-		stages = [d[:-6] for d in os_listdir(str(stagedir))
-			if os_isfile(str(stagedir / d)) and d[-5:] == "stage"]
-		stagedatas = [load_stage(stage) for stage in stages]
+		stagedatas = StageData.load_all_stages(stagedir)
 		stagedatas.sort(key=sort_stagedata)
 
 		# Export with ffmpeg
@@ -95,7 +93,7 @@ def run(args):
 		cprint("#dLoading stage...", end=" ")
 		
 		# check if stage exists, and prep it for slice
-		stagedata = load_stage(args.id)
+		stagedata = StageData.load_from_id(stagedir, args.id)
 		
 		# Export with ffmpeg
 		util.make_dir(args.path)
