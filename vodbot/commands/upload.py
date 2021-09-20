@@ -13,7 +13,7 @@ import pickle
 import subprocess
 from datetime import datetime
 from pathlib import Path
-from os import listdir as os_listdir, remove as os_remove
+from os import remove as os_remove
 from os.path import exists as os_exists, isfile as os_isfile
 from time import sleep
 
@@ -42,8 +42,8 @@ def sort_stagedata(stagedata):
 
 
 def upload_video(service, stagedata):
-	tmpfile = str(tempdir / f"{stagedata.hashdigest}.mp4")
-	cprint(f"#rSlicing stage `#fM{stagedata.hashdigest}#r` #d({stagedata.ss} - {stagedata.to})#r")
+	tmpfile = str(tempdir / f"{stagedata.id}.mp4")
+	cprint(f"#rSlicing stage `#fM{stagedata.id}#r` #d({stagedata.ss} - {stagedata.to})#r")
 
 	cmd = [ "ffmpeg", "-ss", stagedata.ss ]
 
@@ -51,14 +51,14 @@ def upload_video(service, stagedata):
 		cmd += ["-to", stagedata.to]
 
 	cmd += [
-		"-i", stagedata.filename, "-c", "copy",
+		"-i", stagedata.filepath, "-c", "copy",
 		tmpfile, "-y", "-stats", "-loglevel", "warning"
 	]
 	
 	result = subprocess.run(cmd)
 
 	if result.returncode != 0:
-		cprint(f"#r#fRSkipping stage `{stagedata.hashdigest}` due to error.#r\n")
+		cprint(f"#r#fRSkipping stage `{stagedata.id}` due to error.#r\n")
 		return
 
 	# send request to youtube to upload
@@ -86,15 +86,15 @@ def upload_video(service, stagedata):
 
 	resp = None
 	errn = 0
-	cprint(f"#fCUploading stage #r`#fM{stagedata.hashdigest}#r`, progress: #fC0#fY%#r #d...#r", end="\r")
+	cprint(f"#fCUploading stage #r`#fM{stagedata.id}#r`, progress: #fC0#fY%#r #d...#r", end="\r")
 	while resp is None:
 		try:
 			status, resp = response_upload.next_chunk()
 			if status:
-				cprint(f"#fCUploading stage #r`#fM{stagedata.hashdigest}#r`, progress: #fC{int(status.progress()*100)}#fY%#r #d...#r", end="\r")
+				cprint(f"#fCUploading stage #r`#fM{stagedata.id}#r`, progress: #fC{int(status.progress()*100)}#fY%#r #d...#r", end="\r")
 			if resp is not None:
 				if "id" in resp:
-					cprint(f"#fCUploading stage #r`#fM{stagedata.hashdigest}#r`, progress: #fC100#fY%#r!")
+					cprint(f"#fCUploading stage #r`#fM{stagedata.id}#r`, progress: #fC100#fY%#r!")
 					cprint(f"#l#fGVideo was successfully uploaded!#r #dhttps://youtu.be/{resp['id']}#r")
 				else:
 					util.exit_prog(99, f"Unexpected upload failure occurred, \"{resp}\"")
@@ -125,14 +125,14 @@ def upload_video(service, stagedata):
 			break
 	else:
 		try:
-			os_remove(str(stagedir / f"{stagedata.hashdigest}.stage"))
+			os_remove(str(stagedir / f"{stagedata.id}.stage"))
 		except:
-			util.exit_prog(90, f"Failed to remove stage `{stagedata.hashdigest}` after upload.")
+			util.exit_prog(90, f"Failed to remove stage `{stagedata.id}` after upload.")
 
 		try:
 			os_remove(tmpfile)
 		except:
-			util.exit_prog(90, f"Failed to remove temp slice file of stage `{stagedata.hashdigest}` after upload.")
+			util.exit_prog(90, f"Failed to remove temp slice file of stage `{stagedata.id}` after upload.")
 
 
 def run(args):
@@ -172,7 +172,7 @@ def run(args):
 		cprint("#dLoading stage...", end=" ")
 		# check if stage exists, and prep it for upload
 		stagedata = StageData.load_from_id(stagedir, args.id)
-		cprint(f"About to upload stage {stagedata.hashdigest}.#r")
+		cprint(f"About to upload stage {stagedata.id}.#r")
 
 	# authenticate youtube service
 	if not os_exists(CLIENT_SECRET_FILE):
@@ -216,6 +216,6 @@ def run(args):
 			upload_video(service, stage)
 	else:
 		# upload stage
-		cprint(f"About to upload stage {stagedata.hashdigest}.#r")
+		cprint(f"About to upload stage {stagedata.id}.#r")
 		upload_video(service, stagedata)
 	
