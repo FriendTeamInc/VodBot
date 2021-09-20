@@ -45,15 +45,7 @@ def load_stage(stage_id):
 	except KeyError:
 		util.exit_prog(46, f'Could not parse stage "{stage_id}" as JSON. Is this file corrupted?')
 	
-	_title = jsonread['title']
-	_desc = jsonread['desc']
-	_ss = jsonread['ss']
-	_to = jsonread['to']
-	_streamers = jsonread['streamers']
-	_datestring = jsonread['datestring']
-	_filename = jsonread['filename']
-
-	return StageData(_title, _desc, _ss, _to, _streamers, _datestring, _filename)
+	return StageData.load_from_json(jsonread)
 
 
 EPOCH = datetime.utcfromtimestamp(0)

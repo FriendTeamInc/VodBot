@@ -12,6 +12,7 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from os import remove as os_remove, listdir as os_listdir
 from os.path import isfile, isdir
+from typing import List
 
 
 # Default path
@@ -30,7 +31,7 @@ class VideoSlice():
 
 
 class StageData():
-	def __init__(self, streamers: str, title: str, desc: str, slices: list, datestring: str, cid=None):
+	def __init__(self, streamers: List[str], title: str, desc: str, slices: List[VideoSlice], datestring: str, cid=None):
 		self.title = title
 		self.desc = desc
 		self.streamers = streamers
@@ -65,6 +66,33 @@ class StageData():
 		self.id = ""
 		for _ in range(4):
 			self.id += random.choice(string.ascii_lowercase + string.digits)
+	
+	@staticmethod
+	def load_from_json(data: dict):
+		slices = [VideoSlice(v["id"], v["ss"], v["to"], v["path"]) for v in data["slices"]]
+		streamers = data["streamers"]
+		title = data["title"]
+		desc = data["desc"]
+		datestr = data["datestring"]
+		_id = data["id"]
+
+		new_data = StageData(streamers=streamers, title=title, desc=desc, datestring=datestr, slices=slices)
+		new_data.id = _id
+
+		return new_data
+	
+	@staticmethod
+	def load_from_id(stagedir: Path, sid: str):
+		jsonread = None
+		try:
+			with open(str(stagedir / (sid+".stage"))) as f:
+				jsonread = json.load(f)
+		except FileNotFoundError:
+			util.exit_prog(46, f'Could not find stage "{sid}". (FileNotFound)')
+		except KeyError:
+			util.exit_prog(46, f'Could not parse stage "{sid}" as JSON. Is this file corrupted?')
+		
+		return StageData.load_from_json(jsonread)
 
 
 class CouldntFindVideo(Exception):
@@ -226,7 +254,7 @@ def check_time(prefix, resp, default=None):
 	return output
 
 
-def check_streamers(default=None, default_orig=False):
+def check_streamers(default=None, default_orig=False) -> List[str]:
 	streamers = None
 	if streamers == None:
 		streamers = ""
@@ -237,7 +265,7 @@ def check_streamers(default=None, default_orig=False):
 				streamers = input(colorize(f"#fW#lWho was in the VOD#r #d(default to original, csv)#r: "))
 
 			if streamers == "":
-				streamers = default
+				streamers = default.replace(" ", "").split(",")
 			else:
 				streamers = streamers.replace(" ", "").split(",")
 				for streamer in streamers:
@@ -349,7 +377,7 @@ def _new(args, conf, stagedir):
 		cprint(f"#fM{vid.video_id}#r > #fY{vid.ss}#r - #fY{vid.to}#r")
 	
 	# write stage
-	stagename = str(stagedir / stage.id)
+	stagename = str(stagedir / (stage.id + ".stage"))
 	stage.write_stage(stagename)
 
 	# Done!
@@ -362,48 +390,20 @@ def _list(args, conf, stagedir):
 	stagedir = Path(STAGE_DIR)
 	
 	if args.id == None:
-		stages = [d for d in os_listdir(str(stagedir)) if isfile(str(stagedir / d))]
+		stages = [d[:-6] for d in os_listdir(str(stagedir)) if isfile(str(stagedir / (d + ".stage")))]
 
 		for stage in stages:
-			jsonread = None
-			try:
-				with open(str(stagedir / stage)) as f:
-					jsonread = json.load(f)
-			except FileNotFoundError:
-				# Throw error?
-				continue
-			except KeyError:
-				continue
+			s = StageData.load_from_id(stagedir, stage)
 			
-			cprint(f'#r#fY#l{stage}#r -- `#fC{jsonread["title"]}#r` ', end="")
-			cprint(f'(#fM{" ".join([d["id"] for d in jsonread["slices"]])}#r) -- ', end="")
-			cprint(f'#l#fM{", ".join(jsonread["streamers"])}#r')
+			cprint(f'#r#fY#l{stage}#r -- `#fC{s.title}#r` ', end="")
+			cprint(f'(#fM{" ".join([d.video_id for d in s.slices])}#r) -- ', end="")
+			cprint(f'#l#fM{", ".join(s.streamers)}#r')
 		
 		if len(stages) == 0:
 			cprint("#fBNothing staged right now.#r")
 	else:
-		if not isfile(str(stagedir / args.id)):
-			util.exit_prog(45, f'Could not find stage "{args.id}".')
-		
-		jsonread = None
-		try:
-			with open(str(stagedir / args.id)) as f:
-				jsonread = json.load(f)
-		except FileNotFoundError:
-			util.exit_prog(46, f'Could not find stage "{args.id}". (FileNotFound)')
-		except KeyError:
-			util.exit_prog(46, f'Could not parse stage "{args.id}" as JSON. Is this file corrupted?')
-		
-		title = jsonread['title']
-		desc = jsonread['desc']
-		slices = jsonread['slices']
-		streamers = jsonread['streamers']
-		datestring = jsonread['datestring']
+		stage = StageData.load_from_id(stagedir, args.id)
 
-		stage = StageData(title=title, desc=desc, streamers=streamers, datestring=datestring, slices=slices)
-		#shortfile = stage.filename.replace(VODS_DIR, "...").replace(CLIPS_DIR, "...")
-
-		print()
 		cprint(f"#r`#fC{stage.title}#r` #fM{' '.join(stage.streamers)}#r #d({stage.id})#r")
 		cprint(f"#d'''#fG{stage.desc}#r#d'''#r")
 		for vid in stage.slices:
@@ -420,10 +420,10 @@ def run(args):
 	if args.action == "new":
 		_new(args, conf, stagedir)
 	elif args.action == "rm":
-		if not isfile(str(stagedir / args.id)):
+		if not isfile(str(stagedir / (args.id + ".stage"))):
 			util.exit_prog(45, f'Could not find stage "{args.id}".')
 		try:
-			os_remove(str(stagedir / args.id))
+			os_remove(str(stagedir / (args.id + ".stage")))
 			cprint(f'Stage "#fY#l{args.id}#r" has been #fRremoved#r.')
 		except OSError as err:
 			util.exit_prog(88, f'Stage "{args.id}" could not be removed due to an error. {err}')
