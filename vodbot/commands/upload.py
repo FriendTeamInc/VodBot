@@ -35,19 +35,6 @@ tempdir = None
 RETRIABLE_EXCEPTS = (HttpLib2Error, HttpLib2ErrorWithResponse, IOError)
 
 
-def load_stage(stage_id):
-	jsonread = None
-	try:
-		with open(str(stagedir / (stage_id+".stage"))) as f:
-			jsonread = json.load(f)
-	except FileNotFoundError:
-		util.exit_prog(46, f'Could not find stage "{stage_id}". (FileNotFound)')
-	except KeyError:
-		util.exit_prog(46, f'Could not parse stage "{stage_id}" as JSON. Is this file corrupted?')
-	
-	return StageData.load_from_json(jsonread)
-
-
 EPOCH = datetime.utcfromtimestamp(0)
 def sort_stagedata(stagedata):
 	date = datetime.strptime(stagedata.datestring, "%Y/%m/%d")
@@ -179,14 +166,12 @@ def run(args):
 	if args.id == "all":
 		cprint("#dLoading stages...", end=" ")
 		# create a list of all the hashes and sort by date streamed, upload chronologically
-		stages = [d[:-6] for d in os_listdir(str(stagedir))
-			if os_isfile(str(stagedir / d)) and d[-5:] == "stage"]
-		stagedatas = [load_stage(stage) for stage in stages]
+		stagedatas = StageData.load_all_stages(stagedir)
 		stagedatas.sort(key=sort_stagedata)
 	else:
 		cprint("#dLoading stage...", end=" ")
 		# check if stage exists, and prep it for upload
-		stagedata = load_stage(args.id)
+		stagedata = StageData.load_from_id(stagedir, args.id)
 		cprint(f"About to upload stage {stagedata.hashdigest}.#r")
 
 	# authenticate youtube service

@@ -93,6 +93,15 @@ class StageData():
 			util.exit_prog(46, f'Could not parse stage "{sid}" as JSON. Is this file corrupted?')
 		
 		return StageData.load_from_json(jsonread)
+	
+	@staticmethod
+	def load_all_stages(stagedir: Path):
+		stages = []
+		for d in os_listdir(str(stagedir)):
+			if isfile(str(stagedir / (d + ".stage"))):
+				stages.append(stagedir, d[:-d])
+		
+		return stages
 
 
 class CouldntFindVideo(Exception):
@@ -390,12 +399,10 @@ def _list(args, conf, stagedir):
 	stagedir = Path(STAGE_DIR)
 	
 	if args.id == None:
-		stages = [d[:-6] for d in os_listdir(str(stagedir)) if isfile(str(stagedir / (d + ".stage")))]
+		stages = StageData.load_all_stages(stagedir)
 
-		for stage in stages:
-			s = StageData.load_from_id(stagedir, stage)
-			
-			cprint(f'#r#fY#l{stage}#r -- `#fC{s.title}#r` ', end="")
+		for s in stages:
+			cprint(f'#r#fY#l{s.id}#r -- `#fC{s.title}#r` ', end="")
 			cprint(f'(#fM{" ".join([d.video_id for d in s.slices])}#r) -- ', end="")
 			cprint(f'#l#fM{", ".join(s.streamers)}#r')
 		
