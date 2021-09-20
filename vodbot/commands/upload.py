@@ -6,6 +6,7 @@
 from .stage import StageData
 
 import vodbot.util as util
+import vodbot.video as vbvid
 from vodbot.printer import cprint
 
 import json
@@ -41,25 +42,16 @@ def sort_stagedata(stagedata):
 	return (date - EPOCH).total_seconds()
 
 
-def upload_video(service, stagedata):
-	tmpfile = str(tempdir / f"{stagedata.id}.mp4")
-	cprint(f"#rSlicing stage `#fM{stagedata.id}#r` #d({stagedata.ss} - {stagedata.to})#r")
-
-	cmd = [ "ffmpeg", "-ss", stagedata.ss ]
-
-	if stagedata.to != "EOF":
-		cmd += ["-to", stagedata.to]
-
-	cmd += [
-		"-i", stagedata.filepath, "-c", "copy",
-		tmpfile, "-y", "-stats", "-loglevel", "warning"
-	]
-	
-	result = subprocess.run(cmd)
-
-	if result.returncode != 0:
-		cprint(f"#r#fRSkipping stage `{stagedata.id}` due to error.#r\n")
-		return
+def upload_video(conf, service, stagedata):
+	tmpfile = None
+	try:
+		tmpfile = vbvid.process_stage(conf, stagedata)
+	except vbvid.FailedToSlice as e:
+		cprint(f"#r#fRSkipping stage `{stagedata.id}`, failed to slice video with ID of `{e.vid}`.#r\n")
+	except vbvid.FailedToConcat:
+		cprint(f"#r#fRSkipping stage `{stagedata.id}`, failed to concatenate videos.#r\n")
+	except vbvid.FailedToCleanUp as e:
+		cprint(f"#r#fRSkipping stage `{stagedata.id}`, failed to clean up temp files.#r\n\n{e.vid}")
 
 	# send request to youtube to upload
 	request_body = {
@@ -75,7 +67,7 @@ def upload_video(service, stagedata):
 	}
 
 	# create media file, 100 MiB chunks
-	media_file = MediaFileUpload(tmpfile, chunksize=1024*1024*100, resumable=True)
+	media_file = MediaFileUpload(str(tmpfile), chunksize=1024*1024*100, resumable=True)
 
 	# create upload request and execute
 	response_upload = service.videos().insert(
@@ -130,7 +122,7 @@ def upload_video(service, stagedata):
 			util.exit_prog(90, f"Failed to remove stage `{stagedata.id}` after upload.")
 
 		try:
-			os_remove(tmpfile)
+			os_remove(str(tmpfile))
 		except:
 			util.exit_prog(90, f"Failed to remove temp slice file of stage `{stagedata.id}` after upload.")
 
@@ -213,9 +205,9 @@ def run(args):
 		# begin to upload
 		cprint(f"About to upload {len(stagedatas)} stages.#r")
 		for stage in stagedatas:
-			upload_video(service, stage)
+			upload_video(conf, service, stage)
 	else:
 		# upload stage
 		cprint(f"About to upload stage {stagedata.id}.#r")
-		upload_video(service, stagedata)
+		upload_video(conf, service, stagedata)
 	

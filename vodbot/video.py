@@ -10,13 +10,18 @@ from pathlib import Path
 from typing import List, Tuple
 
 
-class FailedToSlice(Exception):
+class VideoFailure(Exception):
+	def __init__(self, vid="?") -> None:
+		self.vid = vid
+		super().__init__(self.vid)
+
+class FailedToSlice(VideoFailure):
 	pass
 
-class FailedToConcat(Exception):
+class FailedToConcat(VideoFailure):
 	pass
 
-class FailedToCleanUp(Exception):
+class FailedToCleanUp(VideoFailure):
 	pass
 
 
@@ -37,8 +42,7 @@ def slice_video(TEMP_DIR: Path, vslice: VideoSlice, i: int=0) -> Path:
 	result = subprocess.run(cmd)
 
 	if result.returncode != 0:
-		#cprint(f"#r#fRSkipping stage `{vslice.video_id}` due to error.#r\n")
-		raise FailedToSlice
+		raise FailedToSlice(vslice.video_id)
 	
 	return tmpfile
 
@@ -65,10 +69,14 @@ def concat_video(TEMP_DIR: Path, stage_id: str, slice_paths: List[str]) -> Path:
 	result = subprocess.run(cmd)
 
 	if result.returncode != 0:
-		#cprint(f"#r#fRSkipping stage `{vslice.video_id}` due to error.#r\n")
-		raise FailedToConcat
+		raise FailedToConcat()
 
 	os.chdir(cwd)
+
+	try:
+		os.remove(str(list_path))
+	except Exception as e:
+		raise FailedToCleanUp(e)
 
 	return concat_path
 
