@@ -73,13 +73,13 @@ def concat_video(TEMP_DIR: Path, stage_id: str, slice_paths: List[str]) -> Path:
 	return concat_path
 
 
-def process_stage(conf: dict, stage: StageData) -> Tuple[Path]:
+def process_stage(conf: dict, stage: StageData) -> Path:
 	# slice all the slices
 	slice_paths = [slice_video(conf, stage.slices[x], x) for x in range(len(stage.slices))]
 
 	# edge case of one video
 	if len(slice_paths) == 1:
-		return (slice_paths[0], slice_paths)
+		return slice_paths[0]
 
 	# concat all the slices
 	concat_path = concat_video(conf, stage.id, slice_paths)
@@ -92,4 +92,4 @@ def process_stage(conf: dict, stage: StageData) -> Tuple[Path]:
 			raise FailedToCleanUp(e)
 
 	# return the path of the concated vid
-	return (concat_path, slice_paths)
+	return concat_path
