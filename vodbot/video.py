@@ -47,11 +47,12 @@ def slice_video(TEMP_DIR: Path, vslice: VideoSlice, i: int=0) -> Path:
 	return tmpfile
 
 
-def concat_video(TEMP_DIR: Path, stage_id: str, slice_paths: List[str]) -> Path:
+def concat_video(TEMP_DIR: Path, stage_id: str, slice_paths: List[Path]) -> Path:
 	# first create file list in temp dir
 	list_path = TEMP_DIR / f"concat-{stage_id}.txt"
 	with open(str(list_path), "w") as f:
-		pass # TODO
+		for path in slice_paths:
+			f.write(f"file '{path.name}'\n")
 
 	# then do subprocess for concat list
 	concat_path = TEMP_DIR / f"concat-{stage_id}.mp4"

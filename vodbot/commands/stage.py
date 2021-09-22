@@ -263,25 +263,20 @@ def check_time(prefix, resp, default=None):
 	return output
 
 
-def check_streamers(default=None, default_orig=False) -> List[str]:
-	streamers = None
-	if streamers == None:
-		streamers = ""
-		while not streamers:
-			if not default_orig:
-				streamers = input(colorize(f"#fW#lWho was in the VOD#r #d(default `{', '.join(default)}`, csv)#r: "))
-			else:
-				streamers = input(colorize(f"#fW#lWho was in the VOD#r #d(default to original, csv)#r: "))
+def check_streamers(default=None) -> List[str]:
+	streamers = ""
+	while not streamers:
+		streamers = input(colorize(f"#fW#lWho was in the VOD#r #d(default `{', '.join(default)}`, csv)#r: "))
 
-			if streamers == "":
-				streamers = default.replace(" ", "").split(",")
-			else:
-				streamers = streamers.replace(" ", "").split(",")
-				for streamer in streamers:
-					if len(streamer) == 0:
-						cprint("#l#fRMissing streamer name!#r")
-						streamers = ""
-						break
+		if streamers == "":
+			streamers = default
+		else:
+			streamers = streamers.replace(" ", "").split(",")
+			for streamer in streamers:
+				if len(streamer) == 0:
+					cprint("#l#fRMissing streamer name!#r")
+					streamers = ""
+					break
 	
 	return streamers
 
@@ -341,7 +336,11 @@ def _new(args, conf, stagedir):
 			util.exit_prog(13, f'Could not find video with ID "{args.id}"')
 	
 	# Get what streamers were involved (usernames), always asked
-	args.streamers = check_streamers(default=[f["meta"]["user_login"] for f in videos])
+	default_streamers = []
+	for f in videos:
+		if f["meta"]["user_login"] not in default_streamers:
+			default_streamers.append(f["meta"]["user_login"])
+	args.streamers = check_streamers(default=default_streamers)
 
 	# get title
 	if not args.title:
