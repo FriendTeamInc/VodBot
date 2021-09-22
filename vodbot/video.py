@@ -25,17 +25,17 @@ class FailedToCleanUp(VideoFailure):
 	pass
 
 
-def slice_video(TEMP_DIR: Path, vslice: VideoSlice, i: int=0) -> Path:
+def slice_video(TEMP_DIR: Path, LOG_LEVEL: str, vslice: VideoSlice, i: int=0) -> Path:
 	tmpfile = TEMP_DIR / f"{vslice.video_id}={i}.mp4"
 	cprint(f"#rSlicing stage `#fM{vslice.video_id}#r` #d({vslice.ss} - {vslice.to})#r")
 
-	cmd = [ "ffmpeg", "-ss", vslice.ss ]
+	cmd = [ "ffmpeg", "-hide_banner", "-ss", vslice.ss ]
 
 	if vslice.to != "EOF":
 		cmd += ["-to", vslice.to]
 
 	cmd += [
-		"-i", vslice.filename, "-c", "copy",
+		"-i", vslice.filepath, "-c", "copy",
 		str(tmpfile), "-y", "-stats", "-loglevel", "warning"
 	]
 	
@@ -47,7 +47,7 @@ def slice_video(TEMP_DIR: Path, vslice: VideoSlice, i: int=0) -> Path:
 	return tmpfile
 
 
-def concat_video(TEMP_DIR: Path, stage_id: str, slice_paths: List[Path]) -> Path:
+def concat_video(TEMP_DIR: Path, LOG_LEVEL: str, stage_id: str, slice_paths: List[Path]) -> Path:
 	# first create file list in temp dir
 	list_path = TEMP_DIR / f"concat-{stage_id}.txt"
 	with open(str(list_path), "w") as f:
@@ -57,11 +57,13 @@ def concat_video(TEMP_DIR: Path, stage_id: str, slice_paths: List[Path]) -> Path
 	# then do subprocess for concat list
 	concat_path = TEMP_DIR / f"concat-{stage_id}.mp4"
 	cmd = [
-		"ffmpeg", "-f", "concat",
+		"ffmpeg", "-hide_banner", "-f", "concat",
 		"-safe", "0", "-i", str(list_path),
-		"-c", "copy", str(concat_path)
+		"-c", "copy", str(concat_path),
+		"-y", "-stats", "-loglevel", "warning"
 	]
 	
+	print()
 	cprint(f"#rConcatentating videos for `#fM{stage_id}#r`")
 	
 	# we need to hop directories real fast to perform this function.
@@ -87,15 +89,18 @@ def concat_video(TEMP_DIR: Path, stage_id: str, slice_paths: List[Path]) -> Path
 
 
 def process_stage(conf: dict, stage: StageData) -> Path:
+	tempdir = Path(conf["temp_dir"])
+	loglevel = conf["ffmpeg_loglevel"]
+
 	# slice all the slices
-	slice_paths = [slice_video(conf, stage.slices[x], x) for x in range(len(stage.slices))]
+	slice_paths = [slice_video(tempdir, stage.slices[x], x) for x in range(len(stage.slices))]
 
 	# edge case of one video
 	if len(slice_paths) == 1:
 		return slice_paths[0]
 
 	# concat all the slices
-	concat_path = concat_video(conf, stage.id, slice_paths)
+	concat_path = concat_video(tempdir, stage.id, slice_paths)
 
 	# clean up old slices
 	for path in slice_paths:

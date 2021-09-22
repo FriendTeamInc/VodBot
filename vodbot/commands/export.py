@@ -68,7 +68,8 @@ def run(args):
 		tmpfile = None
 		try:
 			tmpfile = vbvid.process_stage(conf, stagedata)
-			os_remove(str(stagedir / f"{stagedata.id}.stage"))
+			if conf["stage_export_delete"]:
+				os_remove(str(stagedir / f"{stagedata.id}.stage"))
 		except vbvid.FailedToSlice as e:
 			cprint(f"#r#fRSkipping stage `{stagedata.id}`, failed to slice video with ID of `{e.vid}`.#r\n")
 		except vbvid.FailedToConcat:

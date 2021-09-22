@@ -25,6 +25,8 @@ DEFAULT_CONF = OrderedDict([
 
 	("stage_upload_delete", True), # delete a stage on completed upload?
 	("stage_export_delete", True), # delete a stage on completed export?
+
+	("ffmpeg_loglevel", "warning") # warning (recommended), error (only breaking stuff), fatal (absolute error)
 	
 	("youtube_client_path", str(vodbotdir / "yt-client.json")), # google generated json for using youtube api
 	("youtube_pickle_path", str(vodbotdir / "yt-session.pkl")), # caching oauth session and info
