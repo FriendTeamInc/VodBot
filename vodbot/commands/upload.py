@@ -116,10 +116,11 @@ def upload_video(conf, service, stagedata):
 			print("Skipping, errored too many times.")
 			break
 	else:
-		try:
-			os_remove(str(stagedir / f"{stagedata.id}.stage"))
-		except:
-			util.exit_prog(90, f"Failed to remove stage `{stagedata.id}` after upload.")
+		if conf["stage_upload_delete"]:
+			try:
+				os_remove(str(stagedir / f"{stagedata.id}.stage"))
+			except:
+				util.exit_prog(90, f"Failed to remove stage `{stagedata.id}` after upload.")
 
 		try:
 			os_remove(str(tmpfile))

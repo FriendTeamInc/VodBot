@@ -428,6 +428,7 @@ def run(args):
 	elif args.action == "rm":
 		if not isfile(str(stagedir / (args.id + ".stage"))):
 			util.exit_prog(45, f'Could not find stage "{args.id}".')
+			
 		try:
 			os_remove(str(stagedir / (args.id + ".stage")))
 			cprint(f'Stage "#fY#l{args.id}#r" has been #fRremoved#r.')

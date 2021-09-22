@@ -73,6 +73,8 @@ def load_conf(filename):
 
 	if len(conf["twitch_channels"]) == 0:
 		exit_prog(40, "No channels listed in config, please edit your config to continue.")
+	
+	# TODO: Check all important config options
 
 	return conf
 
