@@ -24,30 +24,9 @@ def sort_stagedata(stagedata):
 	return (date - EPOCH).total_seconds()
 
 
-def load_stage(stage_id):
-	jsonread = None
-	try:
-		with open(str(stagedir / (stage_id+".stage"))) as f:
-			jsonread = json.load(f)
-	except FileNotFoundError:
-		util.exit_prog(46, f'Could not find stage "{stage_id}". (FileNotFound)')
-	except KeyError:
-		util.exit_prog(46, f'Could not parse stage "{stage_id}" as JSON. Is this file corrupted?')
-	
-	_title = jsonread['title']
-	_desc = jsonread['desc']
-	_ss = jsonread['ss']
-	_to = jsonread['to']
-	_streamers = jsonread['streamers']
-	_datestring = jsonread['datestring']
-	_filename = jsonread['filename']
-
-	return StageData(_title, _desc, _ss, _to, _streamers, _datestring, _filename)
-
-
 def export_video(pathout: Path, stagedata: StageData):
 	tmpfile = str(pathout / f"{stagedata.title}.mp4")
-	cprint(f"#rSlicing stage `#fM{stagedata.hashdigest}#r` #d({stagedata.ss} - {stagedata.to})#r")
+	cprint(f"#rSlicing stage `#fM{stagedata.id}#r` #d({stagedata.ss} - {stagedata.to})#r")
 
 	cmd = [ "ffmpeg", "-ss", stagedata.ss ]
 
@@ -78,6 +57,7 @@ def run(args):
 		# create a list of all the hashes and sort by date streamed, slice chronologically
 		stagedatas = StageData.load_all_stages(stagedir)
 		stagedatas.sort(key=sort_stagedata)
+		print(stagedatas)
 
 		# Export with ffmpeg
 		util.make_dir(args.path)
@@ -85,10 +65,10 @@ def run(args):
 		for stage in stagedatas:
 			if export_video(args.path, stage) == True:
 				# delete stage on success
-				os_remove(str(stagedir / f"{stage.hashdigest}.stage"))
+				os_remove(str(stagedir / f"{stage.id}.stage"))
 			else:
 				# have warning message
-				cprint(f"#r#fRSkipping stage `{stage.hashdigest}` due to error.#r\n")
+				cprint(f"#r#fRSkipping stage `{stage.id}` due to error.#r\n")
 	else:
 		cprint("#dLoading stage...", end=" ")
 		
@@ -100,10 +80,10 @@ def run(args):
 		args.path = Path(args.path)
 		if export_video(args.path, stagedata) == True:
 			# delete stage on success
-			os_remove(str(stagedir / f"{stagedata.hashdigest}.stage"))
+			os_remove(str(stagedir / f"{stagedata.id}.stage"))
 		else:
 			# have warning message
-			cprint(f"#r#fRSkipping stage `{stagedata.hashdigest}` due to error.")
+			cprint(f"#r#fRSkipping stage `{stagedata.id}` due to error.")
 
 	# say "Done!"
 	cprint("#fG#lDone!#r")

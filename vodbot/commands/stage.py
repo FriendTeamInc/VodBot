@@ -98,8 +98,8 @@ class StageData():
 	def load_all_stages(stagedir: Path):
 		stages = []
 		for d in os_listdir(str(stagedir)):
-			if isfile(str(stagedir / (d + ".stage"))):
-				stages.append(stagedir, d[:-d])
+			if isfile(str(stagedir / d)) and d[-5:] == "stage":
+				stages.append(StageData.load_from_id(stagedir, d[:-6]))
 		
 		return stages
 
