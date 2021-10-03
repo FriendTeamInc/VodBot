@@ -36,7 +36,7 @@ def slice_video(TEMP_DIR: Path, LOG_LEVEL: str, vslice: VideoSlice, i: int=0) ->
 
 	cmd += [
 		"-i", vslice.filepath, "-c", "copy",
-		str(tmpfile), "-y", "-stats", "-loglevel", "warning"
+		str(tmpfile), "-y", "-stats", "-loglevel", LOG_LEVEL
 	]
 	
 	result = subprocess.run(cmd)
@@ -60,7 +60,7 @@ def concat_video(TEMP_DIR: Path, LOG_LEVEL: str, stage_id: str, slice_paths: Lis
 		"ffmpeg", "-hide_banner", "-f", "concat",
 		"-safe", "0", "-i", str(list_path),
 		"-c", "copy", str(concat_path),
-		"-y", "-stats", "-loglevel", "warning"
+		"-y", "-stats", "-loglevel", LOG_LEVEL
 	]
 	
 	print()
@@ -93,14 +93,14 @@ def process_stage(conf: dict, stage: StageData) -> Path:
 	loglevel = conf["ffmpeg_loglevel"]
 
 	# slice all the slices
-	slice_paths = [slice_video(tempdir, stage.slices[x], x) for x in range(len(stage.slices))]
+	slice_paths = [slice_video(tempdir, loglevel, stage.slices[x], x) for x in range(len(stage.slices))]
 
 	# edge case of one video
 	if len(slice_paths) == 1:
 		return slice_paths[0]
 
 	# concat all the slices
-	concat_path = concat_video(tempdir, stage.id, slice_paths)
+	concat_path = concat_video(tempdir, loglevel, stage.id, slice_paths)
 
 	# clean up old slices
 	for path in slice_paths:

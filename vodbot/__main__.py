@@ -128,6 +128,7 @@ def main():
 		pull.run(args)
 	elif args.cmd == "stage":
 		stage = import_module(".commands.stage", "vodbot")
+		print(args)
 		stage.run(args)
 	elif args.cmd == "upload" or args.cmd == "push":
 		upload = import_module(".commands.upload", "vodbot")
