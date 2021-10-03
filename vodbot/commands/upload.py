@@ -6,6 +6,7 @@
 from .stage import StageData
 
 import vodbot.util as util
+import vodbot.video as vbvid
 from vodbot.printer import cprint
 
 import json
@@ -13,7 +14,7 @@ import pickle
 import subprocess
 from datetime import datetime
 from pathlib import Path
-from os import listdir as os_listdir, remove as os_remove
+from os import remove as os_remove
 from os.path import exists as os_exists, isfile as os_isfile
 from time import sleep
 
@@ -35,52 +36,22 @@ tempdir = None
 RETRIABLE_EXCEPTS = (HttpLib2Error, HttpLib2ErrorWithResponse, IOError)
 
 
-def load_stage(stage_id):
-	jsonread = None
-	try:
-		with open(str(stagedir / (stage_id+".stage"))) as f:
-			jsonread = json.load(f)
-	except FileNotFoundError:
-		util.exit_prog(46, f'Could not find stage "{stage_id}". (FileNotFound)')
-	except KeyError:
-		util.exit_prog(46, f'Could not parse stage "{stage_id}" as JSON. Is this file corrupted?')
-	
-	_title = jsonread['title']
-	_desc = jsonread['desc']
-	_ss = jsonread['ss']
-	_to = jsonread['to']
-	_streamers = jsonread['streamers']
-	_datestring = jsonread['datestring']
-	_filename = jsonread['filename']
-
-	return StageData(_title, _desc, _ss, _to, _streamers, _datestring, _filename)
-
-
 EPOCH = datetime.utcfromtimestamp(0)
 def sort_stagedata(stagedata):
 	date = datetime.strptime(stagedata.datestring, "%Y/%m/%d")
 	return (date - EPOCH).total_seconds()
 
 
-def upload_video(service, stagedata):
-	tmpfile = str(tempdir / f"{stagedata.hashdigest}.mp4")
-	cprint(f"#rSlicing stage `#fM{stagedata.hashdigest}#r` #d({stagedata.ss} - {stagedata.to})#r")
-
-	cmd = [ "ffmpeg", "-ss", stagedata.ss ]
-
-	if stagedata.to != "EOF":
-		cmd += ["-to", stagedata.to]
-
-	cmd += [
-		"-i", stagedata.filename, "-c", "copy",
-		tmpfile, "-y", "-stats", "-loglevel", "warning"
-	]
-	
-	result = subprocess.run(cmd)
-
-	if result.returncode != 0:
-		cprint(f"#r#fRSkipping stage `{stagedata.hashdigest}` due to error.#r\n")
-		return
+def upload_video(conf, service, stagedata):
+	tmpfile = None
+	try:
+		tmpfile = vbvid.process_stage(conf, stagedata)
+	except vbvid.FailedToSlice as e:
+		cprint(f"#r#fRSkipping stage `{stagedata.id}`, failed to slice video with ID of `{e.vid}`.#r\n")
+	except vbvid.FailedToConcat:
+		cprint(f"#r#fRSkipping stage `{stagedata.id}`, failed to concatenate videos.#r\n")
+	except vbvid.FailedToCleanUp as e:
+		cprint(f"#r#fRSkipping stage `{stagedata.id}`, failed to clean up temp files.#r\n\n{e.vid}")
 
 	# send request to youtube to upload
 	request_body = {
@@ -96,7 +67,7 @@ def upload_video(service, stagedata):
 	}
 
 	# create media file, 100 MiB chunks
-	media_file = MediaFileUpload(tmpfile, chunksize=1024*1024*100, resumable=True)
+	media_file = MediaFileUpload(str(tmpfile), chunksize=1024*1024*100, resumable=True)
 
 	# create upload request and execute
 	response_upload = service.videos().insert(
@@ -107,15 +78,15 @@ def upload_video(service, stagedata):
 
 	resp = None
 	errn = 0
-	cprint(f"#fCUploading stage #r`#fM{stagedata.hashdigest}#r`, progress: #fC0#fY%#r #d...#r", end="\r")
+	cprint(f"#fCUploading stage #r`#fM{stagedata.id}#r`, progress: #fC0#fY%#r #d...#r", end="\r")
 	while resp is None:
 		try:
 			status, resp = response_upload.next_chunk()
 			if status:
-				cprint(f"#fCUploading stage #r`#fM{stagedata.hashdigest}#r`, progress: #fC{int(status.progress()*100)}#fY%#r #d...#r", end="\r")
+				cprint(f"#fCUploading stage #r`#fM{stagedata.id}#r`, progress: #fC{int(status.progress()*100)}#fY%#r #d...#r", end="\r")
 			if resp is not None:
 				if "id" in resp:
-					cprint(f"#fCUploading stage #r`#fM{stagedata.hashdigest}#r`, progress: #fC100#fY%#r!")
+					cprint(f"#fCUploading stage #r`#fM{stagedata.id}#r`, progress: #fC100#fY%#r!")
 					cprint(f"#l#fGVideo was successfully uploaded!#r #dhttps://youtu.be/{resp['id']}#r")
 				else:
 					util.exit_prog(99, f"Unexpected upload failure occurred, \"{resp}\"")
@@ -145,15 +116,16 @@ def upload_video(service, stagedata):
 			print("Skipping, errored too many times.")
 			break
 	else:
-		try:
-			os_remove(str(stagedir / f"{stagedata.hashdigest}.stage"))
-		except:
-			util.exit_prog(90, f"Failed to remove stage `{stagedata.hashdigest}` after upload.")
+		if conf["stage_upload_delete"]:
+			try:
+				os_remove(str(stagedir / f"{stagedata.id}.stage"))
+			except:
+				util.exit_prog(90, f"Failed to remove stage `{stagedata.id}` after upload.")
 
 		try:
-			os_remove(tmpfile)
+			os_remove(str(tmpfile))
 		except:
-			util.exit_prog(90, f"Failed to remove temp slice file of stage `{stagedata.hashdigest}` after upload.")
+			util.exit_prog(90, f"Failed to remove temp slice file of stage `{stagedata.id}` after upload.")
 
 
 def run(args):
@@ -187,15 +159,13 @@ def run(args):
 	if args.id == "all":
 		cprint("#dLoading stages...", end=" ")
 		# create a list of all the hashes and sort by date streamed, upload chronologically
-		stages = [d[:-6] for d in os_listdir(str(stagedir))
-			if os_isfile(str(stagedir / d)) and d[-5:] == "stage"]
-		stagedatas = [load_stage(stage) for stage in stages]
+		stagedatas = StageData.load_all_stages(stagedir)
 		stagedatas.sort(key=sort_stagedata)
 	else:
 		cprint("#dLoading stage...", end=" ")
 		# check if stage exists, and prep it for upload
-		stagedata = load_stage(args.id)
-		cprint(f"About to upload stage {stagedata.hashdigest}.#r")
+		stagedata = StageData.load_from_id(stagedir, args.id)
+		cprint(f"About to upload stage {stagedata.id}.#r")
 
 	# authenticate youtube service
 	if not os_exists(CLIENT_SECRET_FILE):
@@ -236,9 +206,9 @@ def run(args):
 		# begin to upload
 		cprint(f"About to upload {len(stagedatas)} stages.#r")
 		for stage in stagedatas:
-			upload_video(service, stage)
+			upload_video(conf, service, stage)
 	else:
 		# upload stage
-		cprint(f"About to upload stage {stagedata.hashdigest}.#r")
-		upload_video(service, stagedata)
+		cprint(f"About to upload stage {stagedata.id}.#r")
+		upload_video(conf, service, stagedata)
 	

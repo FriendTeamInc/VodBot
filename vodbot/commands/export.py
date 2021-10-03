@@ -3,6 +3,7 @@
 from .stage import StageData
 
 import vodbot.util as util
+import vodbot.video as vbvid
 from vodbot.printer import cprint
 
 import json
@@ -24,46 +25,6 @@ def sort_stagedata(stagedata):
 	return (date - EPOCH).total_seconds()
 
 
-def load_stage(stage_id):
-	jsonread = None
-	try:
-		with open(str(stagedir / (stage_id+".stage"))) as f:
-			jsonread = json.load(f)
-	except FileNotFoundError:
-		util.exit_prog(46, f'Could not find stage "{stage_id}". (FileNotFound)')
-	except KeyError:
-		util.exit_prog(46, f'Could not parse stage "{stage_id}" as JSON. Is this file corrupted?')
-	
-	_title = jsonread['title']
-	_desc = jsonread['desc']
-	_ss = jsonread['ss']
-	_to = jsonread['to']
-	_streamers = jsonread['streamers']
-	_datestring = jsonread['datestring']
-	_filename = jsonread['filename']
-
-	return StageData(_title, _desc, _ss, _to, _streamers, _datestring, _filename)
-
-
-def export_video(pathout: Path, stagedata: StageData):
-	tmpfile = str(pathout / f"{stagedata.title}.mp4")
-	cprint(f"#rSlicing stage `#fM{stagedata.hashdigest}#r` #d({stagedata.ss} - {stagedata.to})#r")
-
-	cmd = [ "ffmpeg", "-ss", stagedata.ss ]
-
-	if stagedata.to != "EOF":
-		cmd += ["-to", stagedata.to]
-
-	cmd += [
-		"-i", stagedata.filename, "-c", "copy",
-		tmpfile, "-y", "-stats", "-loglevel", "warning"
-	]
-
-	result = subprocess.run(cmd)
-
-	return result.returncode == 0
-
-
 def run(args):
 	global stagedir
 
@@ -76,36 +37,46 @@ def run(args):
 		cprint("#dLoading and slicing stages...#r")
 
 		# create a list of all the hashes and sort by date streamed, slice chronologically
-		stages = [d[:-6] for d in os_listdir(str(stagedir))
-			if os_isfile(str(stagedir / d)) and d[-5:] == "stage"]
-		stagedatas = [load_stage(stage) for stage in stages]
+		stagedatas = StageData.load_all_stages(stagedir)
 		stagedatas.sort(key=sort_stagedata)
+		print(stagedatas)
 
 		# Export with ffmpeg
 		util.make_dir(args.path)
 		args.path = Path(args.path)
 		for stage in stagedatas:
-			if export_video(args.path, stage) == True:
-				# delete stage on success
-				os_remove(str(stagedir / f"{stage.hashdigest}.stage"))
-			else:
-				# have warning message
-				cprint(f"#r#fRSkipping stage `{stage.hashdigest}` due to error.#r\n")
+			tmpfile = None
+			try:
+				tmpfile = vbvid.process_stage(conf, stage)
+				os_remove(str(stagedir / f"{stage.id}.stage"))
+			except vbvid.FailedToSlice as e:
+				cprint(f"#r#fRSkipping stage `{stage.id}`, failed to slice video with ID of `{e.vid}`.#r\n")
+			except vbvid.FailedToConcat:
+				cprint(f"#r#fRSkipping stage `{stage.id}`, failed to concatenate videos.#r\n")
+			except vbvid.FailedToCleanUp as e:
+				cprint(f"#r#fRSkipping stage `{stage.id}`, failed to clean up temp files.#r\n\n{e.vid}")
 	else:
 		cprint("#dLoading stage...", end=" ")
 		
 		# check if stage exists, and prep it for slice
-		stagedata = load_stage(args.id)
+		stagedata = StageData.load_from_id(stagedir, args.id)
 		
 		# Export with ffmpeg
 		util.make_dir(args.path)
 		args.path = Path(args.path)
-		if export_video(args.path, stagedata) == True:
-			# delete stage on success
-			os_remove(str(stagedir / f"{stagedata.hashdigest}.stage"))
-		else:
-			# have warning message
-			cprint(f"#r#fRSkipping stage `{stagedata.hashdigest}` due to error.")
+		
+		tmpfile = None
+		try:
+			tmpfile = vbvid.process_stage(conf, stagedata)
+			if conf["stage_export_delete"]:
+				os_remove(str(stagedir / f"{stagedata.id}.stage"))
+				
+		except vbvid.FailedToSlice as e:
+			cprint(f"#r#fRSkipping stage `{stagedata.id}`, failed to slice video with ID of `{e.vid}`.#r\n")
+		except vbvid.FailedToConcat:
+			cprint(f"#r#fRSkipping stage `{stagedata.id}`, failed to concatenate videos.#r\n")
+		except vbvid.FailedToCleanUp as e:
+			cprint(f"#r#fRSkipping stage `{stagedata.id}`, failed to clean up temp files.#r\n\n{e.vid}")
 
 	# say "Done!"
 	cprint("#fG#lDone!#r")

@@ -13,23 +13,28 @@ from collections import OrderedDict
 vodbotdir = Path.home() / ".vodbot"
 DEFAULT_CONF_PATH = vodbotdir / "conf.json"
 DEFAULT_CONF = OrderedDict([
-	("twitch_channels", []),
+	("twitch_channels", []), # channels to watch for new clips and videos
 
-	("stage_timezone", "+0000"),
+	("stage_timezone", "+0000"), # timezone for when a video happened
 
-	("stage_format", {
+	("stage_format", { # Macros for video descriptions when staging
 		"watch": "-- Watch live at {links}",
 		"discord": "-- Join the Discord at https://discord.gg/v2t6uag",
 		"credits": "\n{watch}\n{discord}"
 	}),
+
+	("stage_upload_delete", True), # delete a stage on completed upload?
+	("stage_export_delete", True), # delete a stage on completed export?
+
+	("ffmpeg_loglevel", "warning"), # warning (recommended), error (only breaking stuff), fatal (absolute error)
 	
-	("youtube_client_path", str(vodbotdir / "yt-client.json")),
-	("youtube_pickle_path", str(vodbotdir / "yt-api-keys.pkl")),
+	("youtube_client_path", str(vodbotdir / "yt-client.json")), # google generated json for using youtube api
+	("youtube_pickle_path", str(vodbotdir / "yt-session.pkl")), # caching oauth session and info
 	
-	("vod_dir", str(vodbotdir / "vods")),
-	("clip_dir", str(vodbotdir / "clips")),
-	("temp_dir", str(vodbotdir / "temp")),
-	("stage_dir", str(vodbotdir / "stage"))
+	("vod_dir", str(vodbotdir / "vods")), # place to store video data
+	("clip_dir", str(vodbotdir / "clips")), # clip data
+	("temp_dir", str(vodbotdir / "temp")), # temp data
+	("stage_dir", str(vodbotdir / "stage")) # stage data
 ])
 
 
@@ -68,6 +73,8 @@ def load_conf(filename):
 
 	if len(conf["twitch_channels"]) == 0:
 		exit_prog(40, "No channels listed in config, please edit your config to continue.")
+	
+	# TODO: Check all important config options
 
 	return conf
 

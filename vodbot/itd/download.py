@@ -72,6 +72,7 @@ def dl_video(video: Vod, path: str, metapath: str, max_workers: int):
 	cprint("#dDone, now to ffmpeg join...#r")
 
 	# join the vods using ffmpeg at specified path
+	# TODO: change this to the concat function in video?
 	cwd = os.getcwd()
 	os.chdir(str(tempdir))
 	cmd = [

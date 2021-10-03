@@ -5,57 +5,103 @@ from vodbot.printer import cprint, colorize
 
 import re
 import json
-import hashlib
+import string
+import random
 import datetime
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
-from os import walk as os_walk, remove as os_remove, listdir as os_listdir
+from os import remove as os_remove, listdir as os_listdir
 from os.path import isfile, isdir
+from typing import List
 
 
 # Default path
 vodbotdir = util.vodbotdir
 
 
-class StageData():
-	def __init__(self, title, desc, ss, to, streamers, datestring, filename):
-		self.title = title
-		self.desc = desc
+class VideoSlice():
+	def __init__(self, video_id: str, ss: str, to: str, filepath: str):
+		self.video_id = video_id
 		self.ss = ss
 		self.to = to
+		self.filepath = filepath
+	
+	def get_as_dict(self):
+		return {"id":self.video_id, "ss":self.ss, "to":self.to, "path":str(self.filepath)}
+
+
+class StageData():
+	def __init__(self, streamers: List[str], title: str, desc: str, slices: List[VideoSlice], datestring: str, cid=None):
+		self.title = title
+		self.desc = desc
 		self.streamers = streamers
 		self.datestring = datestring
-		self.filename = filename
+		self.slices = slices
 
-		self.hash = hashlib.sha1()
-		self.hash.update(self.title.encode("utf-8"))
-		self.hash.update(self.desc.encode("utf-8"))
-		self.hash.update(self.ss.encode("utf-8"))
-		self.hash.update(self.to.encode("utf-8"))
-		self.hash.update(self.datestring.encode("utf-8"))
-		self.hash.update(self.filename.encode("utf-8"))
-		
-		self.hashdigest = self.hash.hexdigest()[:8]
+		if cid is None:
+			self.gen_new_id()
+		else:
+			self.id = cid
 	
 	def __repr__(self):
-		return f"StageData(\"{self.title}\", {self.hashdigest})"
-	
-	def __hash__(self):
-		return hash((self.title, self.desc, self.ss, self.to, self.filename))
+		return f"StageData(\"{self.title}\", {self.id})"
 	
 	def write_stage(self, filename):
 		with open(filename, "w") as f:
 			jsondump = {
+				"streamers": self.streamers,
 				"title": self.title,
 				"desc": self.desc,
-				"ss": self.ss,
-				"to": self.to,
-				"filename": self.filename,
-				"streamers": self.streamers,
 				"datestring": self.datestring,
-				"hash": self.hash.hexdigest()
+				"id": self.id,
+				"slices": []
 			}
+
+			for vid in self.slices:
+				jsondump["slices"] += [vid.get_as_dict()]
+
 			json.dump(jsondump, f)
+	
+	def gen_new_id(self):
+		self.id = ""
+		for _ in range(4):
+			self.id += random.choice(string.ascii_lowercase + string.digits)
+	
+	@staticmethod
+	def load_from_json(data: dict):
+		slices = [VideoSlice(v["id"], v["ss"], v["to"], v["path"]) for v in data["slices"]]
+		streamers = data["streamers"]
+		title = data["title"]
+		desc = data["desc"]
+		datestr = data["datestring"]
+		_id = data["id"]
+
+		new_data = StageData(streamers=streamers, title=title, desc=desc, datestring=datestr, slices=slices)
+		new_data.id = _id
+
+		return new_data
+	
+	@staticmethod
+	def load_from_id(stagedir: Path, sid: str):
+		jsonread = None
+		try:
+			with open(str(stagedir / (sid+".stage"))) as f:
+				jsonread = json.load(f)
+		except FileNotFoundError:
+			util.exit_prog(46, f'Could not find stage "{sid}". (FileNotFound)')
+		except KeyError:
+			util.exit_prog(46, f'Could not parse stage "{sid}" as JSON. Is this file corrupted?')
+		
+		return StageData.load_from_json(jsonread)
+	
+	@staticmethod
+	def load_all_stages(stagedir: Path):
+		stages = []
+		for d in os_listdir(str(stagedir)):
+			if isfile(str(stagedir / d)) and d[-5:] == "stage":
+				stages.append(StageData.load_from_id(stagedir, d[:-6]))
+		
+		return stages
 
 
 class CouldntFindVideo(Exception):
@@ -116,7 +162,6 @@ def find_video_by_id(vid_id, VODS_DIR, CLIPS_DIR):
 	clip_dirs = [d for d in os_listdir(CLIPS_DIR) if isdir(str(CLIPS_DIR_PATH / d))]
 
 	filename = None
-	metaname = None
 	
 	directories = [(vod_dirs, VODS_DIR_PATH), (clip_dirs, CLIPS_DIR_PATH)]
 
@@ -139,19 +184,30 @@ def find_video_by_id(vid_id, VODS_DIR, CLIPS_DIR):
 	raise CouldntFindVideo()
 
 
-def check_time(prefix, inputstring, resp, default=None):
+def check_stage_id(stage_id, STAGE_DIR):
+	STAGE_DIR_PATH = Path(STAGE_DIR)
+
+	stages = [m[:-6] for m in os_listdir(STAGE_DIR) if isfile(str(STAGE_DIR_PATH / Path(m))) and m[-5:]=="stage"]
+
+	return stage_id in stages
+
+
+def check_time(prefix, resp, default=None):
 	output = resp
 	checkedonce = False
 
 	while True:
-		if checkedonce or output == None:
-			output = input(colorize(inputstring))
+		if checkedonce or not output:
+			a = 'ss' if prefix=='Start' else 'to'
+			t = '0:0:0' if prefix=='Start' else 'EOF'
+			f = f"#fW#l{prefix} time of the Video#r #d(--{a}, default {t})#r: "
+			output = input(colorize(f))
 		checkedonce = True
 
 		if output == "":
-			if prefix == "Start time":
+			if prefix == "Start":
 				return default if default != None else "0:0:0"
-			elif prefix == "End time":
+			elif prefix == "End":
 				return default if default != None else "EOF"
 
 		intime = output.split(":")
@@ -161,7 +217,7 @@ def check_time(prefix, inputstring, resp, default=None):
 		hours = None
 
 		if len(intime) > 3:
-			cprint(f"#fR{prefix}: Time cannot have more than 3 units.#r")
+			cprint(f"#fR{prefix} time: Time cannot have more than 3 units.#r")
 			continue
 		
 		if len(intime) >= 1:
@@ -169,10 +225,10 @@ def check_time(prefix, inputstring, resp, default=None):
 			try:
 				seconds = int(seconds)
 			except ValueError:
-				cprint(f"#fR{prefix}: Seconds does not appear to be a number.#r")
+				cprint(f"#fR{prefix} time: Seconds does not appear to be a number.#r")
 				continue
 			if seconds > 59 or seconds < 0:
-				cprint(f"#fR{prefix}: Seconds must be in the range of 0 to 59.#r")
+				cprint(f"#fR{prefix} time: Seconds must be in the range of 0 to 59.#r")
 				continue
 			timelist.insert(0, str(seconds))
 		
@@ -181,10 +237,10 @@ def check_time(prefix, inputstring, resp, default=None):
 			try:
 				minutes = int(minutes)
 			except ValueError:
-				cprint(f"#fR{prefix}: Minutes does not appear to be a number.#r")
+				cprint(f"#fR{prefix} time: Minutes does not appear to be a number.#r")
 				continue
 			if minutes > 59 or minutes < 0:
-				cprint(f"#fR{prefix}: Minutes must be in the range of 0 to 59.#r")
+				cprint(f"#fR{prefix} time: Minutes must be in the range of 0 to 59.#r")
 				continue
 			timelist.insert(0, str(minutes))
 		else:
@@ -195,7 +251,7 @@ def check_time(prefix, inputstring, resp, default=None):
 			try:
 				hours = int(hours)
 			except ValueError:
-				cprint(f"#fR{prefix}: Hours does not appear to be a number.#r")
+				cprint(f"#fR{prefix} time: Hours does not appear to be a number.#r")
 				continue
 			timelist.insert(0, str(hours))
 		else:
@@ -207,80 +263,129 @@ def check_time(prefix, inputstring, resp, default=None):
 	return output
 
 
-def _add(args, conf, stagedir):
+def check_streamers(default=None) -> List[str]:
+	streamers = ""
+	while not streamers:
+		streamers = input(colorize(f"#fW#lWho was in the VOD#r #d(default `{', '.join(default)}`, csv)#r: "))
+
+		if streamers == "":
+			streamers = default
+		else:
+			streamers = streamers.replace(" ", "").split(",")
+			for streamer in streamers:
+				if len(streamer) == 0:
+					cprint("#l#fRMissing streamer name!#r")
+					streamers = ""
+					break
+	
+	return streamers
+
+
+def check_title(default=None):
+	title = default
+	if not title:
+		title = ""
+		while title == "":
+			title = input(colorize("#fW#lTitle of the Video#r #d(--title)#r: "))
+			if title == "":
+				cprint("#fRTitle cannot be blank.#r")
+	
+	return title
+
+
+def check_description(formatdict, inputdefault=None):
+	desc = ""
+
+	if inputdefault:
+		try:
+			inputdefault = inputdefault.format(**formatdict).replace("\\n", "\n")
+			desc = inputdefault
+		except KeyError as err:
+			cprint(f"#fRDescription format error from default: {err}.#r")
+			desc = ""
+	
+	while desc == "":
+		desc = input(colorize("#fW#lDescription of Video#r #d(--desc)#r: "))
+		if desc == "":
+			cprint("#fRDescription cannot be blank.#r")
+			continue
+
+		# Format the description
+		try:
+			desc = desc.format(**formatdict).replace("\\n", "\n")
+		except KeyError as err:
+			cprint(f"#fRDescription format error: {err}.#r")
+			desc = ""
+	
+	return desc
+
+
+def _new(args, conf, stagedir):
 	VODS_DIR = conf["vod_dir"]
 	CLIPS_DIR = conf["clip_dir"]
+	STAGE_DIR = conf["stage_dir"]
+	stagedir = Path(STAGE_DIR)
 
-	filename = None
-	metadata = None
-	videotype = None
-
-	try:
-		(filename, metadata, videotype) = find_video_by_id(args.id, VODS_DIR, CLIPS_DIR)
-	except CouldntFindVideo:
-		util.exit_prog(13, f'Could not find video with ID "{args.id}"')
+	# find the videos by their ids to confirm they exist
+	videos = []
+	for video in args.id:
+		try:
+			(filename, metadata, videotype) = find_video_by_id(video, VODS_DIR, CLIPS_DIR)
+			videos += [{"id":video, "file":filename, "meta":metadata, "type":videotype}]
+		except CouldntFindVideo:
+			util.exit_prog(13, f'Could not find video with ID "{args.id}"')
 	
-	cprint(f"Found #fM#l{videotype}#r #fM{args.id}#r from #fY#l{metadata['user_name']}#r.")
-
-	# Get any necessary input
 	# Get what streamers were involved (usernames), always asked
-	args.streamers = None
-	if args.streamers == None:
-		args.streamers = ""
-		while args.streamers == "":
-			args.streamers = input(colorize(f"#fW#lWho was in the VOD#r #d(default `{metadata['user_name']}`, csv)#r: "))
-			if args.streamers == "":
-				args.streamers = [metadata["user_name"]]
-			else:
-				args.streamers = args.streamers.replace(" ", "").split(",")
-				
-	# Grab the title
-	if args.title == None:
-		args.title = ""
-		while args.title == "":
-			args.title = input(colorize("#fW#lTitle of the Video#r #d(--title)#r: "))
-			if args.title == "":
-				cprint("#fRTitle cannot be blank.#r")
+	default_streamers = []
+	for f in videos:
+		if f["meta"]["user_login"] not in default_streamers:
+			default_streamers.append(f["meta"]["user_login"])
+	args.streamers = check_streamers(default=default_streamers)
 
-	# Grab times
-	args.ss = check_time("Start time", "#fW#lStart time of the Video#r #d(--ss, default 0:0:0)#r: ", args.ss)
-	args.to = check_time("End time", "#fW#lEnd time of the Video#r #d(--to, default EOF)#r: ", args.to)
+	# get title
+	if not args.title:
+		args.title = check_title(default=None)
 
-	# Generate dict to use for formatting
+	# get description
 	formatdict, datestring = create_format_dict(conf, args.streamers, utcdate=metadata["created_at"])
+	args.desc = check_description(formatdict, inputdefault=args.desc)
 
-	# Grab description
-	if args.desc == None:
-		args.desc = ""
-	else:
-		# Format the description
-		try:
-			args.desc = args.desc.format(**formatdict).replace("\\n", "\n")
-		except KeyError as err:
-			cprint(f"#fRDescription format error: {err}.#r")
-			args.desc = ""
+	# get timestamps for each video through input
+	for x in range(len(videos)):
+		# skip times we dont need because we already have them
+		if x < len(args.ss):
+			continue
+		
+		vid = videos[x]
+		# grab times for this specific stream
+		cprint(f"#dTimestamps for `#r#fM{vid['meta']['title']}#r` #d({vid['meta']['id']})#r")
+		args.ss += [check_time("Start", args.ss[x] if x < len(args.ss) else None)]
+		args.to += [check_time("End", args.to[x] if x < len(args.to) else None)]
 
-	while args.desc == "":
-		args.desc = input(colorize("#fW#lDescription of Video#r #d(--desc)#r: "))
-		if args.desc == "":
-			cprint("#fRDescription cannot be blank.#r")
+	# make slice objects
+	slices = []
+	for x in range(len(videos)):
+		vid = videos[x]
+		vidslice = VideoSlice(video_id=vid["id"], ss=args.ss[x], to=args.to[x], filepath=vid["file"])
+		slices += [vidslice]
 
-		# Format the description
-		try:
-			args.desc = args.desc.format(**formatdict).replace("\\n", "\n")
-		except KeyError as err:
-			cprint(f"#fRDescription format error: {err}.#r")
-			args.desc = ""
+	# make stage object
+	stage = StageData(streamers=args.streamers, title=args.title, desc=args.desc, datestring=datestring, slices=slices)
+	# Check that new "id" does not collide
+	while check_stage_id(stage.id, STAGE_DIR):
+		stage.gen_new_id()
 
-	stage = StageData(args.title, args.desc, args.ss, args.to, args.streamers, datestring, str(filename))
-	shortfile = stage.filename.replace(VODS_DIR, "...").replace(CLIPS_DIR, "...")
+	# shorter file name
+	#shortfile = stage.filename.replace(VODS_DIR, "$vods").replace(CLIPS_DIR, "$clips")
 
 	print()
-	cprint(f"#r`#fC{stage.title}#r` #d({stage.ss} - {stage.to})#r")
-	cprint(f"#d''' {shortfile}#r\n#fG{stage.desc}#r\n#d''' {stage.hashdigest}#r")
-	cprint(f"#d#fM{' '.join(stage.streamers)}#r")
+	cprint(f"#r`#fC{stage.title}#r` #fM{' '.join(stage.streamers)}#r #d({stage.id})#r")
+	cprint(f"#d'''#fG{stage.desc}#r#d'''#r")
+	for vid in stage.slices:
+		cprint(f"#fM{vid.video_id}#r > #fY{vid.ss}#r - #fY{vid.to}#r")
 	
-	stagename = str(stagedir / (stage.hashdigest + ".stage"))
+	# write stage
+	stagename = str(stagedir / (stage.id + ".stage"))
 	stage.write_stage(stagename)
 
 	# Done!
@@ -289,184 +394,41 @@ def _add(args, conf, stagedir):
 def _list(args, conf, stagedir):
 	VODS_DIR = conf["vod_dir"]
 	CLIPS_DIR = conf["clip_dir"]
+	STAGE_DIR = conf["stage_dir"]
+	stagedir = Path(STAGE_DIR)
 	
 	if args.id == None:
-		stages = [d[:-6] for d in os_listdir(str(stagedir))
-			if isfile(str(stagedir / d)) and d[-5:] == "stage"]
+		stages = StageData.load_all_stages(stagedir)
 
-		for stage in stages:
-			jsonread = None
-			try:
-				with open(str(stagedir / (stage+".stage"))) as f:
-					jsonread = json.load(f)
-			except FileNotFoundError:
-				# Throw error?
-				continue
-			except KeyError:
-				continue
-			
-			cprint(f'#r#fY#l{stage}#r -- `#fC{jsonread["title"]}#r` #d(', end="")
-			cprint(f'{jsonread["ss"]} - {jsonread["to"]})#r -- ', end="")
-			cprint(f'#fM{", ".join(jsonread["streamers"])}#r')
+		for s in stages:
+			cprint(f'#r#fY#l{s.id}#r -- `#fC{s.title}#r` ', end="")
+			cprint(f'(#fM{" ".join([d.video_id for d in s.slices])}#r) -- ', end="")
+			cprint(f'#l#fM{", ".join(s.streamers)}#r')
 		
 		if len(stages) == 0:
 			cprint("#fBNothing staged right now.#r")
 	else:
-		if not isfile(str(stagedir / (args.id + ".stage"))):
-			util.exit_prog(45, f'Could not find stage "{args.id}".')
-		
-		jsonread = None
-		try:
-			with open(str(stagedir / (args.id+".stage"))) as f:
-				jsonread = json.load(f)
-		except FileNotFoundError:
-			util.exit_prog(46, f'Could not find stage "{args.id}". (FileNotFound)')
-		except KeyError:
-			util.exit_prog(46, f'Could not parse stage "{args.id}" as JSON. Is this file corrupted?')
-		
-		title = jsonread['title']
-		desc = jsonread['desc']
-		ss = jsonread['ss']
-		to = jsonread['to']
-		streamers = jsonread['streamers']
-		datestring = jsonread['datestring']
-		filename = jsonread['filename']
+		stage = StageData.load_from_id(stagedir, args.id)
 
-		stage = StageData(title, desc, ss, to, streamers, datestring, filename)
-		shortfile = stage.filename.replace(VODS_DIR, "...").replace(CLIPS_DIR, "...")
-
-		print()
-		cprint(f"#r`#fC{stage.title}#r` #d({stage.ss} - {stage.to})#r")
-		cprint(f"#d''' {shortfile}#r\n#fG{stage.desc}#r\n#d''' #fYHash: {stage.hashdigest}#r")
-		cprint(f"#d#fM{' '.join(stage.streamers)}#r")
-
-
-def _edit(args, conf, stagedir):
-	VODS_DIR = conf["vod_dir"]
-	CLIPS_DIR = conf["clip_dir"]
-
-	if not isfile(str(stagedir / (args.id + ".stage"))):
-		util.exit_prog(45, f'Could not find stage "{args.id}".')
-	
-	jsonread = None
-	try:
-		with open(str(stagedir / (args.id+".stage"))) as f:
-			jsonread = json.load(f)
-	except FileNotFoundError:
-		util.exit_prog(46, f'Could not find stage "{args.id}". (FileNotFound)')
-	except KeyError:
-		util.exit_prog(46, f'Could not parse stage "{args.id}" as JSON. Is this file corrupted?')
-	
-	old_title = jsonread['title']
-	old_desc = jsonread['desc']
-	old_ss = jsonread['ss']
-	old_to = jsonread['to']
-	old_streamers = jsonread['streamers']
-	old_datestring = jsonread['datestring']
-	old_filename = jsonread['filename']
-
-	old_stage = StageData(old_title, old_desc, old_ss, old_to, old_streamers, old_datestring, old_filename)
-	shortfile = old_stage.filename.replace(VODS_DIR, "...").replace(CLIPS_DIR, "...")
-
-	cprint("#l#fRCurrent stage:")
-	cprint(f"#r`#fC{old_stage.title}#r` #d({old_stage.ss} - {old_stage.to})#r")
-	cprint(f"#d''' {shortfile}#r\n#fG{old_stage.desc}#r\n#d''' #fYHash: {old_stage.hashdigest}#r")
-	cprint(f"#d#fM{' '.join(old_stage.streamers)}#r")
-	
-	# Now to take the edits, where blank responses are defaulted to the original value.
-	# Get what streamers were involved (usernames)
-	args.streamers = None
-	if args.streamers == None:
-		args.streamers = ""
-		while args.streamers == "":
-			args.streamers = input(colorize(f"#fW#lWho was in the VOD#r #d(default to original, csv)#r: "))
-			if args.streamers == "":
-				args.streamers = old_streamers
-			else:
-				args.streamers = args.streamers.replace(" ", "").split(",")
-				for streamer in args.streamers:
-					if len(streamer) == 0:
-						cprint("#l#fRMissing streamer name!#r")
-						args.streamers = ""
-						break
-
-	# Grab the title
-	if args.title == None:
-		args.title = ""
-		while args.title == "":
-			args.title = input(colorize("#fW#lTitle of the Video#r #d(--title, default to original)#r: "))
-			if args.title == "":
-				args.title = old_title
-
-	# Grab times
-	args.ss = check_time("Start time", "#fW#lStart time of the Video#r #d(--ss, default to original)#r: ", args.ss, old_ss)
-	args.to = check_time("End time", "#fW#lEnd time of the Video#r #d(--to, default to original)#r: ", args.to, old_to)
-
-	# Generate dict to use for formatting
-	formatdict = create_format_dict(conf, args.streamers, truedate=old_datestring)
-
-	if args.desc != None:
-		# Format the description
-		try:
-			args.desc = args.desc.format(**formatdict).replace("\\n", "\n")
-		except KeyError as err:
-			cprint(f"#fRDescription format error: {err}.#r")
-			args.desc = ""
-	
-	while args.desc == "" or args.desc == None:
-		args.desc = input(colorize("#fW#lDescription of Video#r #d(--desc, default to original)#r: "))
-		print(args.desc)
-		if args.desc == "":
-			args.desc = old_desc
-			print("hmm")
-			break
-
-		# Format the description
-		try:
-			args.desc = args.desc.format(**formatdict).replace("\\n", "\n")
-		except KeyError as err:
-			cprint(f"#fRDescription format error: {err}.#r")
-			args.desc = ""
-
-	new_stage = StageData(args.title, args.desc, args.ss, args.to, args.streamers, old_datestring, old_filename)
-	shortfile = new_stage.filename.replace(VODS_DIR, "...").replace(CLIPS_DIR, "...")
-
-	cprint("#l#fRNew stage:")
-	cprint(f"#r`#fC{new_stage.title}#r` #d({new_stage.ss} - {new_stage.to})#r")
-	cprint(f"#d''' {shortfile}#r\n#fG{new_stage.desc}#r\n#d''' #fYHash: {new_stage.hashdigest}#r")
-	cprint(f"#d#fM{' '.join(new_stage.streamers)}#r")
-
-	color_input = colorize("#l#fRSave changes and remove old stage?#r (y/N) ")
-	new_input = ""
-	while new_input == "":
-		new_input = input(color_input).lower().strip()
-		if new_input != "y" and new_input != "n":
-			new_input = ""
-
-	if new_input == "n":
-		cprint("#l#fRNot writing new stage.#r #dExiting...#r")
-	elif new_input == "y":
-		new_stagename = str(stagedir / (new_stage.hashdigest + ".stage"))
-		old_stagename = str(stagedir / (old_stage.hashdigest + ".stage"))
-		new_stage.write_stage(new_stagename)
-		os_remove(old_stagename) # TODO: exception check this
-		cprint("#l#fRWrote new stage.#r")
+		cprint(f"#r`#fC{stage.title}#r` #fM{' '.join(stage.streamers)}#r #d({stage.id})#r")
+		cprint(f"#d'''#fG{stage.desc}#r#d'''#r")
+		for vid in stage.slices:
+			cprint(f"#fM{vid['id']}#r > #fY{vid['ss']}#r - #fY{vid['to']}#r")
 
 
 def run(args):
-	util.make_dir(vodbotdir)
-	stagedir = vodbotdir / "stage"
-	util.make_dir(stagedir)
 	conf = util.load_conf(args.config)
+	
+	util.make_dir(vodbotdir)
+	stagedir = conf["stage_dir"]
+	util.make_dir(stagedir)
 
-	if args.action == "add":
-		_add(args, conf, stagedir)
-	elif args.action == "edit":
-		_edit(args, conf, stagedir)
+	if args.action == "new":
+		_new(args, conf, stagedir)
 	elif args.action == "rm":
 		if not isfile(str(stagedir / (args.id + ".stage"))):
 			util.exit_prog(45, f'Could not find stage "{args.id}".')
-		
+			
 		try:
 			os_remove(str(stagedir / (args.id + ".stage")))
 			cprint(f'Stage "#fY#l{args.id}#r" has been #fRremoved#r.')
