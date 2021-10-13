@@ -25,9 +25,9 @@ class FailedToCleanUp(VideoFailure):
 	pass
 
 
-def slice_video(TEMP_DIR: Path, LOG_LEVEL: str, vslice: VideoSlice, i: int=0) -> Path:
+def slice_video(TEMP_DIR: Path, LOG_LEVEL: str, vslice: VideoSlice, i: int=0, total: int=0) -> Path:
 	tmpfile = TEMP_DIR / f"{vslice.video_id}={i}.mp4"
-	cprint(f"#rSlicing stage `#fM{vslice.video_id}#r` #d({vslice.ss} - {vslice.to})#r")
+	cprint(f"#rSlicing stage part ({i}/{total}) `#fM{vslice.video_id}#r` #d({vslice.ss} - {vslice.to})#r")
 
 	cmd = [ "ffmpeg", "-hide_banner", "-ss", vslice.ss ]
 
@@ -93,7 +93,8 @@ def process_stage(conf: dict, stage: StageData) -> Path:
 	loglevel = conf["ffmpeg_loglevel"]
 
 	# slice all the slices
-	slice_paths = [slice_video(tempdir, loglevel, stage.slices[x], x) for x in range(len(stage.slices))]
+	slices = len(stage.slices)
+	slice_paths = [slice_video(tempdir, loglevel, stage.slices[x], x, slices) for x in range(slices)]
 
 	# edge case of one video
 	if len(slice_paths) == 1:
