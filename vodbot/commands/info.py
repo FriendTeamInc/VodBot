@@ -65,7 +65,7 @@ def run(args):
 	# run the query
 	resp = gql.gql_query(query=query).json()
 	resp = resp["data"]
-	if not any(resp.get("video"), resp.get("clip"), resp.get("user")):
+	if not any([resp.get("video"), resp.get("clip"), resp.get("user")]):
 		util.exit_prog(93, f"Could not query info on {cword} content from input.")
 	
 	# Read the data back and out to the terminal
