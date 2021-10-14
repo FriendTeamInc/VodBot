@@ -1,3 +1,4 @@
+from vodbot import twitch
 from . import util, __project__, __version__
 from .printer import colorize
 
@@ -116,6 +117,10 @@ def main():
 	info = subparsers.add_parser("info", epilog=titletext,
 		description="Prints out info on the Channel, Clip, or VOD given.")
 	info.add_argument("id", type=str, help="id/url of the Channel, Clip, or VOD")
+
+	# `vodbot test`
+	info = subparsers.add_parser("test", epilog=titletext,
+		description="Test Functionality. Should not be included in a release.")
 	
 	args = parser.parse_args()
 
@@ -138,6 +143,8 @@ def main():
 	elif args.cmd == "info":
 		info = import_module(".commands.info", "vodbot")
 		info.run(args)
+	elif args.cmd == "test":
+		twitch.get_video_comments(1172062041)
 
 
 if __name__ == "__main__":

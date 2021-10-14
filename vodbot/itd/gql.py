@@ -45,7 +45,7 @@ GET_CHANNEL_VIDEOS_QUERY = """
 {{  user(login: "{channel_id}") {{
 		videos( first: {first}, type: {type}, sort: {sort}, after: "{after}" ) {{
 			totalCount
-			pageInfo {{ hasNextPage hasPreviousPage }}
+			pageInfo {{ hasNextPage }}
 			edges {{ cursor
 				node {{ id title
 					publishedAt broadcastType
@@ -104,6 +104,18 @@ GET_CHANNEL_QUERY = """
 			viewersCount createdAt
 			game {{ id name }}
 }}  }}  }}
+"""
+# IRC Chat query
+GET_VIDEO_COMMENTS_QUERY = """
+{{ video(id: "{video_id}") {{
+	comments(contentOffsetSeconds: 0) {{
+		pageInfo {{ hasNextPage }}
+		edges {{ cursor node {{
+			contentOffsetSeconds state
+			commenter {{ displayName }}
+			message {{ userColor 
+				fragments {{ mention {{ displayName }} text }}
+}}  }}  }}  }}  }} }}
 """
 
 

@@ -191,3 +191,9 @@ def get_channel_clips(channel):
 			break;
 
 	return clips
+
+
+def get_video_comments(video_id):
+	query = gql.GET_VIDEO_COMMENTS_QUERY.format(video_id=video_id, first=100)
+	resp = gql.gql_query(query=query)
+	print(resp.json())
