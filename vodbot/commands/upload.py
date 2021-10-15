@@ -76,9 +76,12 @@ def upload_video(conf, service, stagedata):
 		media_body=media_file
 	)
 
+	video_id = None # youtube video id
 	resp = None
 	errn = 0
 	cprint(f"#fCUploading stage #r`#fM{stagedata.id}#r`, progress: #fC0#fY%#r #d...#r", end="\r")
+	
+	# Below is taken from Google's documentation, rewrite?
 	while resp is None:
 		try:
 			status, resp = response_upload.next_chunk()
@@ -88,6 +91,7 @@ def upload_video(conf, service, stagedata):
 				if "id" in resp:
 					cprint(f"#fCUploading stage #r`#fM{stagedata.id}#r`, progress: #fC100#fY%#r!")
 					cprint(f"#l#fGVideo was successfully uploaded!#r #dhttps://youtu.be/{resp['id']}#r")
+					video_id = resp["id"]
 				else:
 					util.exit_prog(99, f"Unexpected upload failure occurred, \"{resp}\"")
 		except ResumableUploadError as err:
@@ -115,6 +119,8 @@ def upload_video(conf, service, stagedata):
 		if errn >= 10:
 			print("Skipping, errored too many times.")
 			break
+	
+	# we're done, lets clean up
 	else:
 		if conf["stage_upload_delete"]:
 			try:
@@ -126,6 +132,8 @@ def upload_video(conf, service, stagedata):
 			os_remove(str(tmpfile))
 		except:
 			util.exit_prog(90, f"Failed to remove temp slice file of stage `{stagedata.id}` after upload.")
+	
+	return video_id
 
 
 def run(args):
@@ -140,7 +148,10 @@ def run(args):
 	CLIENT_SECRET_FILE = conf["youtube_client_path"]
 	API_NAME = 'youtube'
 	API_VERSION = 'v3'
-	SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
+	SCOPES = [ # Only force-ssl is required, but both makes it explicit.
+		"https://www.googleapis.com/auth/youtube.upload",   # Videos.insert
+		"https://www.googleapis.com/auth/youtube.force-ssl" # Captions.insert
+	]
 
 	# handle logout
 	if args.id == "logout":
@@ -206,9 +217,11 @@ def run(args):
 		# begin to upload
 		cprint(f"About to upload {len(stagedatas)} stages.#r")
 		for stage in stagedatas:
-			upload_video(conf, service, stage)
+			video_id = upload_video(conf, service, stage)
+			# if upload_captions: upload_captions(conf, service, stage, video_id)
 	else:
 		# upload stage
 		cprint(f"About to upload stage {stagedata.id}.#r")
-		upload_video(conf, service, stagedata)
+		video_id = upload_video(conf, service, stagedata)
+		# if upload_captions: upload_captions(conf, service, stagedata, video_id)
 	
