@@ -144,7 +144,9 @@ def main():
 		info = import_module(".commands.info", "vodbot")
 		info.run(args)
 	elif args.cmd == "test":
-		twitch.get_video_comments(1172062041)
+		msgs = twitch.get_video_comments(1172062041)
+		for msg in msgs:
+			print(msg)
 
 
 if __name__ == "__main__":

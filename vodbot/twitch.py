@@ -108,6 +108,26 @@ class Channel:
 		return f"Channel({self.id}, {self.display_name})"
 
 
+class ChatMessage:
+	def __init__(self, json) -> None:
+		self.user = json["commenter"]["displayName"]
+		self.user_color = json["message"]["userColor"] or "#FFFFFF"
+
+		self.message = ""
+		for frag in json["message"]["fragments"]:
+			if frag["mention"] is not None:
+				self.message += "@" + frag["mention"]["displayName"]
+			self.message += frag["text"]
+			self.message += " "
+		self.message = self.message.strip()
+
+		self.offset_secs = json["contentOffsetSeconds"]
+		self.state = json["state"]
+		
+	def __repr__(self):
+		return f"ChatMessage(ofst={self.offset_secs};user={self.user};msg=\"{self.message}\")"
+
+
 def get_channels(channel_ids: list):
 	"""
 	Uses a (blocking) HTTP request to retrieve channel information from Twitch's API.
@@ -156,7 +176,7 @@ def get_channel_vods(channel: Channel):
 			vods.append(Vod(vod["node"]))
 
 		if pagination == "" or pagination == None:
-			break;
+			break
 
 	return vods
 
@@ -188,12 +208,36 @@ def get_channel_clips(channel):
 			clips.append(Clip(clip["node"]))
 
 		if pagination == "" or pagination == None:
-			break;
+			break
 
 	return clips
 
 
 def get_video_comments(video_id):
-	query = gql.GET_VIDEO_COMMENTS_QUERY.format(video_id=video_id, first=100)
-	resp = gql.gql_query(query=query)
-	print(resp.json())
+	"""
+	Uses a (blocking) HTTP request to retrieve chat logs for a specific video.
+
+	:param video_id: A video ID string.
+	:returns: A list of ChatMessage objects.
+	"""
+
+	messages = []
+	pagination = ""
+	while True:
+		query = gql.GET_VIDEO_COMMENTS_QUERY.format(
+			video_id=video_id, first=100, after=pagination
+		)
+		resp = gql.gql_query(query=query).json()
+		resp = resp["data"]["video"]["comments"]
+
+		if not resp or not resp["edges"]:
+			break
+
+		pagination = resp["edges"][-1]["cursor"]
+		for comment in resp["edges"]:
+			messages.append(ChatMessage(comment["node"]))
+		
+		if pagination == "" or pagination == None:
+			break
+	
+	return messages

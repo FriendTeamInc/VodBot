@@ -45,7 +45,6 @@ GET_CHANNEL_VIDEOS_QUERY = """
 {{  user(login: "{channel_id}") {{
 		videos( first: {first}, type: {type}, sort: {sort}, after: "{after}" ) {{
 			totalCount
-			pageInfo {{ hasNextPage }}
 			edges {{ cursor
 				node {{ id title
 					publishedAt broadcastType
@@ -62,7 +61,6 @@ GET_CHANNEL_CLIPS_QUERY = """
 			first: {first}, after: "{after}",
 			criteria: {{ period: ALL_TIME, sort: VIEWS_DESC }}
 		) {{
-			pageInfo {{ hasNextPage }}
 			edges {{ cursor
 				node {{ id slug title
 					createdAt viewCount
@@ -108,8 +106,7 @@ GET_CHANNEL_QUERY = """
 # IRC Chat query
 GET_VIDEO_COMMENTS_QUERY = """
 {{ video(id: "{video_id}") {{
-	comments(contentOffsetSeconds: 0) {{
-		pageInfo {{ hasNextPage }}
+	comments(contentOffsetSeconds: 0, after: "{after}") {{
 		edges {{ cursor node {{
 			contentOffsetSeconds state
 			commenter {{ displayName }}
