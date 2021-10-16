@@ -1,10 +1,28 @@
 # Module to make API calls to Twitch.tv
 
-from . import TWITCH_CLIENT_ID
 from .itd import gql
 
-import requests
 import json
+
+
+# for escaping strings, taken from json.py
+ENCODE_DICT = {
+    '\b': '\\b',
+    '\f': '\\f',
+    '\n': '\\n',
+    '\r': '\\r',
+    '\t': '\\t',
+}
+
+DECODE_DICT = dict((v,k) for k,v in ENCODE_DICT.items())
+
+CHAT_STATE = [
+	"PUBLISHED",
+	"UNPUBLISHED",
+	"PENDING_REVIEW",
+	"PENDING_REVIEW_SPAM",
+	"DELETED"
+]
 
 class Vod:
 	def __init__(self, json):
@@ -12,12 +30,14 @@ class Vod:
 		self.user_id = json["creator"]["id"]
 		self.user_login = json["creator"]["login"]
 		self.user_name = json["creator"]["displayName"]
+
 		if json["game"]:
 			self.game_id = json["game"]["id"]
 			self.game_name = json["game"]["name"]
 		else:
 			self.game_id = ""
 			self.game_name = ""
+
 		self.title = json["title"]
 		self.created_at = json["publishedAt"]
 		self.length = json["lengthSeconds"]
@@ -51,6 +71,7 @@ class Clip:
 		self.user_id = json["broadcaster"]["id"]
 		self.user_login = json["broadcaster"]["login"]
 		self.user_name = json["broadcaster"]["displayName"]
+
 		if not json["curator"]:
 			self.clipper_id = self.user_id
 			self.clipper_login = self.user_login
@@ -59,12 +80,14 @@ class Clip:
 			self.clipper_id = json["curator"]["id"]
 			self.clipper_login = json["curator"]["login"]
 			self.clipper_name = json["curator"]["displayName"]
+
 		if json["game"]:
 			self.game_id = json["game"]["id"]
 			self.game_name = json["game"]["name"]
 		else:
 			self.game_id = ""
 			self.game_name = ""
+
 		self.title = json["title"]
 		self.created_at = json["createdAt"]
 		self.view_count = json["viewCount"]
@@ -111,7 +134,8 @@ class Channel:
 class ChatMessage:
 	def __init__(self, json) -> None:
 		self.user = json["commenter"]["displayName"]
-		self.user_color = json["message"]["userColor"] or "#FFFFFF"
+		self.user_color = json["message"]["userColor"] or "FFFFFF"
+		self.user_color = self.user_color.strip("#")
 
 		self.message = ""
 		for frag in json["message"]["fragments"]:
@@ -121,8 +145,12 @@ class ChatMessage:
 			self.message += " "
 		self.message = self.message.strip()
 
+
 		self.offset_secs = json["contentOffsetSeconds"]
 		self.state = json["state"]
+
+		self.encoded_message = self.encode_message(self.message)
+		self.encoded_state = self.encode_state(self.state)
 		
 	def __repr__(self):
 		return f"ChatMessage(ofst={self.offset_secs};user={self.user};msg=\"{self.message}\")"
@@ -135,6 +163,29 @@ class ChatMessage:
 			"user":self.user,
 			"msg":self.message
 		}
+	
+	@staticmethod
+	def encode_message(msg):
+		for k,v in ENCODE_DICT.items():
+			msg = msg.replace(k, v)
+		
+		return msg
+	
+	@staticmethod
+	def decode_message(msg):
+		for k,v in DECODE_DICT.items():
+			msg = msg.replace(k, v)
+		
+		return msg
+	
+	@staticmethod
+	def encode_state(state):
+		return CHAT_STATE.index(state)
+	
+	@staticmethod
+	def decode_state(state):
+		return CHAT_STATE[state]
+
 
 
 def get_channels(channel_ids: list):

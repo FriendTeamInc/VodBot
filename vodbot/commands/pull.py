@@ -116,10 +116,10 @@ def download_twitch_video(args):
 			viddir = clipdir / vod.user_name.lower()
 			contentnoun = "Clip"
 		
-		filename = viddir / f"{vod.created_at}_{vod.id}".replace(":", ";")
-		filename = str(filename) + ".mkv"
-		metaname = str(filename) + ".meta"
-		chatname = str(filename) + ".chat"
+		filepath = viddir / f"{vod.created_at}_{vod.id}".replace(":", ";")
+		filename = str(filepath) + ".mkv"
+		metaname = str(filepath) + ".meta"
+		chatname = str(filepath) + ".chat"
 
 		# Write video data and handle exceptions
 		try:
@@ -150,5 +150,5 @@ def compare_existant_file(path, allvods):
 	# Check for existing videos by finding the meta files
 	existingvods = [f[:-5] for f in listdir(str(path)) if isfile(str(path/f)) and f[-4:]=="meta"]
 	# Compare vods, if they arent downloaded (meta is missing) then we need to queue them
-	result = [vod for vod in allvods if not any(vod.id == x for x in existingvods)]
+	result = [vod for vod in allvods if not any(f"{vod.created_at}_{vod.id}".replace(":", ";") == x for x in existingvods)]
 	return result

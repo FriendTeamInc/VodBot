@@ -2,7 +2,7 @@ from pathlib import Path
 from . import gql, worker
 from vodbot.util import make_dir, vodbotdir
 from vodbot.printer import cprint
-from vodbot.twitch import Vod, Clip, get_video_comments
+from vodbot.twitch import Vod, Clip, ChatMessage, get_video_comments
 
 import subprocess
 import requests
@@ -101,14 +101,15 @@ def dl_video_chat(video: Vod, path: str):
 	msgs = get_video_comments(video_id)
 	cprint(f"\r#fM#lVOD Chat#r `#fM{video_id}#r` (100%); Done, now to write...", end="")
 
-	# TODO: custom output lines and parser? json is too big.
-	mjson = []
-	for msg in msgs:
-		mjson.append(msg.write_dict())
-
 	# open chat log file
 	with open(path, "w") as f:
-		json.dump(mjson, f)
+		for m in msgs:
+			# each line is a unique message
+			# line string split with \0 for components
+			# m[0]=offset, m[1]=state, m[2]=color, m[3]=user, m[4:the rest of the array]=message
+			f.write(f"{m.offset_secs}\0{m.encoded_state}\0{m.user_color}\0{m.user}\0{(m.encoded_message)}\n")
+		
+	# TODO: add a preamble of all the users with unique identifiers so the colors and names dont repeat so much?
 
 	cprint(f"\r#fM#lVOD Chat#r `#fM{video_id}#r` (100%); Done, now to write... Done")
 
