@@ -38,7 +38,7 @@ def get_playlist_uris(video_id, access_token):
 	
 	return playlist_uris
 
-def dl_video(video: Vod, TEMP_DIR: Path, path: str, metapath: str, max_workers: int, LOG_LEVEL: str):
+def dl_video(video: Vod, TEMP_DIR: Path, path: str, max_workers: int, LOG_LEVEL: str):
 	video_id = video.id
 
 	# Grab access token
@@ -101,20 +101,33 @@ def dl_video_chat(video: Vod, path: str):
 	msgs = get_video_comments(video_id)
 	cprint(f"\r#fM#lVOD Chat#r `#fM{video_id}#r` (100%); Done, now to write...", end="")
 
+	preamb = []
+	for m in msgs:
+		s = f"{m.user_color};{m.user}"
+		if s not in preamb:
+			preamb.append(s)
+
 	# open chat log file
 	with open(path, "w") as f:
+		for s in preamb:
+			f.write(s)
+
+			if s != preamb[-1]:
+				f.write("\0")
+		
+		f.write("\n")
+
 		for m in msgs:
+			idx = preamb.index(f"{m.user_color};{m.user}")
 			# each line is a unique message
 			# line string split with \0 for components
-			# m[0]=offset, m[1]=state, m[2]=color, m[3]=user, m[4:the rest of the array]=message
-			f.write(f"{m.offset_secs}\0{m.encoded_state}\0{m.user_color}\0{m.user}\0{(m.encoded_message)}\n")
-		
-	# TODO: add a preamble of all the users with unique identifiers so the colors and names dont repeat so much?
+			# m[0]=offset, m[1]=state, m[2]=user, m[3:the rest of the array]=message
+			f.write(f"{m.offset_secs}\0{m.encoded_state}\0{idx}\0{m.encoded_message}\n")
 
 	cprint(f"\r#fM#lVOD Chat#r `#fM{video_id}#r` (100%); Done, now to write... Done")
 
 
-def dl_clip(clip: Clip, path: str, metapath: str):
+def dl_clip(clip: Clip, path: str):
 	clip_slug = clip.slug
 
 	# Get proper clip file URL

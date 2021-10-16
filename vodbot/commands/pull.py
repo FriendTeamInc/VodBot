@@ -124,15 +124,16 @@ def download_twitch_video(args):
 		# Write video data and handle exceptions
 		try:
 			if isinstance(vod, Vod):
-				# download video
-				itd_dl.dl_video(vod, Path(TEMP_DIR), filename, metaname, 20, LOG_LEVEL)
 				# download chat
+				# TODO: Check config first
 				itd_dl.dl_video_chat(vod, chatname)
+				# download video
+				itd_dl.dl_video(vod, Path(TEMP_DIR), filename, 20, LOG_LEVEL)
 				# write meta file
 				vod.write_meta(metaname)
 			elif isinstance(vod, Clip):
 				# download clip
-				itd_dl.dl_clip(vod, filename, metaname)
+				itd_dl.dl_clip(vod, filename)
 				# write meta file
 				vod.write_meta(metaname)
 		except itd_dl.JoiningFailed:
