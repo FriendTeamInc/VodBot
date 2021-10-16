@@ -1,5 +1,7 @@
 from pathlib import Path
+
 from . import gql, worker
+from vodbot import chatlog
 from vodbot.util import make_dir, vodbotdir
 from vodbot.printer import cprint
 from vodbot.twitch import Vod, Clip, ChatMessage, get_video_comments
@@ -101,28 +103,7 @@ def dl_video_chat(video: Vod, path: str):
 	msgs = get_video_comments(video_id)
 	cprint(f"\r#fM#lVOD Chat#r `#fM{video_id}#r` (100%); Done, now to write...", end="")
 
-	preamb = []
-	for m in msgs:
-		s = f"{m.user_color};{m.user}"
-		if s not in preamb:
-			preamb.append(s)
-
-	# open chat log file
-	with open(path, "w") as f:
-		for s in preamb:
-			f.write(s)
-
-			if s != preamb[-1]:
-				f.write("\0")
-		
-		f.write("\n")
-
-		for m in msgs:
-			idx = preamb.index(f"{m.user_color};{m.user}")
-			# each line is a unique message
-			# line string split with \0 for components
-			# m[0]=offset, m[1]=state, m[2]=user, m[3:the rest of the array]=message
-			f.write(f"{m.offset_secs}\0{m.encoded_state}\0{idx}\0{m.encoded_message}\n")
+	chatlog.chat_to_logfile(msgs, path)
 
 	cprint(f"\r#fM#lVOD Chat#r `#fM{video_id}#r` (100%); Done, now to write... Done")
 

@@ -1,5 +1,6 @@
 # Module to make API calls to Twitch.tv
 
+from typing import List
 from .itd import gql
 
 import json
@@ -132,28 +133,31 @@ class Channel:
 
 
 class ChatMessage:
-	def __init__(self, json) -> None:
-		self.user = json["commenter"]["displayName"]
-		self.user_color = json["message"]["userColor"] or "FFFFFF"
-		self.user_color = self.user_color.strip("#")
+	def __init__(self, user:str, color:str, offset:int, msg:str=None, state:str=None, enc_msg:str=None, enc_state:str=None):
+		self.user = user
+		self.color = color
+		self.offset = offset
 
-		self.message = ""
-		for frag in json["message"]["fragments"]:
-			if frag["mention"] is not None:
-				self.message += "@" + frag["mention"]["displayName"]
-			self.message += frag["text"]
-			self.message += " "
-		self.message = self.message.strip()
+		if msg is not None:
+			self.msg = msg
+			self.enc_msg = self.encode_message(self.msg)
+		elif enc_msg is not None:
+			self.enc_msg = enc_msg
+			self.msg = self.decode_message(self.enc_msg)
+		else:
+			raise Exception(f"Could not determine message from constructor for ChatMessage. (\"{msg}\") (\"{enc_msg}\")")
 
-
-		self.offset_secs = json["contentOffsetSeconds"]
-		self.state = json["state"]
-
-		self.encoded_message = self.encode_message(self.message)
-		self.encoded_state = self.encode_state(self.state)
+		if state is not None:
+			self.state = state
+			self.enc_state = self.encode_state(self.state)
+		elif enc_state is not None:
+			self.enc_state = enc_state
+			self.state = self.decode_state(self.enc_state)
+		else:
+			raise Exception(f"Could not determine state from constructor for ChatMessage. (\"{state}\") (\"{enc_state}\")")
 		
 	def __repr__(self):
-		return f"ChatMessage(ofst={self.offset_secs};user={self.user};msg=\"{self.message}\")"
+		return f"ChatMessage(ofst={self.offset};{self.user}: {self.msg})"
 		
 	def write_dict(self):
 		return {
@@ -188,7 +192,7 @@ class ChatMessage:
 
 
 
-def get_channels(channel_ids: list):
+def get_channels(channel_ids: List[str]) -> List[Channel]:
 	"""
 	Uses a (blocking) HTTP request to retrieve channel information from Twitch's API.
 
@@ -208,7 +212,7 @@ def get_channels(channel_ids: list):
 	return channels
 
 
-def get_channel_vods(channel: Channel):
+def get_channel_vods(channel: Channel) -> List[Vod]:
 	"""
 	Uses a (blocking) HTTP request to retrieve VOD info for a specific channel.
 
@@ -241,7 +245,7 @@ def get_channel_vods(channel: Channel):
 	return vods
 
 
-def get_channel_clips(channel):
+def get_channel_clips(channel: Channel) -> List[Clip]:
 	"""
 	Uses a (blocking) HTTP request to retrieve Clip info for a specific channel.
 
@@ -273,7 +277,7 @@ def get_channel_clips(channel):
 	return clips
 
 
-def get_video_comments(video_id):
+def get_video_comments(video_id: str) -> List[ChatMessage]:
 	"""
 	Uses a (blocking) HTTP request to retrieve chat logs for a specific video.
 
@@ -295,7 +299,24 @@ def get_video_comments(video_id):
 
 		pagination = resp["edges"][-1]["cursor"]
 		for comment in resp["edges"]:
-			messages.append(ChatMessage(comment["node"]))
+			c = comment["node"]
+
+			usr = c["commenter"]["displayName"]
+			clr = c["message"]["userColor"] or "FFFFFF"
+			clr = clr.strip("#")
+
+			msg = ""
+			for frag in c["message"]["fragments"]:
+				if frag["mention"] is not None:
+					msg += "@" + frag["mention"]["displayName"]
+				msg += frag["text"]
+				msg += " "
+			msg = msg.strip()
+
+			ofst = c["contentOffsetSeconds"]
+			state = c["state"]
+
+			messages.append(ChatMessage(user=usr, color=clr, msg=msg, offset=ofst, state=state))
 		
 		if pagination == "" or pagination == None:
 			break

@@ -1,4 +1,5 @@
 from vodbot import twitch
+from vodbot.chatlog import chat_to_logfile, logfile_to_chat
 from . import util, __project__, __version__
 from .printer import colorize
 
@@ -145,7 +146,9 @@ def main():
 		info.run(args)
 	elif args.cmd == "test":
 		msgs = twitch.get_video_comments(1172062041)
-		for msg in msgs:
+		chat_to_logfile(msgs, "f.chat")
+		ms = logfile_to_chat("f.chat")
+		for msg in ms:
 			print(msg)
 
 

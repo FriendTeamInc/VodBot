@@ -1,6 +1,5 @@
 # Module that manages shelling out commands to ffmpeg, with functions returning paths to the final video.
 
-from . import util
 from .printer import cprint
 from .commands.stage import StageData, VideoSlice
 
