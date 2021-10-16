@@ -126,6 +126,15 @@ class ChatMessage:
 		
 	def __repr__(self):
 		return f"ChatMessage(ofst={self.offset_secs};user={self.user};msg=\"{self.message}\")"
+		
+	def write_dict(self):
+		return {
+			"ofst":self.offset_secs,
+			"state":self.state,
+			"clr":self.user_color,
+			"user":self.user,
+			"msg":self.message
+		}
 
 
 def get_channels(channel_ids: list):

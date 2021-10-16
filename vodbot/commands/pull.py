@@ -23,6 +23,8 @@ def download_twitch_video(args):
 	CHANNEL_IDS = conf["twitch_channels"]
 	VODS_DIR = conf["vod_dir"]
 	CLIPS_DIR = conf["clip_dir"]
+	TEMP_DIR = conf["temp_dir"]
+	LOG_LEVEL = conf["ffmpeg_loglevel"]
 
 	# If channel arguments are provided, override config
 	if args.channels:
@@ -33,9 +35,8 @@ def download_twitch_video(args):
 	
 	contentnoun = "video" # temp contentnoun until the rest is reworked
 	
-	# Setup directories for videos, config, and temp
-	util.make_dir(vodbotdir)
-	util.make_dir(vodbotdir / "temp")
+	# Setup directories for videos and temp
+	util.make_dir(TEMP_DIR)
 	voddir = Path(VODS_DIR)
 	util.make_dir(voddir)
 	clipdir = Path(CLIPS_DIR)
@@ -115,16 +116,25 @@ def download_twitch_video(args):
 			viddir = clipdir / vod.user_name.lower()
 			contentnoun = "Clip"
 		
-		filename = viddir / f"{vod.created_at}_{vod.id}.mkv".replace(":", ";")
-		filename = str(filename)
-		metaname = str(viddir / (vod.id + ".meta"))
+		filename = viddir / f"{vod.created_at}_{vod.id}".replace(":", ";")
+		filename = str(filename) + ".mkv"
+		metaname = str(filename) + ".meta"
+		chatname = str(filename) + ".chat"
 
 		# Write video data and handle exceptions
 		try:
-			if isinstance(vod, Vod): # Download video
-				itd_dl.dl_video(vod, filename, metaname, 20)
-			elif isinstance(vod, Clip): # Download clip
+			if isinstance(vod, Vod):
+				# download video
+				itd_dl.dl_video(vod, Path(TEMP_DIR), filename, metaname, 20, LOG_LEVEL)
+				# download chat
+				itd_dl.dl_video_chat(vod, chatname)
+				# write meta file
+				vod.write_meta(metaname)
+			elif isinstance(vod, Clip):
+				# download clip
 				itd_dl.dl_clip(vod, filename, metaname)
+				# write meta file
+				vod.write_meta(metaname)
 		except itd_dl.JoiningFailed:
 			cprint(f"#fR#lVOD `{vod.id}` joining failed! Preserving files...#r")
 		except itd_work.DownloadFailed:
