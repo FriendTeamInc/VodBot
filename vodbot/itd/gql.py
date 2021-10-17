@@ -91,7 +91,7 @@ GET_CLIP_QUERY = """
 		curator {{ id displayName login }}
 }}  }}
 """
-# Channel info query
+# Single Channel info query
 GET_CHANNEL_QUERY = """
 {{  user(login: "{channel_id}") {{
 		id login displayName

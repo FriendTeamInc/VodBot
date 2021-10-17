@@ -26,22 +26,21 @@ CHAT_STATE = [
 ]
 
 class Vod:
-	def __init__(self, json):
-		self.id = json["id"]
-		self.user_id = json["creator"]["id"]
-		self.user_login = json["creator"]["login"]
-		self.user_name = json["creator"]["displayName"]
+	def __init__(self,
+		id:str, user_id:str, user_login:str, user_name:str, title:str,
+		created_at:str, length:int, game_id:str="", game_name:str=""
+	):
+		self.id = id
+		self.user_id = user_id
+		self.user_login = user_login
+		self.user_name = user_name
 
-		if json["game"]:
-			self.game_id = json["game"]["id"]
-			self.game_name = json["game"]["name"]
-		else:
-			self.game_id = ""
-			self.game_name = ""
+		self.game_id = game_id
+		self.game_name = game_name
 
-		self.title = json["title"]
-		self.created_at = json["publishedAt"]
-		self.length = json["lengthSeconds"]
+		self.title = title
+		self.created_at = created_at
+		self.length = length
 		
 		self.url = f"twitch.tv/videos/{self.id}"
 	
@@ -66,33 +65,28 @@ class Vod:
 
 
 class Clip:
-	def __init__(self, json):
-		self.id = json["id"]
-		self.slug = json["slug"]
-		self.user_id = json["broadcaster"]["id"]
-		self.user_login = json["broadcaster"]["login"]
-		self.user_name = json["broadcaster"]["displayName"]
+	def __init__(self, id:str, slug:str, title:str, created_at:str, 
+		user_id:str, user_login:str, user_name:str,
+		clipper_id:str, clipper_login:str, clipper_name:str,
+		game_id:str, game_name:str, view_count:int, length:int,
+	):
+		self.id = id
+		self.slug = slug
+		self.user_id = user_id
+		self.user_login = user_login
+		self.user_name = user_name
 
-		if not json["curator"]:
-			self.clipper_id = self.user_id
-			self.clipper_login = self.user_login
-			self.clipper_name = self.user_name
-		else:
-			self.clipper_id = json["curator"]["id"]
-			self.clipper_login = json["curator"]["login"]
-			self.clipper_name = json["curator"]["displayName"]
+		self.clipper_id = clipper_id
+		self.clipper_login = clipper_login
+		self.clipper_name = clipper_name
 
-		if json["game"]:
-			self.game_id = json["game"]["id"]
-			self.game_name = json["game"]["name"]
-		else:
-			self.game_id = ""
-			self.game_name = ""
+		self.game_id = game_id
+		self.game_name = game_name
 
-		self.title = json["title"]
-		self.created_at = json["createdAt"]
-		self.view_count = json["viewCount"]
-		self.length = json["durationSeconds"]
+		self.title = title
+		self.created_at = created_at
+		self.view_count = view_count
+		self.length = length
 		
 		self.url = f"twitch.tv/{self.user_name}/clip/{self.id}"
 	
@@ -122,11 +116,11 @@ class Clip:
 
 
 class Channel:
-	def __init__(self, json):
-		self.id = json["id"]
-		self.login = json["login"]
-		self.display_name = json["displayName"]
-		self.created_at = json["createdAt"]
+	def __init__(self, id:str, login:str, display_name:str, created_at:str):
+		self.id = id
+		self.login = login
+		self.display_name = display_name
+		self.created_at = created_at
 	
 	def __repr__(self):
 		return f"Channel({self.id}, {self.display_name})"
@@ -191,7 +185,6 @@ class ChatMessage:
 		return CHAT_STATE[state]
 
 
-
 def get_channels(channel_ids: List[str]) -> List[Channel]:
 	"""
 	Uses a (blocking) HTTP request to retrieve channel information from Twitch's API.
@@ -205,9 +198,17 @@ def get_channels(channel_ids: List[str]) -> List[Channel]:
 	for channel_id in channel_ids:
 		query = gql.GET_CHANNEL_QUERY.format(channel_id=channel_id)
 		resp = gql.gql_query(query=query).json()
-		if resp["data"]["user"] == None:
+		c = resp["data"]["user"]
+
+		if c == None:
 			raise Exception(f"Channel `{channel_id}` does not exist!")
-		channels.append(Channel(resp["data"]["user"]))
+
+		id = c["id"]
+		login = c["login"]
+		display_name = c["displayName"]
+		created_at = c["createdAt"]
+		
+		channels.append(Channel(id=id, login=login, display_name=display_name, created_at=created_at))
 	
 	return channels
 
@@ -237,7 +238,23 @@ def get_channel_vods(channel: Channel) -> List[Vod]:
 		pagination = resp["edges"][-1]["cursor"]
 		
 		for vod in resp["edges"]:
-			vods.append(Vod(vod["node"]))
+			v = vod["node"]
+			c = v["creator"]
+			g = v["game"]
+
+			game_id = ""
+			game_name = ""
+			if g:
+				game_id = g["id"]
+				game_name = g["name"]
+
+			vods.append(
+				Vod(
+					id=v["id"], length=v["lengthSeconds"], title=v["title"],
+					user_id=c["id"], user_login=c["login"], user_name=c["displayName"], 
+					game_id=game_id, game_name=game_name, created_at=v["publishedAt"]
+				)
+			)
 
 		if pagination == "" or pagination == None:
 			break
@@ -269,7 +286,34 @@ def get_channel_clips(channel: Channel) -> List[Clip]:
 		pagination = resp["edges"][-1]["cursor"]
 		
 		for clip in resp["edges"]:
-			clips.append(Clip(clip["node"]))
+			c = clip["node"]
+			b = c["broadcaster"]
+			w = c["curator"]
+			g = c["game"]
+
+			w_id = b["id"]
+			w_login = b["login"]
+			w_name = b["displayName"]
+			if w is not None:
+				w_id = w["id"]
+				w_login = w["login"]
+				w_name = w["displayName"]
+			
+			g_id = ""
+			g_name = ""
+			if g is not None:
+				g_id = g["id"]
+				g_name = g["name"]
+
+			clips.append(
+				Clip(
+					id=c["id"], slug=c["slug"], title=c["title"], created_at=c["createdAt"],
+					user_id=b["id"], user_login=b["login"], user_name=b["displayName"],
+					clipper_id=w_id, clipper_login=w_login, clipper_name=w_name,
+					game_id=g_id, game_name=g_name,
+					view_count=c["viewCount"], length=c["durationSeconds"]
+				)
+			)
 
 		if pagination == "" or pagination == None:
 			break
