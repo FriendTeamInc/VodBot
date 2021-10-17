@@ -25,6 +25,7 @@ def download_twitch_video(args):
 	CLIPS_DIR = conf["clip_dir"]
 	TEMP_DIR = conf["temp_dir"]
 	LOG_LEVEL = conf["ffmpeg_loglevel"]
+	PULL_CHAT = conf["pull_chat_logs"]
 
 	# If channel arguments are provided, override config
 	if args.channels:
@@ -125,8 +126,9 @@ def download_twitch_video(args):
 		try:
 			if isinstance(vod, Vod):
 				# download chat
-				# TODO: Check config first
-				itd_dl.dl_video_chat(vod, chatname)
+				if PULL_CHAT:
+					itd_dl.dl_video_chat(vod, chatname)
+					vod.has_chat = True
 				# download video
 				itd_dl.dl_video(vod, Path(TEMP_DIR), filename, 20, LOG_LEVEL)
 				# write meta file

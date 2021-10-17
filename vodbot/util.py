@@ -15,14 +15,14 @@ DEFAULT_CONF_PATH = vodbotdir / "conf.json"
 DEFAULT_CONF = OrderedDict([
 	("twitch_channels", []), # channels to watch for new clips and videos
 
-	("stage_timezone", "+0000"), # timezone for when a video happened
+	("pull_chat_logs", True), # determines if chat logs get pulled with VODs
 
+	("stage_timezone", "+0000"), # timezone for when a video happened
 	("stage_format", { # Macros for video descriptions when staging
 		"watch": "-- Watch live at {links}",
 		"discord": "-- Join the Discord at https://discord.gg/v2t6uag",
 		"credits": "\n{watch}\n{discord}"
 	}),
-
 	("stage_upload_delete", True), # delete a stage on completed upload?
 	("stage_export_delete", True), # delete a stage on completed export?
 

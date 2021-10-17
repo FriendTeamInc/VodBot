@@ -17,18 +17,18 @@ ENCODE_DICT = {
 
 DECODE_DICT = dict((v,k) for k,v in ENCODE_DICT.items())
 
+# TODO: change to enum?
 CHAT_STATE = [
-	"PUBLISHED",
-	"UNPUBLISHED",
-	"PENDING_REVIEW",
-	"PENDING_REVIEW_SPAM",
+	"PUBLISHED", "UNPUBLISHED",
+	"PENDING_REVIEW", "PENDING_REVIEW_SPAM",
 	"DELETED"
 ]
 
 class Vod:
 	def __init__(self,
 		id:str, user_id:str, user_login:str, user_name:str, title:str,
-		created_at:str, length:int, game_id:str="", game_name:str=""
+		created_at:str, length:int, game_id:str="", game_name:str="",
+		has_chat:bool = False
 	):
 		self.id = id
 		self.user_id = user_id
@@ -43,6 +43,8 @@ class Vod:
 		self.length = length
 		
 		self.url = f"twitch.tv/videos/{self.id}"
+
+		self.has_chat = has_chat
 	
 	def __repr__(self):
 		return f"VOD({self.id}, {self.created_at}, {self.user_name}, {self.created_at}, {self.duration})"
@@ -57,7 +59,8 @@ class Vod:
 			"game_name": self.game_name,
 			"title": self.title,
 			"created_at": self.created_at,
-			"length": self.length
+			"length": self.length,
+			"has_chat": self.has_chat
 		}
 		
 		with open(filename, "w") as f:
@@ -127,7 +130,10 @@ class Channel:
 
 
 class ChatMessage:
-	def __init__(self, user:str, color:str, offset:int, msg:str=None, state:str=None, enc_msg:str=None, enc_state:str=None):
+	def __init__(self,
+		user:str, color:str, offset:int, msg:str=None, state:str=None,
+		enc_msg:str=None, enc_state:str=None
+	):
 		self.user = user
 		self.color = color
 		self.offset = offset
@@ -202,13 +208,13 @@ def get_channels(channel_ids: List[str]) -> List[Channel]:
 
 		if c == None:
 			raise Exception(f"Channel `{channel_id}` does not exist!")
-
-		id = c["id"]
-		login = c["login"]
-		display_name = c["displayName"]
-		created_at = c["createdAt"]
 		
-		channels.append(Channel(id=id, login=login, display_name=display_name, created_at=created_at))
+		channels.append(
+			Channel(
+				id=c["id"], login=c["login"],
+				display_name=c["displayName"], created_at=c["createdAt"]
+			)
+		)
 	
 	return channels
 
@@ -307,10 +313,10 @@ def get_channel_clips(channel: Channel) -> List[Clip]:
 
 			clips.append(
 				Clip(
-					id=c["id"], slug=c["slug"], title=c["title"], created_at=c["createdAt"],
+					id=c["id"], slug=c["slug"], created_at=c["createdAt"],
 					user_id=b["id"], user_login=b["login"], user_name=b["displayName"],
 					clipper_id=w_id, clipper_login=w_login, clipper_name=w_name,
-					game_id=g_id, game_name=g_name,
+					game_id=g_id, game_name=g_name, title=c["title"],
 					view_count=c["viewCount"], length=c["durationSeconds"]
 				)
 			)
@@ -360,7 +366,11 @@ def get_video_comments(video_id: str) -> List[ChatMessage]:
 			ofst = c["contentOffsetSeconds"]
 			state = c["state"]
 
-			messages.append(ChatMessage(user=usr, color=clr, msg=msg, offset=ofst, state=state))
+			messages.append(
+				ChatMessage(
+					user=usr, color=clr, msg=msg, offset=ofst, state=state
+				)
+			)
 		
 		if pagination == "" or pagination == None:
 			break
