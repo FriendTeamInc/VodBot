@@ -421,16 +421,17 @@ def run(args):
 	
 	util.make_dir(vodbotdir)
 	stagedir = conf["stage_dir"]
+	path_stage = Path(stagedir)
 	util.make_dir(stagedir)
 
 	if args.action == "new":
 		_new(args, conf, stagedir)
 	elif args.action == "rm":
-		if not isfile(str(stagedir / (args.id + ".stage"))):
+		if not isfile(str(path_stage / (args.id + ".stage"))):
 			util.exit_prog(45, f'Could not find stage "{args.id}".')
 			
 		try:
-			os_remove(str(stagedir / (args.id + ".stage")))
+			os_remove(str(path_stage / (args.id + ".stage")))
 			cprint(f'Stage "#fY#l{args.id}#r" has been #fRremoved#r.')
 		except OSError as err:
 			util.exit_prog(88, f'Stage "{args.id}" could not be removed due to an error. {err}')
