@@ -1,7 +1,7 @@
 from vodbot import util, twitch
 from vodbot.itd import download as itd_dl, worker as itd_work
 from vodbot.twitch import Channel, Vod, Clip
-from vodbot.printer import cprint, colorize
+from vodbot.printer import cprint
 
 from pathlib import Path
 from os import listdir

@@ -5,7 +5,6 @@ from .printer import cprint
 import os
 import sys
 import json
-import argparse
 from pathlib import Path
 from collections import OrderedDict
 
@@ -25,6 +24,9 @@ DEFAULT_CONF = OrderedDict([
 	}),
 	("stage_upload_delete", True), # delete a stage on completed upload?
 	("stage_export_delete", True), # delete a stage on completed export?
+
+	("chat_upload", "RealText"), # can be RealText or SAMI
+	("chat_export", "raw"), # can be raw, RealText, or SAMI
 
 	("ffmpeg_loglevel", "warning"), # warning (recommended), error (only breaking stuff), fatal (absolute error)
 	

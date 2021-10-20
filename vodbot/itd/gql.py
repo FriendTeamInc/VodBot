@@ -1,6 +1,5 @@
 # Module to call GQL queries
 
-from urllib import parse
 from vodbot import TWITCH_CLIENT_ID
 
 import requests

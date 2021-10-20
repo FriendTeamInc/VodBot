@@ -6,7 +6,7 @@ from .commands.stage import StageData, VideoSlice
 import os
 import subprocess
 from pathlib import Path
-from typing import List, Tuple
+from typing import List
 
 
 class VideoFailure(Exception):

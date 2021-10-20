@@ -3,6 +3,7 @@
 from vodbot.twitch import ChatMessage
 
 from typing import List
+from pathlib import Path
 
 
 def chat_to_logfile(msgs: List[ChatMessage], path: str) -> None:
@@ -68,3 +69,18 @@ def logfile_to_chat(path: str) -> List[ChatMessage]:
 
 	return chats
 
+
+def process_stage(conf: dict, stage: StageData) -> Path:
+	tempdir = Path(conf["temp_dir"])
+	loglevel = conf["ffmpeg_loglevel"]
+
+	# load up each stagedata to grab video id's to pull chat
+
+	# keep each list of chat separate, compare timestamps to offsets to make
+	# sure theyre inbetween the slices
+
+	# now take each stage's duration and apply it to the next chat list's offsets
+
+	# connect all the lists together
+
+	# determine how to export, then return the resultant path

@@ -11,7 +11,6 @@ from vodbot.printer import cprint
 
 import json
 import pickle
-import subprocess
 from datetime import datetime
 from pathlib import Path
 from os import remove as os_remove

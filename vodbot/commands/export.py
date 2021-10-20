@@ -6,12 +6,9 @@ import vodbot.util as util
 import vodbot.video as vbvid
 from vodbot.printer import cprint
 
-import json
-import subprocess
 from datetime import datetime
 from pathlib import Path
-from os import listdir as os_listdir, remove as os_remove
-from os.path import isfile as os_isfile
+from os import remove as os_remove
 
 
 # Default path
