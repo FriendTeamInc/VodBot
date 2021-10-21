@@ -122,10 +122,13 @@ def process_stage(conf: dict, stage: StageData, mode:str) -> Path:
 	export_type = conf["chat_"+mode]
 
 	if export_type == "raw":
+		# copy from archive to temp
 		pass
 	elif export_type == "RealText":
+		# load from archive, parse and write to temp
 		pass
 	elif export_type == "SAMI":
+		# load from archive, parse and write to temp
 		pass
 
 	return None
