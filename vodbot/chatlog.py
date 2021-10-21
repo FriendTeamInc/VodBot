@@ -159,10 +159,39 @@ def chat_to_sami(msgs: List[ChatMessage], path: str, vid_duration:int, msg_durat
 				if m != c["msgs"][-1]:
 					f.write("<br/>")
 				
-			f.write("\n")
+			f.write("</p>\n")
 
 		# finish up
 		f.write("</body></SAMI>")
+
+
+def chat_to_ttml(msgs: List[ChatMessage], path: str, vid_duration:int, msg_duration:int):
+	# DOES NOT CURRENTLY WORK
+	# get chat with message in bounds
+	chat_lists = chat_to_listwithbounds(msgs, vid_duration, msg_duration)
+
+	with open(path, "w") as f:
+		# write preamble stuffs
+		f.write('<?xml version="1.0" encoding="utf-8"?>\n')
+		f.write('<tt xmlns="http://www.w3.org/ns/ttml"><head>\n')
+		f.write('<styling xmlns:tts="http://www.w3.org/ns/ttml#styling">\n')
+		f.write('<style xml:id="s" tts:textAlign="left" tts:color="#ffffff"/>\n')
+		f.write('</styling></head><body>\n')
+
+		count = 0
+		for c in chat_lists:
+			f.write(f'<p xml:id="a{count}" style="s" begin="{c["begin"]}.0s" end="{c["end"]}.0s">')
+			count += 1
+			for m in c["msgs"]:
+				msg = m["msg"].replace("<", "&lt;").replace(">", "&gt;").replace("&", "&amp;")
+				f.write(f'<font color="#{m["clr"]}"><b>{m["usr"]}</b></font>: {msg}')
+				if m != c["msgs"][-1]:
+					f.write("<br/>")
+				
+			f.write("</p>\n")
+		
+		# finish up
+		f.write("</body></tt>")
 
 
 def timestring_as_seconds(time:str, default:int=0):
@@ -234,6 +263,10 @@ def process_stage(conf: dict, stage: StageData, mode:str) -> Path:
 		# load from archive, parse and write to temp
 		returnpath = tempdir / (stage.id + ".sami")
 		chat_to_sami(chat_list, str(returnpath), total_offset, msg_duration)
+	elif export_type == "TTML":
+		# load from archive, parse and write to temp
+		returnpath = tempdir / (stage.id + ".ttml")
+		chat_to_ttml(chat_list, str(returnpath), total_offset, msg_duration)
 
 	return returnpath
 
