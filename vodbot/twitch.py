@@ -137,7 +137,6 @@ class ChatMessage:
 		self.user = user
 		self.color = color
 		self.offset = offset
-		self.offset_seconds = offset // 1000
 
 		if msg is not None:
 			self.msg = msg

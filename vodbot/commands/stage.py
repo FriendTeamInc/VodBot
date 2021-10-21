@@ -176,7 +176,7 @@ def find_video_by_id(vid_id, VODS_DIR, CLIPS_DIR):
 				try:
 					with open(str(folder / (vid_id+".meta"))) as f:
 						metajson = json.load(f)
-					filename = folder / f"{metajson['created_at']}_{vid_id}.mkv".replace(":", ";")
+					filename = folder / f"{metajson['created_at']}_{metajson['id']}.mkv".replace(":", ";")
 					return (filename, metajson, "VOD" if dir_t[1] == VODS_DIR_PATH else "Clip")
 				except FileNotFoundError:
 					pass

@@ -1,5 +1,6 @@
 # Module that parses chatlogs to and from files
 
+from os import write
 from vodbot.commands.stage import StageData
 from vodbot.twitch import ChatMessage
 import vodbot.util as util
@@ -67,7 +68,7 @@ def logfile_to_chat(path: str) -> List[ChatMessage]:
 				chats.append(
 					ChatMessage(
 						user=preamb[info][1], color=preamb[info][0],
-						offset=line[0], enc_state=int(line[1]), enc_msg=line[3]
+						offset=int(line[0]), enc_state=int(line[1]), enc_msg=line[3]
 					)
 				)
 
@@ -77,29 +78,39 @@ def logfile_to_chat(path: str) -> List[ChatMessage]:
 def chat_to_realtext(msgs: List[ChatMessage], path: str, vid_duration:int, msg_duration:int):
 	with open(path, "w") as f:
 		# add preamble (stuff like opening tags)
-		f.write('<window type="generic" wordwrap="true"/>\n')
+		f.write('<window type="generic" wordwrap="true"><font color="#ffffff">\n')
 
 		# this is so cursed
-		last_msgs = []
+		last_msgs: List[ChatMessage] = []
 		for t in range(vid_duration):
-			current_msgs = []
+			current_msgs: List[ChatMessage] = []
 			for m in msgs:
-				if t <= m.offset_seconds <= t+msg_duration:
+				if t <= m.offset <= t+msg_duration:
 					current_msgs.append(m)
-				elif m.offset_seconds > t+msg_duration:
+				elif m.offset > t+msg_duration:
 					break
 			
 			if current_msgs != last_msgs:
 				# write line and overwrite last_msgs
 				last_msgs = current_msgs
+				string_to_write = f'<time begin="{t}"/>'
 				if len(current_msgs) != 0:
-					pass # write full messages line
+					# write full messages line
+					for m in current_msgs:
+						# write name and message
+						string_to_write += f'<font color="#{m.color}"><b>{m.user}</b></font>: {m.msg}'
+						if m != current_msgs[-1]:
+							string_to_write += "<br/>"
 				else:
+					string_to_write += "<clear/>"
 					pass # write clear line
 
+				# write string
+				string_to_write += "\n"
+				f.write(string_to_write)
+
 		# finish up
-		f.write('</window>')
-	pass
+		f.write("</font></window")
 
 
 def timestring_as_seconds(time:str, default:int=0):
@@ -118,20 +129,20 @@ def timestring_as_seconds(time:str, default:int=0):
 
 def process_stage(conf: dict, stage: StageData, mode:str) -> Path:
 	tempdir = Path(conf["temp_dir"])
-	msg_duration = conf["chat_msg_time"]
+	msg_duration = int(conf["chat_msg_time"])
 
 	total_offset = 0
 	chat_list = []
 	for slc in stage.slices:
 		# load up each stagedata's meta to see if chat exists
-		metapath = slc.filepath[:-5] + ".meta"
+		metapath = slc.filepath[:-4] + ".meta"
 		meta = None
 		with open(metapath, "r") as f:
 			meta = json.load(f)
 		
 		has_chat = meta.get("has_chat", False)
 		duration = meta.get("length")
-		chat_path = slc.filepath[:-5] + ".chat"
+		chat_path = slc.filepath[:-4] + ".chat"
 		# start and end times as seconds
 		start_sec = timestring_as_seconds(slc.ss)
 		end_sec = timestring_as_seconds(slc.to, duration)
@@ -150,7 +161,7 @@ def process_stage(conf: dict, stage: StageData, mode:str) -> Path:
 		total_offset += end_sec - start_sec
 
 	# determine how to export, then return the resultant path
-	if mode != "upload" or mode != "export":
+	if mode != "upload" and mode != "export":
 		util.exit_prog(94, f"Cannot export chat with export mode {mode}")
 	
 	export_type = conf["chat_"+mode]
@@ -167,6 +178,8 @@ def process_stage(conf: dict, stage: StageData, mode:str) -> Path:
 	elif export_type == "SAMI":
 		# load from archive, parse and write to temp
 		returnpath = tempdir / (stage.id + ".sami")
+	
+	print(returnpath)
 
-	return None
+	return returnpath
 
