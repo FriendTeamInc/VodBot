@@ -9,7 +9,7 @@ from vodbot.printer import cprint
 
 from datetime import datetime
 from pathlib import Path
-from os import remove as os_remove, replace as os_replace, rename as os_rename
+from os import remove as os_remove, replace as os_replace
 
 
 # Default path
@@ -27,9 +27,6 @@ def handle_stage(conf: dict, stagedir: Path, stage: StageData) -> Path:
 	tmpfile = None
 	try:
 		tmpfile = vbvid.process_stage(conf, stage)
-		# TODO: move out of this function and delete after chat export
-		if conf["stage_export_delete"]:
-			os_remove(str(stagedir / f"{stage.id}.stage"))
 	except vbvid.FailedToSlice as e:
 		cprint(f"#r#fRSkipping stage `{stage.id}`, failed to slice video with ID of `{e.vid}`.#r\n")
 		return None
@@ -63,15 +60,19 @@ def run(args):
 
 		for stage in stagedatas:
 			# Export with ffmpeg
-			#tmpfile = handle_stage(conf, stagedir, stage)
+			tmpfile = handle_stage(conf, stagedir, stage)
+			# Export chat
 			tmpchat = vbchat.process_stage(conf, stage, "export")
 
 			# move appropriate files
-			#if tmpfile is not None:
-				#os_replace(tmpfile, args.path / f"{stage.title}.mp4")
-			
+			if tmpfile is not None:
+				os_replace(tmpfile, args.path / f"{stage.title}.mp4")
 			if tmpchat is not None:
-				os_rename(tmpchat, args.path / (f"{stage.title}"+tmpchat.suffix))
+				os_replace(tmpchat, args.path / (f"{stage.title}"+tmpchat.suffix))
+			
+			# deal with old stage
+			if conf["stage_export_delete"]:
+				os_remove(str(stagedir / f"{stage.id}.stage"))
 	else:
 		cprint("#dLoading stage...", end=" ")
 		
@@ -80,14 +81,18 @@ def run(args):
 		
 		# Export with ffmpeg
 		tmpfile = handle_stage(conf, stagedir, stagedata)
-
+		# Export chat
 		tmpchat = vbchat.process_stage(conf, stagedata)
 
 		# move appropriate files
 		if tmpfile is not None:
 			os_replace(tmpfile, args.path / f"{stagedata.title}.mp4")
 		if tmpchat is not None:
-			os_rename(tmpchat, args.path)
+			os_replace(tmpchat, args.path / (f"{stagedata.title}"+tmpchat.suffix))
+		
+		# Deal with old stage
+		if conf["stage_export_delete"]:
+			os_remove(str(stagedir / f"{stagedata.id}.stage"))
 
 	# say "Done!"
 	cprint("#fG#lDone!#r")

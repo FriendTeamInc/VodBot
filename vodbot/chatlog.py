@@ -2,6 +2,7 @@
 
 from os import write
 from vodbot.commands.stage import StageData
+from vodbot.printer import cprint
 from vodbot.twitch import ChatMessage
 import vodbot.util as util
 
@@ -182,6 +183,7 @@ def process_stage(conf: dict, stage: StageData, mode:str) -> Path:
 	tempdir = Path(conf["temp_dir"])
 	msg_duration = int(conf["chat_msg_time"])
 
+	cprint(f"#rLoading all chat messages for `#fM{stage.id}#r`.", end="")
 	total_offset = 0
 	chat_list = []
 	for slc in stage.slices:
@@ -192,7 +194,7 @@ def process_stage(conf: dict, stage: StageData, mode:str) -> Path:
 			meta = json.load(f)
 		
 		has_chat = meta.get("has_chat", False)
-		duration = meta.get("length")
+		duration = meta.get("length", 0)
 		chat_path = slc.filepath[:-4] + ".chat"
 		# start and end times as seconds
 		start_sec = timestring_as_seconds(slc.ss)
@@ -216,6 +218,8 @@ def process_stage(conf: dict, stage: StageData, mode:str) -> Path:
 		util.exit_prog(94, f"Cannot export chat with export mode {mode}")
 	
 	export_type = conf["chat_"+mode]
+
+	cprint(f" Exporting as format `#fY{export_type}#r`.")
 
 	returnpath = None
 	if export_type == "raw":
