@@ -1,7 +1,10 @@
 # Module that parses chatlogs to and from files
 
+from vodbot.commands.stage import StageData
 from vodbot.twitch import ChatMessage
+import vodbot.util as util
 
+import json
 from typing import List
 from pathlib import Path
 
@@ -70,17 +73,60 @@ def logfile_to_chat(path: str) -> List[ChatMessage]:
 	return chats
 
 
-def process_stage(conf: dict, stage: StageData) -> Path:
+def timestring_as_seconds(time:str, default:int=0):
+	if time == "EOF":
+		return default
+	
+	s = time.split(":")
+
+	# Hours, minutes, seconds
+	return int(s[0]) * 60 * 60 + int(s[1]) * 60 + int(s[2])
+
+
+def process_stage(conf: dict, stage: StageData, mode:str) -> Path:
 	tempdir = Path(conf["temp_dir"])
-	loglevel = conf["ffmpeg_loglevel"]
 
-	# load up each stagedata to grab video id's to pull chat
-
-	# keep each list of chat separate, compare timestamps to offsets to make
-	# sure theyre inbetween the slices
-
-	# now take each stage's duration and apply it to the next chat list's offsets
-
-	# connect all the lists together
+	total_offset = 0
+	chat_list = []
+	for slc in stage.slices:
+		# load up each stagedata's meta to see if chat exists
+		metapath = slc.filepath[:-5] + ".meta"
+		meta = None
+		with open(metapath, "r") as f:
+			meta = json.load(f)
+		
+		has_chat = meta.get("has_chat", False)
+		duration = meta.get("length")
+		chat_path = slc.filepath[:-5] + ".chat"
+		# start and end times as seconds
+		start_sec = timestring_as_seconds(slc.ss)
+		end_sec = timestring_as_seconds(slc.to, duration)
+		
+		# keep each list of chat separate, compare timestamps to offsets to make
+		# sure theyre inbetween the slices
+		if has_chat:
+			msg_list = [m for m in logfile_to_chat(chat_path) if start_sec <= m.offset < end_sec]
+			if total_offset != 0:
+				for m in msg_list:
+					m.offset = m.offset + total_offset
+			
+			chat_list += msg_list
+		
+		# now take each stage's duration and apply it to the next chat list's
+		total_offset += end_sec - start_sec
 
 	# determine how to export, then return the resultant path
+	if mode != "upload" or mode != "export":
+		util.exit_prog(94, f"Cannot export chat with export mode {mode}")
+	
+	export_type = conf["chat_"+mode]
+
+	if export_type == "raw":
+		pass
+	elif export_type == "RealText":
+		pass
+	elif export_type == "SAMI":
+		pass
+
+	return None
+

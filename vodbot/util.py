@@ -75,6 +75,13 @@ def load_conf(filename):
 
 	if len(conf["twitch_channels"]) == 0:
 		exit_prog(40, "No channels listed in config, please edit your config to continue.")
+
+	chat_format = ["RealText", "SAMI"]
+	if conf["chat_upload"] not in chat_format:
+		exit_prog(10, f"Chat format for uploading not valid. Got `{conf['chat_upload']}`, expected any of the following `{chat_format}`.")
+	chat_format.append("raw")
+	if conf["chat_export"] not in chat_format:
+		exit_prog(10, f"Chat format for exporting not valid. Got `{conf['chat_export']}`, expected any of the following `{chat_format}`.")
 	
 	# TODO: Check all important config options
 
