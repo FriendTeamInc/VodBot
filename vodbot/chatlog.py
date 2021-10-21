@@ -75,42 +75,93 @@ def logfile_to_chat(path: str) -> List[ChatMessage]:
 	return chats
 
 
+def chat_to_listwithbounds(msgs: List[ChatMessage], vid_duration:int, msg_duration:int) -> List[dict]:
+	# First we run through all the messages and see what needs showing and what doesn't
+	chat_lists = []
+	# this is so cursed
+	last_msgs: List[ChatMessage] = []
+	for t in range(vid_duration):
+		current_msgs: List[ChatMessage] = []
+		for m in msgs:
+			if t <= m.offset <= t+msg_duration:
+				current_msgs.append(m)
+			elif m.offset > t+msg_duration:
+				break
+		
+		if current_msgs != last_msgs:
+			# write line and overwrite last_msgs
+			last_msgs = current_msgs
+			write = {"begin": t, "end": vid_duration, "msgs":[], "break":False}
+			if len(current_msgs) != 0:
+				# write full messages line
+				for m in current_msgs:
+					# write color, name, and message
+					write["msgs"] += [{"clr":m.color, "usr":m.user, "msg":m.msg}]
+			else:
+				# write clear line
+				write["break"] = True
+
+			# write string
+			chat_lists.append(write)
+	
+	# set end boundaries
+	for x in range(len(chat_lists)):
+		if x != len(chat_lists)-1:
+			chat_lists[x]["end"] = chat_lists[x+1]["begin"]
+	
+	return chat_lists
+
+
 def chat_to_realtext(msgs: List[ChatMessage], path: str, vid_duration:int, msg_duration:int):
+	# get chat with message in bounds
+	chat_lists = chat_to_listwithbounds(msgs, vid_duration, msg_duration)
+
+	# write actual realtext stuff
 	with open(path, "w") as f:
 		# add preamble (stuff like opening tags)
-		f.write('<window type="generic" wordwrap="true"><font color="#ffffff">\n')
+		f.write('<window type="generic" wordwrap="true"><font color="#ffffff" text-align="left">\n')
 
-		# this is so cursed
-		last_msgs: List[ChatMessage] = []
-		for t in range(vid_duration):
-			current_msgs: List[ChatMessage] = []
-			for m in msgs:
-				if t <= m.offset <= t+msg_duration:
-					current_msgs.append(m)
-				elif m.offset > t+msg_duration:
-					break
+		for c in chat_lists:
+			f.write(f'<time begin="{c["begin"]}" end="{c["end"]}">')
+			if c["break"]:
+				f.write("<clear/>\n")
+				continue
+			for m in c["msgs"]:
+				msg = m["msg"].replace("<", "&lt;").replace(">", "&gt;").replace("&", "&amp;")
+				f.write(f'<font color="#{m["clr"]}"><b>{m["usr"]}</b></font>: {msg}')
+				if m != c["msgs"][-1]:
+					f.write("<br/>")
 			
-			if current_msgs != last_msgs:
-				# write line and overwrite last_msgs
-				last_msgs = current_msgs
-				string_to_write = f'<time begin="{t}"/>'
-				if len(current_msgs) != 0:
-					# write full messages line
-					for m in current_msgs:
-						# write name and message
-						string_to_write += f'<font color="#{m.color}"><b>{m.user}</b></font>: {m.msg}'
-						if m != current_msgs[-1]:
-							string_to_write += "<br/>"
-				else:
-					string_to_write += "<clear/>"
-					pass # write clear line
+			f.write("\n")
+		
+		# finish up
+		f.write("</font></window>")
 
-				# write string
-				string_to_write += "\n"
-				f.write(string_to_write)
+
+def chat_to_sami(msgs: List[ChatMessage], path: str, vid_duration:int, msg_duration:int):
+	# get chat with message in bounds
+	chat_lists = chat_to_listwithbounds(msgs, vid_duration, msg_duration)
+
+	with open(path, "w") as f:
+		# write preamble stuff
+		f.write("<SAMI><head><SAMIParam>\n")
+		f.write(f"Metrics {{time:ms; duration: {vid_duration*1000};}}\nSpec {{MSFT:1.0;}}\n")
+		f.write('</SAMIParam><style type="text/css"><!--\n')
+		f.write(f"p {{text-align: left; color: white}}\n")
+		f.write("--></style></head><body>\n")
+
+		for c in chat_lists:
+			f.write(f"<sync start={c['begin']*1000}><p>")
+			for m in c["msgs"]:
+				msg = m["msg"].replace("<", "&lt;").replace(">", "&gt;").replace("&", "&amp;")
+				f.write(f'<font color="#{m["clr"]}"><b>{m["usr"]}</b></font>: {msg}')
+				if m != c["msgs"][-1]:
+					f.write("<br/>")
+				
+			f.write("\n")
 
 		# finish up
-		f.write("</font></window")
+		f.write("</body></SAMI>")
 
 
 def timestring_as_seconds(time:str, default:int=0):
@@ -178,8 +229,7 @@ def process_stage(conf: dict, stage: StageData, mode:str) -> Path:
 	elif export_type == "SAMI":
 		# load from archive, parse and write to temp
 		returnpath = tempdir / (stage.id + ".sami")
-	
-	print(returnpath)
+		chat_to_sami(chat_list, str(returnpath), total_offset, msg_duration)
 
 	return returnpath
 

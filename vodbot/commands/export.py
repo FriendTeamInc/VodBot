@@ -71,7 +71,7 @@ def run(args):
 				#os_replace(tmpfile, args.path / f"{stage.title}.mp4")
 			
 			if tmpchat is not None:
-				os_rename(tmpchat, args.path / f"{stage.title}.chat")
+				os_rename(tmpchat, args.path / (f"{stage.title}"+tmpchat.suffix))
 	else:
 		cprint("#dLoading stage...", end=" ")
 		
