@@ -25,6 +25,7 @@ DEFAULT_CONF = OrderedDict([
 	("stage_upload_delete", True), # delete a stage on completed upload?
 	("stage_export_delete", True), # delete a stage on completed export?
 
+	("chat_msg_time", 10), # measured in seconds, how long to show a chat message in subtitle
 	("chat_upload", "RealText"), # can be RealText or SAMI
 	("chat_export", "raw"), # can be raw, RealText, or SAMI
 

@@ -7,6 +7,7 @@ import vodbot.util as util
 import json
 from typing import List
 from pathlib import Path
+import shutil
 
 
 def chat_to_logfile(msgs: List[ChatMessage], path: str) -> None:
@@ -73,18 +74,51 @@ def logfile_to_chat(path: str) -> List[ChatMessage]:
 	return chats
 
 
+def chat_to_realtext(msgs: List[ChatMessage], path: str, vid_duration:int, msg_duration:int):
+	with open(path, "w") as f:
+		# add preamble (stuff like opening tags)
+		f.write('<window type="generic" wordwrap="true"/>\n')
+
+		# this is so cursed
+		last_msgs = []
+		for t in range(vid_duration):
+			current_msgs = []
+			for m in msgs:
+				if t <= m.offset_seconds <= t+msg_duration:
+					current_msgs.append(m)
+				elif m.offset_seconds > t+msg_duration:
+					break
+			
+			if current_msgs != last_msgs:
+				# write line and overwrite last_msgs
+				last_msgs = current_msgs
+				if len(current_msgs) != 0:
+					pass # write full messages line
+				else:
+					pass # write clear line
+
+		# finish up
+		f.write('</window>')
+	pass
+
+
 def timestring_as_seconds(time:str, default:int=0):
 	if time == "EOF":
 		return default
 	
 	s = time.split(":")
+	
+	seconds = int(s[-1]) if len(s) >= 1 else 0
+	minutes = int(s[-2]) if len(s) >= 2 else 0
+	hours = int(s[-3]) if len(s) >= 3 else 0
 
 	# Hours, minutes, seconds
-	return int(s[0]) * 60 * 60 + int(s[1]) * 60 + int(s[2])
+	return hours * 60 * 60 + minutes * 60 + seconds
 
 
 def process_stage(conf: dict, stage: StageData, mode:str) -> Path:
 	tempdir = Path(conf["temp_dir"])
+	msg_duration = conf["chat_msg_time"]
 
 	total_offset = 0
 	chat_list = []
@@ -108,7 +142,7 @@ def process_stage(conf: dict, stage: StageData, mode:str) -> Path:
 			msg_list = [m for m in logfile_to_chat(chat_path) if start_sec <= m.offset < end_sec]
 			if total_offset != 0:
 				for m in msg_list:
-					m.offset = m.offset + total_offset
+					m.offset = m.offset - start_sec + total_offset
 			
 			chat_list += msg_list
 		
@@ -121,15 +155,18 @@ def process_stage(conf: dict, stage: StageData, mode:str) -> Path:
 	
 	export_type = conf["chat_"+mode]
 
+	returnpath = None
 	if export_type == "raw":
-		# copy from archive to temp
-		pass
+		# chat to logfile time
+		returnpath = tempdir / (stage.id + ".chat")
+		chat_to_logfile(chat_list, str(returnpath))
 	elif export_type == "RealText":
 		# load from archive, parse and write to temp
-		pass
+		returnpath = tempdir / (stage.id + ".rt")
+		chat_to_realtext(chat_list, str(returnpath), total_offset, msg_duration)
 	elif export_type == "SAMI":
 		# load from archive, parse and write to temp
-		pass
+		returnpath = tempdir / (stage.id + ".sami")
 
 	return None
 

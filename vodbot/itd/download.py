@@ -110,6 +110,7 @@ def dl_video_chat(video: Vod, path: str):
 
 def dl_clip(clip: Clip, path: str):
 	clip_slug = clip.slug
+	clip_id = clip.id
 
 	# Get proper clip file URL
 	source_url = gql.get_clip_source(clip_slug)
@@ -118,4 +119,4 @@ def dl_clip(clip: Clip, path: str):
 	size = worker.download_file(source_url, path)
 
 	# Print progress
-	cprint(f"#fM#lClip#r `#fM{clip_slug}#r` #fB#l~{worker.format_size(size)}#r")
+	cprint(f"#fM#lClip#r ({clip_id})`#fM{clip_slug}#r` #fB#l~{worker.format_size(size)}#r")

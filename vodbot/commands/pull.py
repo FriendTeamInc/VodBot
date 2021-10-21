@@ -153,5 +153,16 @@ def compare_existant_file(path, allvods):
 	# Check for existing videos by finding the meta files
 	existingvods = [f[:-5] for f in listdir(str(path)) if isfile(str(path/f)) and f[-4:]=="meta"]
 	# Compare vods, if they arent downloaded (meta is missing) then we need to queue them
-	result = [vod for vod in allvods if not any(f"{vod.created_at}_{vod.id}".replace(":", ";") == x for x in existingvods)]
+	result = [
+		vod 
+			for vod in allvods
+			# we use two methods of detection, one for the new format and one for the old
+			# this is so old archives don't get overwritten unecessarily
+			# TODO: remove this in a future update after deprecation
+			if not any(
+				f"{vod.created_at}_{vod.id}".replace(":", ";") == x
+				or vod.id == x for x in existingvods
+					for x in existingvods
+			)
+		]
 	return result
