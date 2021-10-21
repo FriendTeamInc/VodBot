@@ -68,7 +68,7 @@ class StageData():
 			self.id += random.choice(string.ascii_lowercase + string.digits)
 	
 	@staticmethod
-	def load_from_json(data: dict):
+	def load_from_json(data: dict) -> 'StageData':
 		slices = [VideoSlice(v["id"], v["ss"], v["to"], v["path"]) for v in data["slices"]]
 		streamers = data["streamers"]
 		title = data["title"]
@@ -82,7 +82,7 @@ class StageData():
 		return new_data
 	
 	@staticmethod
-	def load_from_id(stagedir: Path, sid: str):
+	def load_from_id(stagedir: Path, sid: str) -> 'StageData':
 		jsonread = None
 		try:
 			with open(str(stagedir / (sid+".stage"))) as f:
@@ -95,7 +95,7 @@ class StageData():
 		return StageData.load_from_json(jsonread)
 	
 	@staticmethod
-	def load_all_stages(stagedir: Path):
+	def load_all_stages(stagedir: Path) -> List['StageData']:
 		stages = []
 		for d in os_listdir(str(stagedir)):
 			if isfile(str(stagedir / d)) and d[-5:] == "stage":
