@@ -124,9 +124,13 @@ def upload_video(conf: dict, service, stagedata: StageData) -> str:
 	# we're done, lets clean up
 	else:
 		try:
+			# delete vars to release the files
+			del media_file
+			del response_upload
+			sleep(1)
 			os_remove(str(tmpfile))
-		except:
-			util.exit_prog(90, f"Failed to remove temp slice file of stage `{stagedata.id}` after upload.")
+		except Exception as e:
+			util.exit_prog(90, f"Failed to remove temp slice file of stage `{stagedata.id}` after upload. {e}")
 	
 	return video_id
 
@@ -141,7 +145,7 @@ def upload_captions(conf: dict, service, stagedata: StageData, vid_id: str) -> b
 		"snippet": {
 			"name": "Chat",
 			"videoId": vid_id,
-			"language": "en-US"
+			"language": "en"
 		}
 	}
 
@@ -195,9 +199,13 @@ def upload_captions(conf: dict, service, stagedata: StageData, vid_id: str) -> b
 	# we're done, lets clean up
 	else:
 		try:
+			# delete vars to release the files
+			del media_file
+			del response_upload
+			sleep(1)
 			os_remove(str(tmpfile))
-		except:
-			util.exit_prog(90, f"Failed to remove temp slice file of stage `{stagedata.id}` after upload.")
+		except Exception as e:
+			util.exit_prog(90, f"Failed to remove temp slice file of stage `{stagedata.id}` after upload. {e}")
 	
 	return True
 

@@ -79,10 +79,10 @@ def load_conf(filename):
 
 	chat_format = ["RealText", "SAMI"]
 	if conf["chat_upload"] not in chat_format:
-		exit_prog(10, f"Chat format for uploading not valid. Got `{conf['chat_upload']}`, expected any of the following `{chat_format}`.")
+		exit_prog(10, f"Chat format for uploading not valid. Got `{conf['chat_upload']}`, expected any of the following `{chat_format}`. Fix your config to continue.")
 	chat_format.append("raw")
 	if conf["chat_export"] not in chat_format:
-		exit_prog(10, f"Chat format for exporting not valid. Got `{conf['chat_export']}`, expected any of the following `{chat_format}`.")
+		exit_prog(10, f"Chat format for exporting not valid. Got `{conf['chat_export']}`, expected any of the following `{chat_format}`. Fix your config to continue.")
 	
 	# TODO: Check all important config options
 
