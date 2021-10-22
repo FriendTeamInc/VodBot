@@ -6,7 +6,7 @@ with open("README.md", "r", encoding="utf-8") as f:
 
 setup(
 	name="vodbot",
-	version="1.0.0",
+	version="0.9.9",
     
 	author="Logan \"NotQuiteApex\" Hickok-Dickson",
 	author_email="self@notquiteapex.net",
