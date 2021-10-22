@@ -7,6 +7,7 @@ from .stage import StageData
 
 import vodbot.util as util
 import vodbot.video as vbvid
+import vodbot.chatlog as vbchat
 from vodbot.printer import cprint
 
 import json
@@ -41,7 +42,7 @@ def sort_stagedata(stagedata):
 	return (date - EPOCH).total_seconds()
 
 
-def upload_video(conf, service, stagedata):
+def upload_video(conf: dict, service, stagedata: StageData) -> str:
 	tmpfile = None
 	try:
 		tmpfile = vbvid.process_stage(conf, stagedata)
@@ -72,6 +73,7 @@ def upload_video(conf, service, stagedata):
 	response_upload = service.videos().insert(
 		part="snippet,status",
 		body=request_body,
+		notifySubscribers=False,
 		media_body=media_file
 	)
 
@@ -116,23 +118,89 @@ def upload_video(conf, service, stagedata):
 			sleep(5)
 		
 		if errn >= 10:
-			print("Skipping, errored too many times.")
+			print("Skipping video upload, errored too many times.")
 			break
 	
 	# we're done, lets clean up
 	else:
-		if conf["stage_upload_delete"]:
-			try:
-				os_remove(str(stagedir / f"{stagedata.id}.stage"))
-			except:
-				util.exit_prog(90, f"Failed to remove stage `{stagedata.id}` after upload.")
-
 		try:
 			os_remove(str(tmpfile))
 		except:
 			util.exit_prog(90, f"Failed to remove temp slice file of stage `{stagedata.id}` after upload.")
 	
 	return video_id
+
+
+def upload_captions(conf: dict, service, stagedata: StageData, vid_id: str) -> bool:
+	tmpfile = vbchat.process_stage(conf, stagedata, "upload")
+
+	if tmpfile == False:
+		return True
+
+	request_body = {
+		"snippet": {
+			"name": "Chat",
+			"videoId": vid_id,
+			"language": "en-US"
+		}
+	}
+
+	media_file = MediaFileUpload(str(tmpfile), chunksize=1024*1024*100, resumable=True)
+
+	response_upload = service.captions().insert(
+		part="snippet",
+		body=request_body,
+		sync=False,
+		media_body=media_file
+	)
+
+	resp = None
+	errn = 0
+	cprint(f"#fCUploading stage chatlog #r`#fM{stagedata.id}#r`, progress: #fC0#fY%#r #d...#r", end="\r")
+	
+	while resp is None:
+		try:
+			status, resp = response_upload.next_chunk()
+			if status:
+				cprint(f"#fCUploading stage chatlog #r`#fM{stagedata.id}#r`, progress: #fC{int(status.progress()*100)}#fY%#r #d...#r", end="\r")
+			if resp is not None:
+				cprint(f"#fCUploading stage chatlog #r`#fM{stagedata.id}#r`, progress: #fC100#fY%#r!")
+				cprint(f"#l#fGVideo captions were successfully uploaded!#r")
+		except ResumableUploadError as err:
+			if err.resp.status in [400, 401, 402, 403]:
+				try:
+					jsondata = json.loads(err.content)['error']['errors'][0]
+					util.exit_prog(40, f"API Error: `{jsondata['reason']}`. Message: `{jsondata['message']}`")
+				except (json.JSONDecodeError, KeyError):
+					util.exit_prog(40, f"Unknown API Error has occured, ({err.resp.status}, {err.content})")
+			print(f"A Resumeable error has occured, retrying in 5 sec... ({err.resp.status}, {err.content})")
+			errn += 1
+			sleep(5)
+		except HttpError as err:
+			if err.resp.status in [500, 502, 503, 504]:
+				print(f"An HTTP error has occured, retrying in 5 sec... ({err.resp.status}, {err.content})")
+				errn += 1
+				sleep(5)
+			else:
+				raise
+		except RETRIABLE_EXCEPTS as err:
+			print(f"An HTTP error has occured, retrying in 5 sec... ({err})")
+			errn += 1
+			sleep(5)
+		
+		if errn >= 10:
+			print("Skipping chatlog upload, errored too many times.")
+			return False
+	
+	# we're done, lets clean up
+	else:
+		try:
+			os_remove(str(tmpfile))
+		except:
+			util.exit_prog(90, f"Failed to remove temp slice file of stage `{stagedata.id}` after upload.")
+	
+	return True
+
 
 
 def run(args):
@@ -217,10 +285,28 @@ def run(args):
 		cprint(f"About to upload {len(stagedatas)} stages.#r")
 		for stage in stagedatas:
 			video_id = upload_video(conf, service, stage)
-			# if upload_captions: upload_captions(conf, service, stage, video_id)
+			if video_id is not None:
+				chat_success = True
+				if conf["chat_upload"]:
+					chat_success = upload_captions(conf, service, stagedata, video_id)
+				
+				if conf["stage_upload_delete"] and chat_success:
+					try:
+						os_remove(str(stagedir / f"{stage.id}.stage"))
+					except:
+						util.exit_prog(90, f"Failed to remove stage `{stage.id}` after upload.")
 	else:
 		# upload stage
 		cprint(f"About to upload stage {stagedata.id}.#r")
 		video_id = upload_video(conf, service, stagedata)
-		# if upload_captions: upload_captions(conf, service, stagedata, video_id)
+		if video_id is not None:
+			chat_success = True
+			if conf["chat_upload"]:
+				chat_success = upload_captions(conf, service, stagedata, video_id)
+			
+			if conf["stage_upload_delete"] and chat_success:
+				try:
+					os_remove(str(stagedir / f"{stagedata.id}.stage"))
+				except:
+					util.exit_prog(90, f"Failed to remove stage `{stagedata.id}` after upload.")
 	

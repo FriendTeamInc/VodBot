@@ -248,6 +248,10 @@ def process_stage(conf: dict, stage: StageData, mode:str) -> Path:
 	
 	export_type = conf["chat_"+mode]
 
+	if len(chat_list) == 0:
+		cprint(f" No chat found in `#fY{export_type}#r` stage. Skipping...")
+		return False
+
 	cprint(f" Exporting as format `#fY{export_type}#r`.")
 
 	returnpath = None
