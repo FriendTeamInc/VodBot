@@ -1,4 +1,4 @@
-# <img src="/assets/banner.png" alt="VodBot" height="100" /> by NotQuiteApex [![GitHub license](https://badgen.net/github/license/NotQuiteApex/VodBot)](https://github.com/NotQuiteApex/VodBot/blob/master/LICENSE.md) [![PyPI version fury.io](https://badge.fury.io/py/vodbot.svg)](https://pypi.org/project/vodbot/) [![PyPI pyversions](https://img.shields.io/pypi/pyversions/vodbot.svg)](https://pypi.org/project/vodbot/) [![GitHub issues](https://img.shields.io/github/issues/NotQuiteApex/VodBot.svg)](https://gitHub.com/NotQuiteApex/VodBot/issues/)
+# <img src="/assets/banner.png" alt="VodBot" height="100" /> [![GitHub license](https://badgen.net/github/license/NotQuiteApex/VodBot)](https://github.com/NotQuiteApex/VodBot/blob/master/LICENSE.md) [![PyPI version fury.io](https://badge.fury.io/py/vodbot.svg)](https://pypi.org/project/vodbot/) [![GitHub issues](https://img.shields.io/github/issues/NotQuiteApex/VodBot.svg)](https://gitHub.com/NotQuiteApex/VodBot/issues/)
 
 A command line interface VOD and Clip manager for Twitch. Downloads VODs and Clips with appropriate metadata for any public channel, and allows for slicing and reupload to YouTube.
 
