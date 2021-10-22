@@ -40,11 +40,11 @@ def _download(url, path):
 
 def download_file(url, path, retries=RETRY_COUNT):
 	if os.path.exists(path):
-		return os.path.getsize(path)
+		return os.path.getsize(path), True
 
 	for _ in range(retries):
 		try:
-			return _download(url, path)
+			return _download(url, path), False
 		except RequestException:
 			pass
 
@@ -82,20 +82,23 @@ def format_size(bytes_, digits=1):
 def _print_progress(video_id, futures):
 	downloaded_count = 0
 	downloaded_size = 0
+	existing_size = 0
 	max_msg_size = 0
 	start_time = datetime.now()
 	total_count = len(futures)
 
 	try:
 		for future in as_completed(futures):
-			size = future.result()
+			size, existed = future.result()
 			downloaded_count += 1
 			downloaded_size += size
+			if existed:
+				existing_size += size
 
 			percentage = 100 * downloaded_count // total_count
 			est_total_size = int(total_count * downloaded_size / downloaded_count)
 			duration = (datetime.now() - start_time).seconds
-			speed = downloaded_size // duration if duration else 0
+			speed = (downloaded_size-existing_size) // duration if duration else 0
 			remaining = (total_count - downloaded_count) * duration / downloaded_count
 
 			msg = " ".join([
