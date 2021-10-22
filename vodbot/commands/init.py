@@ -2,7 +2,7 @@
 
 import json
 import re
-from os.path import isabs
+from os.path import isabs, exists
 
 import vodbot.util as util
 from vodbot.printer import cprint
@@ -101,6 +101,13 @@ def create_config(args):
 
 
 def run(args):
+	# check if the config exists and ask if it should be overwritten
+	if exists(args.output):
+		input("It seems a file already exists here. Press enter if you wish to continue, otherwise press Ctrl+C to quit.")
+		input("This operation will overwrite this file. Do you have a backup? Press enter again to continue, otherwise press Ctrl+C to quit.")
+		input("Last time, are you absolutely certain you want to overwrite this file? Press enter again to continue, otherwise press Ctrl+C to quit.")
+		print("Overwriting file...")
+
 	# test write the config.
 	try:
 		util.make_dir(args.output.parent)
