@@ -89,7 +89,7 @@ def _print_progress(video_id, futures):
 
 	try:
 		for future in as_completed(futures):
-			size, existed = future.result()
+			(size, existed) = future.result()
 			downloaded_count += 1
 			downloaded_size += size
 			if existed:
