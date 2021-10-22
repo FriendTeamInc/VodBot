@@ -6,6 +6,8 @@ COLOR_CODES = {
 	"c": "\033[K",  # clear line
 	"l": "\033[1m", # light
 	"d": "\033[2m", # dim
+	"A": "\033[A",  # move up a line
+	"F": "\033[F",  # move cursor to beginning of line
 
 	"fK": "\033[30m", # foreground blacK
 	"fR": "\033[31m", # Red

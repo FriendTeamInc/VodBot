@@ -1,13 +1,12 @@
 # Module that manages shelling out commands to ffmpeg, with functions returning paths to the final video.
 
-from . import util
 from .printer import cprint
 from .commands.stage import StageData, VideoSlice
 
 import os
 import subprocess
 from pathlib import Path
-from typing import List, Tuple
+from typing import List
 
 
 class VideoFailure(Exception):

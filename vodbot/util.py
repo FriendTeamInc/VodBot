@@ -5,7 +5,6 @@ from .printer import cprint
 import os
 import sys
 import json
-import argparse
 from pathlib import Path
 from collections import OrderedDict
 
@@ -15,16 +14,20 @@ DEFAULT_CONF_PATH = vodbotdir / "conf.json"
 DEFAULT_CONF = OrderedDict([
 	("twitch_channels", []), # channels to watch for new clips and videos
 
-	("stage_timezone", "+0000"), # timezone for when a video happened
+	("pull_chat_logs", True), # determines if chat logs get pulled with VODs
 
+	("stage_timezone", "+0000"), # timezone for when a video happened
 	("stage_format", { # Macros for video descriptions when staging
 		"watch": "-- Watch live at {links}",
 		"discord": "-- Join the Discord at https://discord.gg/v2t6uag",
 		"credits": "\n{watch}\n{discord}"
 	}),
-
 	("stage_upload_delete", True), # delete a stage on completed upload?
 	("stage_export_delete", True), # delete a stage on completed export?
+
+	("chat_msg_time", 10), # measured in seconds, how long to show a chat message in subtitle
+	("chat_upload", "RealText"), # can be RealText or SAMI
+	("chat_export", "raw"), # can be raw, RealText, or SAMI
 
 	("ffmpeg_loglevel", "warning"), # warning (recommended), error (only breaking stuff), fatal (absolute error)
 	
@@ -73,6 +76,13 @@ def load_conf(filename):
 
 	if len(conf["twitch_channels"]) == 0:
 		exit_prog(40, "No channels listed in config, please edit your config to continue.")
+
+	chat_format = ["RealText", "SAMI"]
+	if conf["chat_upload"] not in chat_format:
+		exit_prog(10, f"Chat format for uploading not valid. Got `{conf['chat_upload']}`, expected any of the following `{chat_format}`. Fix your config to continue.")
+	chat_format.append("raw")
+	if conf["chat_export"] not in chat_format:
+		exit_prog(10, f"Chat format for exporting not valid. Got `{conf['chat_export']}`, expected any of the following `{chat_format}`. Fix your config to continue.")
 	
 	# TODO: Check all important config options
 
