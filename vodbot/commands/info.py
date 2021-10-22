@@ -73,7 +73,7 @@ def run(args):
 		r = resp['video']
 		c = r['creator']
 		g = r['game']
-		cprint(f"#fGTitle: `{r['title']}`#r")
+		cprint(f"#fGTitle: `{r['title']}`#r - ID: `{r['id']}`")
 		cprint(f"#fMBroadcaster: {c['displayName']} - {c['login']} ({c['id']})#r")
 		cprint(f"#fCPlaying: {g['name']} ({g['id']})#r")
 		cprint(f"#fYAt: {r['publishedAt']} - For: {r['lengthSeconds']} seconds#r")
@@ -82,14 +82,15 @@ def run(args):
 		c = r['curator']
 		b = r['broadcaster']
 		g = r['game']
-		cprint(f"#fGTitle: `{r['title']}`#r")
+		cprint(f"#fGTitle: `{r['title']}`#r - ID: `{r['id']}`")
+		cprint(f"Slug: `{r['slug']}`")
 		cprint(f"#fBClipper: {c['displayName']} - {c['login']} ({c['id']})#r")
 		cprint(f"#fMBroadcaster: {b['displayName']} - {b['login']} ({b['id']})#r")
 		cprint(f"#fCPlaying: {g['name']} ({g['id']})#r")
 		cprint(f"#fYAt: {r['createdAt']} - For: {r['durationSeconds']} seconds - With: {r['viewCount']} views#r")
 	elif ctype == "channel":
 		r = resp['user']
-		cprint(f"#fMBroadcaster: {r['displayName']} - {r['login']} ({r['id']})#r")
+		cprint(f"#fMBroadcaster: {r['displayName']} - {r['login']} (ID: `{r['id']}`)#r")
 		cprint(f"#fRDescription: {r['description']}#r")
 		cprint(f"#fYChannel Created At: {r['createdAt']}#r")
 		r = r['roles']
