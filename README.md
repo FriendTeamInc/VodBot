@@ -10,10 +10,10 @@ VodBot is command line VOD and Clip manager for Twitch. Vodbot can:
 ...with more features to come!
 
 # Installation
-VodBot can be installed with `pip install vodbot`. You can also install by cloning the repo and running `pip install .` for the latest commits and changes, although this isn't recommended. This will not install FFMPEG, that must be done separately.
+VodBot can be installed with `pip install vodbot`. You can also install by cloning the repo and running `pip install .` for the latest commits and changes, although this isn't recommended. This will not install FFmpeg, that must be done separately.
 
 Dependencies/Requirements:
-* [ffmpeg](https://www.ffmpeg.org/) (Must be in your PATH environment variable)
+* [FFmpeg](https://www.ffmpeg.org/) (Must be in your PATH environment variable)
 * [Python 3.6+](https://www.python.org/)
     * [Requests 2.20+](https://pypi.org/project/requests/)
     * [M3U8 0.8+](https://pypi.org/project/m3u8/)
@@ -27,5 +27,7 @@ All documentation of VodBot and its usage is managed on the repo wiki, which can
 ## Project Status
 VodBot is considered complete-enough. However, features will continue to be added and the project itself rewritten many times down the road for optimization and repo readability. Major changes should not be expected. Any future releases will be documented on the [projects page](https://github.com/NotQuiteApex/VodBot/projects).
 
-# License
-This project is licensed under the zlib license, copyright Logan "NotQuiteApex" Hickok-Dickson. See [LICENSE.md](LICENSE.MD) for more details.
+# License and Credit
+This project is licensed under the zlib license, copyright Logan "NotQuiteApex" Hickok-Dickson. See [LICENSE.md](LICENSE.md) for more details.
+
+VodBot was built on the grounds laid by the streaming group Friend Team Inc. (for the original idea and necessity of the project), the many people who research Twitch's GraphQL API (for all the API calls that the project makes), and the support from friends and family (for, y'know, the support). Without any of this, VodBot would not exist as it currently does. 🧡
