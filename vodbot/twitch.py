@@ -72,24 +72,28 @@ class Clip:
 		user_id:str, user_login:str, user_name:str,
 		clipper_id:str, clipper_login:str, clipper_name:str,
 		game_id:str, game_name:str, view_count:int, length:int,
+		offset:int, video_id:str
 	):
-		self.id = id
-		self.slug = slug
-		self.user_id = user_id
+		self.id = id # id of the clip itself
+		self.slug = slug # the url ending to identify the clip
+		self.user_id = user_id # user streaming
 		self.user_login = user_login
 		self.user_name = user_name
 
-		self.clipper_id = clipper_id
+		self.clipper_id = clipper_id # user who clipped stream
 		self.clipper_login = clipper_login
 		self.clipper_name = clipper_name
 
-		self.game_id = game_id
+		self.game_id = game_id # the "game" being played
 		self.game_name = game_name
 
-		self.title = title
+		self.title = title # clip metadata
 		self.created_at = created_at
 		self.view_count = view_count
 		self.length = length
+
+		self.offset = offset # offset from the start of the stream the clip was made
+		self.video_id = video_id # id of the video stream the clip was made of
 		
 		self.url = f"twitch.tv/{self.user_name}/clip/{self.id}"
 	
@@ -111,7 +115,9 @@ class Clip:
 			"title": self.title,
 			"created_at": self.created_at,
 			"view_count": self.view_count,
-			"length": self.length
+			"length": self.length,
+			"offset": self.offset,
+			"video_id": self.video_id
 		}
 		
 		with open(filename, "w") as f:
@@ -296,6 +302,10 @@ def get_channel_clips(channel: Channel) -> List[Clip]:
 			b = c["broadcaster"]
 			w = c["curator"]
 			g = c["game"]
+			v = c["video"]
+			v_id = "unknown"
+			if v is not None:
+				v_id = v["id"]
 
 			w_id = b["id"]
 			w_login = b["login"]
@@ -317,7 +327,8 @@ def get_channel_clips(channel: Channel) -> List[Clip]:
 					user_id=b["id"], user_login=b["login"], user_name=b["displayName"],
 					clipper_id=w_id, clipper_login=w_login, clipper_name=w_name,
 					game_id=g_id, game_name=g_name, title=c["title"],
-					view_count=c["viewCount"], length=c["durationSeconds"]
+					view_count=c["viewCount"], length=c["durationSeconds"],
+					offset=c["videoOffsetSeconds"] or 0, video_id=v_id
 				)
 			)
 

@@ -63,8 +63,8 @@ GET_CHANNEL_CLIPS_QUERY = """
 			edges {{ cursor
 				node {{ id slug title
 					createdAt viewCount
-					durationSeconds url
-					videoQualities {{ frameRate quality sourceURL }}
+					durationSeconds url videoOffsetSeconds
+					video {{ id }}
 					game {{ id name }}
 					broadcaster {{ id displayName login }}
 					curator {{ id displayName login }}
@@ -82,12 +82,7 @@ GET_VIDEO_QUERY = """
 # Single Clip query
 GET_CLIP_QUERY = """
 {{  clip(slug: "{clip_slug}") {{
-		id slug title createdAt
-		viewCount durationSeconds url
 		videoQualities {{ frameRate quality sourceURL }}
-		game {{ id name }}
-		broadcaster {{ id displayName login }}
-		curator {{ id displayName login }}
 }}  }}
 """
 # Single Channel info query
