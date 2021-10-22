@@ -116,7 +116,7 @@ def dl_clip(clip: Clip, path: str):
 	source_url = gql.get_clip_source(clip_slug)
 
 	# Download file to path
-	size = worker.download_file(source_url, path)
+	size, _existed = worker.download_file(source_url, path)
 
 	# Print progress
 	cprint(f"#fM#lClip#r ({clip_id})`#fM{clip_slug}#r` #fB#l~{worker.format_size(size)}#r")
