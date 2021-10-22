@@ -15,7 +15,7 @@ import pickle
 from datetime import datetime
 from pathlib import Path
 from os import remove as os_remove
-from os.path import exists as os_exists, isfile as os_isfile
+from os.path import exists as os_exists
 from time import sleep
 
 from httplib2.error import HttpLib2Error, HttpLib2ErrorWithResponse
@@ -210,7 +210,6 @@ def upload_captions(conf: dict, service, stagedata: StageData, vid_id: str) -> b
 	return True
 
 
-
 def run(args):
 	# load config
 	conf = util.load_conf(args.config)
@@ -303,6 +302,7 @@ def run(args):
 						os_remove(str(stagedir / f"{stage.id}.stage"))
 					except:
 						util.exit_prog(90, f"Failed to remove stage `{stage.id}` after upload.")
+			print()
 	else:
 		# upload stage
 		cprint(f"About to upload stage {stagedata.id}.#r")

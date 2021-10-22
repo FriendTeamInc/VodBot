@@ -23,7 +23,7 @@ def sort_stagedata(stagedata):
 	return (date - EPOCH).total_seconds()
 
 
-def handle_stage(conf: dict, stagedir: Path, stage: StageData) -> Path:
+def handle_stage(conf: dict, stage: StageData) -> Path:
 	tmpfile = None
 	try:
 		tmpfile = vbvid.process_stage(conf, stage)
@@ -60,13 +60,13 @@ def run(args):
 
 		for stage in stagedatas:
 			# Export with ffmpeg
-			tmpfile = handle_stage(conf, stagedir, stage)
+			tmpfile = handle_stage(conf, stage)
 			# Export chat
 			tmpchat = vbchat.process_stage(conf, stage, "export")
 
 			# move appropriate files
 			if tmpfile is not None:
-				os_replace(tmpfile, args.path / f"{stage.title}.mp4")
+				os_replace(tmpfile, args.path / (f"{stage.title}"+tmpfile.suffix))
 			if tmpchat is not None:
 				os_replace(tmpchat, args.path / (f"{stage.title}"+tmpchat.suffix))
 			
@@ -80,13 +80,13 @@ def run(args):
 		stagedata = StageData.load_from_id(stagedir, args.id)
 		
 		# Export with ffmpeg
-		tmpfile = handle_stage(conf, stagedir, stagedata)
+		tmpfile = handle_stage(conf, stagedata)
 		# Export chat
-		tmpchat = vbchat.process_stage(conf, stagedata)
+		tmpchat = vbchat.process_stage(conf, stagedata, "export")
 
 		# move appropriate files
 		if tmpfile is not None:
-			os_replace(tmpfile, args.path / f"{stagedata.title}.mp4")
+			os_replace(tmpfile, args.path / (f"{stagedata.title}"+tmpfile.suffix))
 		if tmpchat is not None:
 			os_replace(tmpchat, args.path / (f"{stagedata.title}"+tmpchat.suffix))
 		
