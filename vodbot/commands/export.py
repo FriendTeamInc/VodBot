@@ -17,6 +17,12 @@ vodbotdir = util.vodbotdir
 stagedir = None
 
 
+DISALLOWED_CHARACTERS = [
+	"/", "\\", "<", ">", ":",
+	"\"", "|", "?", "*"
+]
+
+
 EPOCH = datetime.utcfromtimestamp(0)
 def sort_stagedata(stagedata):
 	date = datetime.strptime(stagedata.datestring, "%Y/%m/%d")
@@ -64,11 +70,15 @@ def run(args):
 			# Export chat
 			tmpchat = vbchat.process_stage(conf, stage, "export")
 
+			title = stage.title.strip()
+			for x in DISALLOWED_CHARACTERS:
+				title = title.replace(x, "_")
+
 			# move appropriate files
 			if tmpfile is not None:
-				os_replace(tmpfile, args.path / (f"{stage.title}"+tmpfile.suffix))
+				os_replace(tmpfile, args.path / (title+tmpfile.suffix))
 			if tmpchat is not None:
-				os_replace(tmpchat, args.path / (f"{stage.title}"+tmpchat.suffix))
+				os_replace(tmpchat, args.path / (title+tmpchat.suffix))
 			
 			# deal with old stage
 			if conf["stage_export_delete"]:
@@ -83,12 +93,16 @@ def run(args):
 		tmpfile = handle_stage(conf, stagedata)
 		# Export chat
 		tmpchat = vbchat.process_stage(conf, stagedata, "export")
+		
+		title = stagedata.title.strip()
+		for x in DISALLOWED_CHARACTERS:
+			title = title.replace(x, "_")
 
 		# move appropriate files
 		if tmpfile is not None:
-			os_replace(tmpfile, args.path / (f"{stagedata.title}"+tmpfile.suffix))
+			os_replace(tmpfile, args.path / (title+tmpfile.suffix))
 		if tmpchat is not None:
-			os_replace(tmpchat, args.path / (f"{stagedata.title}"+tmpchat.suffix))
+			os_replace(tmpchat, args.path / (title+tmpchat.suffix))
 		
 		# Deal with old stage
 		if conf["stage_export_delete"]:

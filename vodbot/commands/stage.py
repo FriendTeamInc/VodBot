@@ -18,6 +18,8 @@ from typing import List
 # Default path
 vodbotdir = util.vodbotdir
 
+DISALLOWED_CHARACTERS = [chr(x) for x in range(32)] # just in case...
+
 
 class VideoSlice():
 	def __init__(self, video_id: str, ss: str, to: str, filepath: str):
@@ -32,6 +34,8 @@ class VideoSlice():
 
 class StageData():
 	def __init__(self, streamers: List[str], title: str, desc: str, slices: List[VideoSlice], datestring: str, cid=None):
+		for x in DISALLOWED_CHARACTERS:
+			title = title.replace(x, "_")
 		self.title = title
 		self.desc = desc
 		self.streamers = streamers
@@ -283,14 +287,24 @@ def check_streamers(default=None) -> List[str]:
 	return streamers
 
 
+RESERVED_NAMES = [
+	"CON", "PRN", "AUX", "NUL",
+	"COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
+	"LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
+]
 def check_title(default=None):
 	title = default
 	if not title:
 		title = ""
 		while title == "":
 			title = input(colorize("#fW#lTitle of the Video#r #d(--title)#r: "))
+			# blank title
 			if title == "":
 				cprint("#fRTitle cannot be blank.#r")
+			# reserved names
+			if title in RESERVED_NAMES:
+				cprint("#fRTitle cannot be a reserved name.#r")
+				title = ""
 	
 	return title
 
