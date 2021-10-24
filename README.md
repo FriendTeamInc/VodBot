@@ -6,6 +6,7 @@ VodBot is command line VOD and Clip manager for Twitch. Vodbot can:
 * Slice and splice videos downloaded in instances of staged data.
 * Export instances one at a time or all at once, with chatlogs converted to common formats such as RealText or SAMI.
 * Upload instances one at a time or all at once to YouTube, with chatlogs as captions/subtitles synced with the video.
+	* NOTE: Requires approval from Google for now, just use export and upload manually.
 
 ...with more features to come!
 

@@ -295,7 +295,7 @@ def run(args):
 			if video_id is not None:
 				chat_success = True
 				if conf["chat_upload"]:
-					chat_success = upload_captions(conf, service, stagedata, video_id)
+					chat_success = upload_captions(conf, service, stage, video_id)
 				
 				if conf["stage_upload_delete"] and chat_success:
 					try:
