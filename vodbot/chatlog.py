@@ -21,6 +21,7 @@ def chat_to_logfile(msgs: List[ChatMessage], path: str) -> None:
 			preamb.append(s)
 
 	# open chat log file
+	# TODO: change to encoding="utf8"?
 	with open(path, "wb") as f:
 		# write pramble as one line, delimited by null characters
 		for s in preamb:
@@ -118,7 +119,7 @@ def chat_to_realtext(msgs: List[ChatMessage], path: str, vid_duration:int, msg_d
 	chat_lists = chat_to_listwithbounds(msgs, vid_duration, msg_duration)
 
 	# write actual realtext stuff
-	with open(path, "w") as f:
+	with open(path, "w", encoding="utf8") as f:
 		# add preamble (stuff like opening tags)
 		f.write('<window type="generic" wordwrap="true"><font color="#ffffff" text-align="left">\n')
 
@@ -143,7 +144,7 @@ def chat_to_sami(msgs: List[ChatMessage], path: str, vid_duration:int, msg_durat
 	# get chat with message in bounds
 	chat_lists = chat_to_listwithbounds(msgs, vid_duration, msg_duration)
 
-	with open(path, "w") as f:
+	with open(path, "w", encoding="utf8") as f:
 		# write preamble stuff
 		f.write("<SAMI><head><SAMIParam>\n")
 		f.write(f"Metrics {{time:ms; duration: {vid_duration*1000};}}\nSpec {{MSFT:1.0;}}\n")
@@ -170,7 +171,7 @@ def chat_to_ttml(msgs: List[ChatMessage], path: str, vid_duration:int, msg_durat
 	# get chat with message in bounds
 	chat_lists = chat_to_listwithbounds(msgs, vid_duration, msg_duration)
 
-	with open(path, "w") as f:
+	with open(path, "w", encoding="utf8") as f:
 		# write preamble stuffs
 		f.write('<?xml version="1.0" encoding="utf-8"?>\n')
 		f.write('<tt xmlns="http://www.w3.org/ns/ttml"><head>\n')
@@ -233,9 +234,8 @@ def process_stage(conf: dict, stage: StageData, mode:str) -> Path:
 		# sure theyre inbetween the slices
 		if has_chat:
 			msg_list = [m for m in logfile_to_chat(chat_path) if start_sec <= m.offset < end_sec]
-			if total_offset != 0:
-				for m in msg_list:
-					m.offset = m.offset - start_sec + total_offset
+			for m in msg_list:
+				m.offset = m.offset - start_sec + total_offset
 			
 			chat_list += msg_list
 		
