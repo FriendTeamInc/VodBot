@@ -26,8 +26,8 @@ DEFAULT_CONF = OrderedDict([
 	("stage_export_delete", True), # delete a stage on completed export?
 
 	("chat_msg_time", 10), # measured in seconds, how long to show a chat message in subtitle
-	("chat_upload", "RealText"), # can be RealText or SAMI
-	("chat_export", "raw"), # can be raw, RealText, or SAMI
+	("chat_upload", "YTT"), # can be RealText, YTT, or SAMI
+	("chat_export", "raw"), # can be raw, RealText, YTT, or SAMI
 
 	("ffmpeg_loglevel", "warning"), # warning (recommended), error (only breaking stuff), fatal (absolute error)
 	
@@ -77,7 +77,7 @@ def load_conf(filename):
 	if len(conf["twitch_channels"]) == 0:
 		exit_prog(40, "No channels listed in config, please edit your config to continue.")
 
-	chat_format = ["RealText", "SAMI"]
+	chat_format = ["RealText", "SAMI", "YTT"]
 	if conf["chat_upload"] not in chat_format:
 		exit_prog(10, f"Chat format for uploading not valid. Got `{conf['chat_upload']}`, expected any of the following `{chat_format}`. Fix your config to continue.")
 	chat_format.append("raw")

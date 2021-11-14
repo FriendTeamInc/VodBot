@@ -9,7 +9,6 @@ import vodbot.util as util
 import json
 from typing import List
 from pathlib import Path
-import shutil
 
 
 def chat_to_logfile(msgs: List[ChatMessage], path: str) -> None:
@@ -75,6 +74,19 @@ def logfile_to_chat(path: str) -> List[ChatMessage]:
 				)
 
 	return chats
+
+
+def chat_to_userlist(msgs: List[ChatMessage]) -> List[dict], List[str]:
+	userlist = {}
+	userorder = []
+	uid = 0
+	for m in msgs:
+		if m.user not in userlist:
+			userlist[m.user] = {"id":uid, "clr":m.color}
+			userorder.append(m.user)
+			uid += 1
+	
+	return userlist, userorder
 
 
 def chat_to_listwithbounds(msgs: List[ChatMessage], vid_duration:int, msg_duration:int) -> List[dict]:
@@ -164,6 +176,42 @@ def chat_to_sami(msgs: List[ChatMessage], path: str, vid_duration:int, msg_durat
 
 		# finish up
 		f.write("</body></SAMI>")
+
+
+def chat_to_ytt(msgs: List[ChatMessage], path: str, vid_duration:int, msg_duration:int):
+	# get individual users and their info
+	chat_users, user_order = chat_to_userlist(msgs)
+	# get chat with message in bounds
+	chat_lists = chat_to_listwithbounds(msgs, vid_duration, msg_duration)
+
+	with open(path, "w", encoding="utf8") as f:
+		# write preamble stuffs
+		f.write('<?xml version="1.0" encoding="utf-8"?>\n')
+		f.write('<timedtext format="3"><head>\n')
+		# write pens and side anchoring HERE
+		# default text
+		f.write('<pen id="1" fc="#FFFFFF"/>\n')
+		# user name text
+		for user in user_order:
+			u = chat_users[user]
+			f.write(f'<pen id="{u["id"]+2}" b="1" fc="{u["clr"]}" />\n')
+		f.write('</head><body>\n')
+
+		count = 0
+		for c in chat_lists:
+			f.write(f'<p t="{c["begin"]*1000}" d="{msg_duration*1000}">')
+			count += 1
+			for m in c["msgs"]:
+				msg = m["msg"].replace("<", "&lt;").replace(">", "&gt;").replace("&", "&amp;")
+				u = chat_users[m["usr"]]
+				f.write(f'<p p="{u["id"]}">{m["usr"]}</p><p p="1">: {msg}</p>')
+				if m != c["msgs"][-1]:
+					f.write("<br/>")
+				
+			f.write("</p>\n")
+		
+		# finish up
+		f.write("</body></timedtext>")
 
 
 def chat_to_ttml(msgs: List[ChatMessage], path: str, vid_duration:int, msg_duration:int):
@@ -267,6 +315,10 @@ def process_stage(conf: dict, stage: StageData, mode:str) -> Path:
 		# load from archive, parse and write to temp
 		returnpath = tempdir / (stage.id + ".sami")
 		chat_to_sami(chat_list, str(returnpath), total_offset, msg_duration)
+	elif export_type == "YTT":
+		# load from archive, parse and write to temp
+		returnpath = tempdir / (stage.id + ".ytt")
+		chat_to_ytt(chat_list, str(returnpath), total_offset, msg_duration)
 	elif export_type == "TTML":
 		# load from archive, parse and write to temp
 		returnpath = tempdir / (stage.id + ".ttml")
