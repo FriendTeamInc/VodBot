@@ -7,7 +7,7 @@ from vodbot.twitch import ChatMessage
 import vodbot.util as util
 
 import json
-from typing import List
+from typing import List, Tuple
 from pathlib import Path
 
 
@@ -76,7 +76,7 @@ def logfile_to_chat(path: str) -> List[ChatMessage]:
 	return chats
 
 
-def chat_to_userlist(msgs: List[ChatMessage]) -> List[dict], List[str]:
+def chat_to_userlist(msgs: List[ChatMessage]) -> Tuple[List[dict], List[str]]:
 	userlist = {}
 	userorder = []
 	uid = 0
@@ -97,9 +97,9 @@ def chat_to_listwithbounds(msgs: List[ChatMessage], vid_duration:int, msg_durati
 	for t in range(vid_duration):
 		current_msgs: List[ChatMessage] = []
 		for m in msgs:
-			if t <= m.offset <= t+msg_duration:
+			if t <= m.offset < t+msg_duration:
 				current_msgs.append(m)
-			elif m.offset > t+msg_duration:
+			elif m.offset >= t+msg_duration:
 				break
 		
 		if current_msgs != last_msgs:
@@ -190,23 +190,27 @@ def chat_to_ytt(msgs: List[ChatMessage], path: str, vid_duration:int, msg_durati
 		f.write('<timedtext format="3"><head>\n')
 		# write pens and side anchoring HERE
 		# default text
-		f.write('<pen id="1" fc="#FFFFFF"/>\n')
+		f.write('<pen id="1" fc="#FEFEFE"/>\n')
 		# user name text
 		for user in user_order:
 			u = chat_users[user]
-			f.write(f'<pen id="{u["id"]+2}" b="1" fc="{u["clr"]}" />\n')
+			f.write(f'<pen id="{u["id"]+2}" fc="#{u["clr"]}" fo="254" b="1" />\n')
+		f.write(f'<ws id="1" ju="0" />\n')
+		f.write(f'<wp id="1" ap="6" ah="0" av="100" />\n')
 		f.write('</head><body>\n')
 
 		count = 0
 		for c in chat_lists:
-			f.write(f'<p t="{c["begin"]*1000}" d="{msg_duration*1000}">')
+			if not c["msgs"]:
+				continue
+			f.write(f'<p t="{c["begin"]*1000}" d="{(c["end"]-c["begin"])*1000}" wp="1" ws="1">')
 			count += 1
 			for m in c["msgs"]:
 				msg = m["msg"].replace("<", "&lt;").replace(">", "&gt;").replace("&", "&amp;")
 				u = chat_users[m["usr"]]
-				f.write(f'<p p="{u["id"]}">{m["usr"]}</p><p p="1">: {msg}</p>')
+				f.write(f'<s p="{u["id"]+2}">{m["usr"]}</s>&#8203;<s p="1">: {msg}</s>')
 				if m != c["msgs"][-1]:
-					f.write("<br/>")
+					f.write("\n")
 				
 			f.write("</p>\n")
 		

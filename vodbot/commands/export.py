@@ -65,8 +65,10 @@ def run(args):
 		stagedatas.sort(key=sort_stagedata)
 
 		for stage in stagedatas:
+			tmpfile = None
+			tmpchat = None
 			# Export with ffmpeg
-			tmpfile = handle_stage(conf, stage)
+			#tmpfile = handle_stage(conf, stage)
 			# Export chat
 			tmpchat = vbchat.process_stage(conf, stage, "export")
 
@@ -88,6 +90,9 @@ def run(args):
 		
 		# check if stage exists, and prep it for slice
 		stagedata = StageData.load_from_id(stagedir, args.id)
+		
+		tmpfile = None
+		tmpchat = None
 		
 		# Export with ffmpeg
 		tmpfile = handle_stage(conf, stagedata)
