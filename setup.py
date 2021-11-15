@@ -4,9 +4,13 @@ from setuptools import setup, find_packages
 with open("README.md", "r", encoding="utf-8") as f:
     long_description = f.read()
 
+# "imports" project and version number
+# https://stackoverflow.com/a/16084844/13977827
+exec(open("vodbot/__init__.py").read())
+
 setup(
-	name="vodbot",
-	version="0.9.9",
+	name=__project__,
+	version=__version__,
     
 	author="Logan \"NotQuiteApex\" Hickok-Dickson",
 	author_email="self@notquiteapex.net",
