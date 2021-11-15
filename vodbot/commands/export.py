@@ -68,7 +68,7 @@ def run(args):
 			tmpfile = None
 			tmpchat = None
 			# Export with ffmpeg
-			#tmpfile = handle_stage(conf, stage)
+			tmpfile = handle_stage(conf, stage)
 			# Export chat
 			tmpchat = vbchat.process_stage(conf, stage, "export")
 
