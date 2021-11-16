@@ -24,7 +24,7 @@ setup(
         "Bug Tracker": "https://github.com/NotQuiteApex/VodBot/issues",
     },
     
-	keywords="twitch vod video download",
+	keywords="twitch youtube vod video clip download",
 	license="zlib/libpng",
     
 	packages=find_packages(include=["vodbot", "vodbot.*"]),
