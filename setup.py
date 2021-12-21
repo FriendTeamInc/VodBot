@@ -25,7 +25,7 @@ setup(
     },
     
 	keywords="twitch youtube vod video clip download",
-	license="zlib/libpng",
+	license="MIT",
     
 	packages=find_packages(include=["vodbot", "vodbot.*"]),
     
