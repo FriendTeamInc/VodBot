@@ -108,6 +108,15 @@ GET_VIDEO_COMMENTS_QUERY = """
 				fragments {{ mention {{ displayName }} text }}
 }}  }}  }}  }}  }} }}
 """
+# VOD chapters query
+GET_VIDEO_CHAPTERS = """{{
+video(id: {id}) {{
+    moments(first=100, momentRequestType: VIDEO_CHAPTER_MARKERS, after: "{after}") {{
+        edges {{ cursor node {{
+            createdAt description
+            positionMilliseconds durationMilliseconds
+}}  }}  }}  }}  }}
+"""
 
 
 VIDEO_ACCESS_QUERY = """

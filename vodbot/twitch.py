@@ -1,5 +1,6 @@
 # Module to make API calls to Twitch.tv
 
+from turtle import position
 from typing import List
 from .itd import gql
 
@@ -24,10 +25,20 @@ CHAT_STATE = [
 	"DELETED"
 ]
 
+class VodChapter:
+	def __init__(self,
+		position:int, duration:int, created_at:str, description:str
+	):
+		self.position = position
+		self.duration = duration
+		self.created_at = created_at
+		self.description = description
+
 class Vod:
 	def __init__(self,
 		id:str, user_id:str, user_login:str, user_name:str, title:str,
-		created_at:str, length:int, game_id:str="", game_name:str="",
+		created_at:str, length:int, chapters:List[VodChapter],
+		game_id:str="", game_name:str="",
 		has_chat:bool = False
 	):
 		self.id = id
@@ -37,6 +48,8 @@ class Vod:
 
 		self.game_id = game_id
 		self.game_name = game_name
+
+		self.chapters = chapters
 
 		self.title = title
 		self.created_at = created_at
@@ -259,17 +272,43 @@ def get_channel_vods(channel: Channel) -> List[Vod]:
 			if g:
 				game_id = g["id"]
 				game_name = g["name"]
+			
+			
+			# Get stream chapter info now
+			chapters = []
+			chapter_page = ""
+			while True:
+				query = gql.GET_VIDEO_CHAPTERS.format(
+					id=v["id"], after=chapter_page
+				)
+				resp = gql.gql_query(query=query).json()
+				resp = resp ["data"]["video"]["moments"]
+				
+				if not resp or not resp["edges"]:
+					break
+				chapter_page = resp["edges"][-1]["cursor"]
+
+				for chap in resp["edges"]:
+					n = vod["node"]
+					chapters.append(
+						VodChapter(
+							created_at=n["createdAt"], description=n["description"],
+							position=n["positionMilliseconds"], duration=n["durationMilliseconds"]
+						)
+					)
 
 			vods.append(
 				Vod(
 					id=v["id"], length=v["lengthSeconds"], title=v["title"],
 					user_id=c["id"], user_login=c["login"], user_name=c["displayName"], 
-					game_id=game_id, game_name=game_name, created_at=v["publishedAt"]
+					game_id=game_id, game_name=game_name, created_at=v["publishedAt"],
+					chapters=chapters
 				)
 			)
 
 		if pagination == "" or pagination == None:
 			break
+
 
 	return vods
 
