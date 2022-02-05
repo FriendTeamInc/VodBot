@@ -130,12 +130,12 @@ def download_twitch_video(args):
 					itd_dl.dl_video_chat(vod, chatname)
 					vod.has_chat = True
 				# download video
-				#itd_dl.dl_video(vod, Path(TEMP_DIR), filename, 20, LOG_LEVEL)
+				itd_dl.dl_video(vod, Path(TEMP_DIR), filename, 20, LOG_LEVEL)
 				# write meta file
 				vod.write_meta(metaname)
 			elif isinstance(vod, Clip):
 				# download clip
-				#itd_dl.dl_clip(vod, filename)
+				itd_dl.dl_clip(vod, filename)
 				# write meta file
 				vod.write_meta(metaname)
 		except itd_dl.JoiningFailed:
