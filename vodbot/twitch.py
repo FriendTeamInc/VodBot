@@ -300,8 +300,8 @@ def get_channel_vods(channel: Channel) -> List[Vod]:
 					chapters.append(
 						VodChapter(
 							type=n["type"], description=n["description"],
-							position=n["positionMilliseconds"],
-							duration=n["durationMilliseconds"]
+							position=int(n["positionMilliseconds"]/1000),
+							duration=int(n["durationMilliseconds"]/1000)
 						)
 					)
 				

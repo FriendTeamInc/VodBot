@@ -12,7 +12,7 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from os import remove as os_remove, listdir as os_listdir
 from os.path import isfile, isdir
-from typing import List
+from typing import List, Tuple
 
 
 # Default path
@@ -335,6 +335,19 @@ def check_description(formatdict, inputdefault=None):
 	
 	return desc
 
+# time in seconds to a timestamp string
+def int_to_timestamp(i:int) -> str:
+	if i >= 3600: # hours position
+		return f"{int(i // 3600)}:{int((i // 60) % 60)}:{int(i % 60)}"
+	elif i >= 60: # minutes position
+		return f"0:{int(i // 60)}:{int(i % 60)}"
+	else:
+		return f"0:0:{int(i)}"
+
+# position and duration to a proper timestamp string
+def posdur_to_timestamp(pos:int, dur:int) -> Tuple[str, str]:
+	return (int_to_timestamp(pos), int_to_timestamp(pos + dur))
+
 
 def _new(args, conf, stagedir):
 	VODS_DIR = conf["vod_dir"]
@@ -372,9 +385,20 @@ def _new(args, conf, stagedir):
 		if x < len(args.ss):
 			continue
 		
-		vid = videos[x]
+		vid = videos[x]["meta"]
 		# grab times for this specific stream
-		cprint(f"#dTimestamps for `#r#fM{vid['meta']['title']}#r` #d({vid['meta']['id']})#r")
+		cprint(f"#dTimestamps for `#r#fM{vid['title']}#r` #d({vid['id']})#r")
+		if "chapters" in vid and len(vid["chapters"]) > 0:
+			cprint(f"#dChapters: ", end="")
+			ch = []
+			for c in vid["chapters"]:
+				(pos, end) = posdur_to_timestamp(c['pos'], c['dur'])
+				ch.append(f"`{c['desc']}` ({pos}-{end})")
+			cprint(" | ".join(ch) + "#r")
+		else:
+			chap = vid["chapters"][0]
+			(pos, end) = posdur_to_timestamp(chap['pos'], chap['dur'])
+			cprint(f"#dChapter: `{chap['desc']}` ({pos}-{end})#r")
 		args.ss += [check_time("Start", args.ss[x] if x < len(args.ss) else None)]
 		args.to += [check_time("End", args.to[x] if x < len(args.to) else None)]
 
