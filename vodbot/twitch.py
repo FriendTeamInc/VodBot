@@ -1,5 +1,6 @@
 # Module to make API calls to Twitch.tv
 
+from turtle import position
 from typing import List
 from .itd import gql
 
@@ -24,10 +25,26 @@ CHAT_STATE = [
 	"DELETED"
 ]
 
+class VodChapter:
+	def __init__(self,
+		position:int, duration:int, type:str, description:str
+	):
+		self.position = position
+		self.duration = duration
+		self.type = type
+		self.description = description
+
+	def __repr__(self):
+		return f"VodChapter({self.position}, {self.duration}, {self.created_at}, {self.description})"
+
+	def to_dict(self):
+		return {"pos":self.position, "dur":self.duration, "type":self.type, "desc":self.description}
+
 class Vod:
 	def __init__(self,
 		id:str, user_id:str, user_login:str, user_name:str, title:str,
-		created_at:str, length:int, game_id:str="", game_name:str="",
+		created_at:str, length:int, chapters:List[VodChapter],
+		game_id:str="", game_name:str="",
 		has_chat:bool = False
 	):
 		self.id = id
@@ -38,6 +55,8 @@ class Vod:
 		self.game_id = game_id
 		self.game_name = game_name
 
+		self.chapters = chapters
+
 		self.title = title
 		self.created_at = created_at
 		self.length = length
@@ -47,7 +66,7 @@ class Vod:
 		self.has_chat = has_chat
 	
 	def __repr__(self):
-		return f"VOD({self.id}, {self.created_at}, {self.user_name}, {self.created_at}, {self.duration})"
+		return f"Vod({self.id}, {self.created_at}, {self.user_name}, {self.duration})"
 	
 	def write_meta(self, filename):
 		jsondict = {
@@ -60,7 +79,8 @@ class Vod:
 			"title": self.title,
 			"created_at": self.created_at,
 			"length": self.length,
-			"has_chat": self.has_chat
+			"has_chat": self.has_chat,
+			"chapters": [x.to_dict() for x in self.chapters]
 		}
 		
 		with open(filename, "w") as f:
@@ -259,17 +279,47 @@ def get_channel_vods(channel: Channel) -> List[Vod]:
 			if g:
 				game_id = g["id"]
 				game_name = g["name"]
+			
+			
+			# Get stream chapter info now
+			chapters = []
+			chapter_page = ""
+			while True:
+				query = gql.GET_VIDEO_CHAPTERS.format(
+					id=v["id"], after=chapter_page
+				)
+				resp = gql.gql_query(query=query).json()
+				resp = resp["data"]["video"]["moments"]
+				
+				if not resp or not resp["edges"]:
+					break
+				chapter_page = resp["edges"][-1]["cursor"]
+
+				for chap in resp["edges"]:
+					n = chap["node"]
+					chapters.append(
+						VodChapter(
+							type=n["type"], description=n["description"],
+							position=int(n["positionMilliseconds"]/1000),
+							duration=int(n["durationMilliseconds"]/1000)
+						)
+					)
+				
+				if chapter_page == "" or chapter_page == None:
+					break
 
 			vods.append(
 				Vod(
 					id=v["id"], length=v["lengthSeconds"], title=v["title"],
 					user_id=c["id"], user_login=c["login"], user_name=c["displayName"], 
-					game_id=game_id, game_name=game_name, created_at=v["publishedAt"]
+					game_id=game_id, game_name=game_name, created_at=v["publishedAt"],
+					chapters=chapters
 				)
 			)
 
 		if pagination == "" or pagination == None:
 			break
+
 
 	return vods
 
