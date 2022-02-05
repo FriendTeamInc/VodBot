@@ -27,12 +27,18 @@ CHAT_STATE = [
 
 class VodChapter:
 	def __init__(self,
-		position:int, duration:int, created_at:str, description:str
+		position:int, duration:int, type:str, description:str
 	):
 		self.position = position
 		self.duration = duration
-		self.created_at = created_at
+		self.type = type
 		self.description = description
+
+	def __repr__(self):
+		return f"VodChapter({self.position}, {self.duration}, {self.created_at}, {self.description})"
+
+	def to_dict(self):
+		return {"pos":self.position, "dur":self.duration, "type":self.type, "desc":self.description}
 
 class Vod:
 	def __init__(self,
@@ -60,7 +66,7 @@ class Vod:
 		self.has_chat = has_chat
 	
 	def __repr__(self):
-		return f"VOD({self.id}, {self.created_at}, {self.user_name}, {self.created_at}, {self.duration})"
+		return f"Vod({self.id}, {self.created_at}, {self.user_name}, {self.duration})"
 	
 	def write_meta(self, filename):
 		jsondict = {
@@ -73,7 +79,8 @@ class Vod:
 			"title": self.title,
 			"created_at": self.created_at,
 			"length": self.length,
-			"has_chat": self.has_chat
+			"has_chat": self.has_chat,
+			"chapters": [x.to_dict() for x in self.chapters]
 		}
 		
 		with open(filename, "w") as f:
@@ -282,20 +289,24 @@ def get_channel_vods(channel: Channel) -> List[Vod]:
 					id=v["id"], after=chapter_page
 				)
 				resp = gql.gql_query(query=query).json()
-				resp = resp ["data"]["video"]["moments"]
+				resp = resp["data"]["video"]["moments"]
 				
 				if not resp or not resp["edges"]:
 					break
 				chapter_page = resp["edges"][-1]["cursor"]
 
 				for chap in resp["edges"]:
-					n = vod["node"]
+					n = chap["node"]
 					chapters.append(
 						VodChapter(
-							created_at=n["createdAt"], description=n["description"],
-							position=n["positionMilliseconds"], duration=n["durationMilliseconds"]
+							type=n["type"], description=n["description"],
+							position=n["positionMilliseconds"],
+							duration=n["durationMilliseconds"]
 						)
 					)
+				
+				if chapter_page == "" or chapter_page == None:
+					break
 
 			vods.append(
 				Vod(

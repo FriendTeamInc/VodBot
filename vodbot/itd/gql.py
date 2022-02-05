@@ -111,10 +111,11 @@ GET_VIDEO_COMMENTS_QUERY = """
 # VOD chapters query
 GET_VIDEO_CHAPTERS = """{{
 video(id: {id}) {{
-    moments(first=100, momentRequestType: VIDEO_CHAPTER_MARKERS, after: "{after}") {{
+    moments(first:100, momentRequestType: VIDEO_CHAPTER_MARKERS, after: "{after}") {{
         edges {{ cursor node {{
-            createdAt description
-            positionMilliseconds durationMilliseconds
+            description type
+            positionMilliseconds
+			durationMilliseconds
 }}  }}  }}  }}  }}
 """
 
