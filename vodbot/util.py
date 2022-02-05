@@ -11,6 +11,109 @@ from collections import OrderedDict
 
 vodbotdir = Path.home() / ".vodbot"
 DEFAULT_CONF_PATH = vodbotdir / "conf.json"
+
+class Config:
+	def __init__(self) -> None:
+		self.channels = []
+		self.pull = OrderedDict([
+			("save_chat", True),
+			("gql_client", "kimne78kx3ncx6brgo4mv6wki5h1ko"),
+			("api_use_alt", False),
+			("api_client", ""),
+			("api_secret", "")
+		])
+		self.stage = OrderedDict([
+			("timezone", "+0000"),
+			("description_macros", OrderedDict([
+				("captions", "Want to read chat? Enable Closed Captioning!"),
+				("watch", "Watch streams live at {links}"),
+				("discord", "Join the FTI Discord: https://discord.gg/v2t6uag"),
+				("vodbot", "Stream archived by VodBot: https://github.com/NotQuiteApex/VodBot"),
+				("end", "on {date}\n\n{captions}\n{watch}\n{discord}\n{vodbot}")
+			]))
+		])
+		self.export = OrderedDict([
+			("ffmpeg_loglevel", "warning"),
+
+			("hardware_accel", OrderedDict([
+				("enable", False),
+				("hw_args", "")
+			]))
+
+			("chat", OrderedDict([
+				("enable", True),
+				("msg_time", 10),
+				("format", "RealText"),
+				("randomize_uncolored_names", True),
+			]))
+		])
+		self.upload = OrderedDict([
+			("client_path", str(vodbotdir / "yt-client.json")),
+			("pickle_path", str(vodbotdir / "yt-session.pkl")),
+
+			("chat_export", OrderedDict([
+				("enable", True),
+				("msg_time", 10),
+				("randomize_uncolored_names", True),
+
+				("format", OrderedDict([
+					("align", "left"), ("pos_weight", 6),
+					("pos_x", 0), ("pos_y", 100),
+				]))
+			]))
+		])
+		self.thumbnail = OrderedDict([
+			("enable", False),
+
+			("thumb_size", "1280x720"),
+			("thumb_x", 0), ("thumb_y", 0),
+			("thumb_w,h", "1280,720"),
+			("thumb_path", "thumb_bg.png"),
+
+			("screenshot_x", 300), ("screenshot_y", 0),
+			("screenshot_w,h", "1280,720"),
+
+			("font", "Ubuntu-Bold-Italic"),
+			("font_size", 160), ("font_x", 420), ("font_y", 50),
+			("font_gravity", "NorthWest"),
+
+			("head_order", [5,6,7,8,4,3,2,1]),
+			("head_positions", [
+				[250, 250], [465, 280],
+				[100, 388], [502, 508], [250, 250, 2],
+				[130, 616], [544, 650], [342, 654],
+			]),
+
+			("game_x", -430), ("game_y", -240),
+			("game_gravity", "Center"), ("games", [])
+		])
+		self.webhooks = OrderedDict([
+			("enable", False),
+			("name", "VodBot"),
+			("webhook_url", ""),
+			("avatar_url", ""),
+
+			("pull_vod", OrderedDict([ ("enable", False), ("name", ""), ("webhook_url", ""), ("avatar_url", ""), ("msg", "") ])),
+			("pull_clip", OrderedDict([ ("enable", False), ("name", ""), ("webhook_url", ""), ("avatar_url", ""), ("msg", "") ])),
+			("pull_job_done", OrderedDict([ ("enable", False), ("name", ""), ("webhook_url", ""), ("avatar_url", ""), ("msg", "") ])),
+
+			("export_video", OrderedDict([ ("enable", False), ("name", ""), ("webhook_url", ""), ("avatar_url", ""), ("msg", "") ])),
+			("export_job_done", OrderedDict([ ("enable", False), ("name", ""), ("webhook_url", ""), ("avatar_url", ""), ("msg", "") ])),
+
+			("upload_video", OrderedDict([ ("enable", False), ("name", ""), ("webhook_url", ""), ("avatar_url", ""), ("msg", "") ])),
+			("upload_job_done", OrderedDict([ ("enable", False), ("name", ""), ("webhook_url", ""), ("avatar_url", ""), ("msg", "") ])),
+		])
+		self.directories = OrderedDict([
+			("vod", str(vodbotdir / "vods")),
+			("clip", str(vodbotdir / "clips")),
+			("temp", str(vodbotdir / "temp")),
+			("stage", str(vodbotdir / "stage")),
+			("thumbnail", str(vodbotdir / "thumbnail")),
+		])
+
+	def load_json(j) -> None:
+		pass
+
 DEFAULT_CONF = OrderedDict([
 	("twitch_channels", []), # channels to watch for new clips and videos
 
