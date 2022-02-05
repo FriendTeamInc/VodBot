@@ -394,11 +394,10 @@ def _new(args, conf, stagedir):
 			for c in vid["chapters"]:
 				(pos, end) = posdur_to_timestamp(c['pos'], c['dur'])
 				ch.append(f"`{c['desc']}` ({pos}-{end})")
-			cprint(" | ".join(ch) + "#r")
+			cprint(" | ".join(ch) + " | EOF#r")
 		else:
-			chap = vid["chapters"][0]
-			(pos, end) = posdur_to_timestamp(chap['pos'], chap['dur'])
-			cprint(f"#dChapter: `{chap['desc']}` ({pos}-{end})#r")
+			(pos, end) = posdur_to_timestamp(0, vid['length'])
+			cprint(f"#dChapter: `{vid['game_name']}` ({pos}-{end}) | EOF#r")
 		args.ss += [check_time("Start", args.ss[x] if x < len(args.ss) else None)]
 		args.to += [check_time("End", args.to[x] if x < len(args.to) else None)]
 
