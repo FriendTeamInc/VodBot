@@ -12,6 +12,64 @@ from collections import OrderedDict
 vodbotdir = Path.home() / ".vodbot"
 DEFAULT_CONF_PATH = vodbotdir / "conf.json"
 
+class ConfigChannelThumbnailIcon:
+	def __init__(self, path:str, ox:int, oy:int) -> None:
+		self.path = path
+		self.ox = ox
+		self.oy = oy
+		pass
+
+class ConfigChannel:
+	def __init__(self,
+		name:str, username:str,
+		save_vods:bool=True, save_clips:bool=True, save_chat:bool=True,
+		thumbnail_icon:ConfigChannelThumbnailIcon=None
+	) -> None:
+		self.name = name
+		self.username = username
+		
+		self.save_vods = save_vods
+		self.save_clips = save_clips
+		self.save_chat = save_chat
+
+		self.thumbnail_icon = thumbnail_icon
+
+class ConfigPull:
+	def __init__(self) -> None:
+		pass
+
+class ConfigStage:
+	def __init__(self) -> None:
+		pass
+
+class ConfigExport:
+	def __init__(self) -> None:
+		pass
+
+class ConfigUpload:
+	def __init__(self) -> None:
+		pass
+
+class ConfigThumbnail:
+	def __init__(self) -> None:
+		pass
+
+class ConfigThumbnails:
+	def __init__(self) -> None:
+		pass
+
+class ConfigWebhooks:
+	def __init__(self) -> None:
+		pass
+
+class ConfigDirectories:
+	def __init__(self, vods:str, clips:str, temp:str, stage:str, thumbnails:str) -> None:
+		self.vods = vods
+		self.clips = clips
+		self.temp = temp
+		self.stage = stage
+		self.thumbnails = thumbnails
+
 class Config:
 	def __init__(self) -> None:
 		self.channels = []
@@ -112,6 +170,7 @@ class Config:
 		])
 
 	def load_json(j) -> None:
+
 		pass
 
 DEFAULT_CONF = OrderedDict([
