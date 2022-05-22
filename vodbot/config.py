@@ -1,7 +1,8 @@
 # Dedicated module for the config class and associated classes
 # having a dedicated type makes accessing specific members easier and dictated
 
-from typing import Dict, Literal
+from cgitb import enable
+from typing import Dict, List, Literal, Tuple
 from pathlib import Path
 
 # class ChannelThumbnailIcon:
@@ -91,24 +92,84 @@ class _ConfigExport():
 		# little unless otherwise necessary.
 		self.ffmpeg_loglevel = ffmpeg_loglevel
 
-		# A simple toggle for managing whether chat is exported with a video. More options are
-		# available in the chat config section.
+		# A simple toggle for managing whether chat is exported with a video, if available. More
+		# options are available in the chat config section.
 		self.chat_enable = chat_enable
 
 		# Hardware acceleration options
 		# TODO?
 
 class _ConfigUpload():
-	def __init__(self) -> None:
-		pass
+	def __init__(self,
+		client_path:str, credentials_path:str,
+		chat_enable:bool=True
+	) -> None:
+		# JSON files that contain important information relating to interfacing with YouTube.
+		self.client_path = client_path
+		self.credentials_path = credentials_path
+
+		# A simple toggle for managing whether chat is uploaded with a video, if available. More
+		# options are available in the chat config section. Only uploads YouTube Timed Text format.
+		self.chat_enable = chat_enable
+
+class _ConfigThumbnailHead():
+	pass
+
+class _ConfigThumbnailGame():
+	pass
 
 class _ConfigThumbnail():
-	def __init__(self) -> None:
+	def __init__(self,
+		enable:bool=False,
+		thumbnail_x:int=0, thumbnail_y:int=0,
+		thumbnail_width:int=1280, thumbnail_height:int=720,
+		thumbnail_path:str="",
+		screenshot_x:int=0, screenshot_y:int=0,
+		screenshot_width:int=1280, screenshot_height:int=720,
+		font:str="", font_gravity:str="NorthWest", font_size:int=160,
+		font_x:int=0,font_y:int=0,
+		heads:List[_ConfigThumbnailHead]=None,
+		head_order:List[int]=None,
+		head_positions:List[Tuple[int,int]]=None,
+		games:List[_ConfigThumbnailGame]=None,
+		game_x:int=0,game_y:int=0,game_weight:str="Center"
+	) -> None:
 		pass
 
+class _ConfigWebhookBase():
+	def __init__(self,
+		enable:bool=False, display_name:str="VodBot",
+		webhook_url:str="", avatar_url:str=""
+	) -> None:
+		self.enable = enable
+		self.display_name = display_name
+		self.webhook_url = webhook_url
+		self.avatar_url = avatar_url
+
 class _ConfigWebhooks():
-	def __init__(self) -> None:
-		pass
+	def __init__(self,
+		enable:bool=False, display_name:str="VodBot",
+		webhook_url:str="", avatar_url:str="",
+		pull_vod:_ConfigWebhookBase=None,
+		pull_clip:_ConfigWebhookBase=None,
+		pull_job_done:_ConfigWebhookBase=None,
+		export_video:_ConfigWebhookBase=None,
+		export_job_done:_ConfigWebhookBase=None,
+		upload_video:_ConfigWebhookBase=None,
+		upload_job_done:_ConfigWebhookBase=None,
+	) -> None:
+		self.enable = enable
+		self.display_name = display_name
+		self.webhook_url = webhook_url
+		self.avatar_url = avatar_url
+
+		self.pull_vod = pull_vod
+		self.pull_clip = pull_clip
+		self.pull_job_done = pull_job_done
+		self.export_video = export_video
+		self.export_job_done = export_job_done
+		self.upload_video = upload_video
+		self.upload_job_done = upload_job_done
 
 class _ConfigDirectories():
 	def __init__(self,
@@ -129,7 +190,7 @@ class _ConfigDirectories():
 		self.thumbnail = Path(thumbnail)
 
 class Config:
-	def __init__(self) -> None:
+	def __init__(self, **kwargs) -> None:
 		self.channels = [] # channels to watch for new clips and videos
 		self.pull = _ConfigPull()
 		self.stage = _ConfigStage()
