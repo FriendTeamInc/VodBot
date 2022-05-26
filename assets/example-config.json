@@ -1,0 +1,136 @@
+{
+	"channels": {
+		"apex": {
+			"username": "notquiteapex",
+			"save_chat": true,
+			"save_vods": true,
+			"save_clips": true
+		},
+		"percy": {
+			"username": "percy_creates",
+			"save_chat": false,
+			"save_vods": false,
+			"save_clips": true
+		}
+	},
+	
+	"pull": {
+		"save_chat": true,
+		
+		"gql_client_id": "kimne78kx3ncx6brgo4mv6wki5h1ko",
+		
+		"api_use_alt": false,
+		"api_client": "",
+		"api_secret": ""
+	},
+
+	"chat": {
+		"export_format": "RealText",
+		"message_display_time": 10,
+		"randomize_uncolored_names": true,
+
+		"youtube_timed_text": {
+			"align": "left", "weight": 6,
+			"x": 0, "y": 100
+		}
+	},
+	
+	"stage": {
+		"timezone": "-0400",
+		"desc_macros": {
+			"captions": "Want to replay chat with video streams? No!",
+			"watch": "Watch streams live at {links}",
+			"discord": "Don't Join the Friend Team Inc.",
+			"vodbot": "Stream archived by VodBot, maybe",
+			"e": "on {date}\n\n{captions}\n{watch}\n{discord}\n{vodbot}"
+		}
+	},
+	
+	"export": {
+		"ffmpeg_loglevel": "warning",
+		"chat_enable": false, "video_enable": true
+	},
+	
+	"upload": {
+		"client_path": "/root/.vodbot/yt-client.json",
+		"credentials_path": "/root/.vodbot/yt-session.pkl",
+		"chat_enable": true
+	},
+	
+	"thumbnail": {
+		"enable": false,
+		
+		"thumb_x": 0, "thumb_y": 0,
+		"thumb_width": 1280, "thumb_height": 720,
+		"thumb_filepath": "thumb_bg.png",
+		
+		"screenshot_x": 300, "screenshot_y": 0,
+		"screenshot_width": 1280, "screenshot_height": 720,
+		
+		"font_x": 420, "font_y": 50, "text_font": "Ubuntu-Bold-Italic",
+		"text_size": 160, "font_gravity": "NorthWest",
+		
+		"head_order": [15,16,17,18,14,13,12,11, 1,2,3,4,5,6,7,8,9,10],
+		"head_positions": [
+			[1210, 540, 1], [1230, 645, 1], [1126, 650, 1], [1010, 664, 1],
+			[855, 664, 1], [600, 442, 1], [644, 622, 1], [600, 250, 1],
+			[636, 500, 1], [658, 654, 1],
+
+			[250, 250, 1], [465, 280, 1], [100, 388, 1], [502, 508, 1],
+			[250, 250, 2], [130, 616, 1], [544, 650, 1], [342, 654, 1]
+		],
+		"heads": {
+			"apex": {
+				"offset_x": 92, "offset_y": 130,
+				"scale": 1, "filepath": "heads/apex.png"
+			},
+			"percy": {
+				"offset_x": 146, "offset_y": 95,
+				"scale": 1, "filepath": "heads/percy.png"
+			}
+		},
+		
+		"game_x": -430, "game_y": -240,
+		"game_gravity": "center",
+		
+		"games": {
+			"minecraft": {
+				"offset_x": 0, "offset_y": 0,
+				"scale": 1, "filepath": "games/minecraft.png"
+			}
+		}
+	},
+	
+	"webhook": {
+		"enable": false,
+		"username": "VodBot",
+		"url": "discord_webhook_url",
+		
+		"pull_vod": {
+			"enable": false,
+			"username": "VodBot Pulled VOD",
+			"url": "discord_webhook_url"
+		},
+		"pull_clip": {
+			"enable": false,
+			"username": "VodBot Pulled Clip"
+		},
+		"pull_job_done": { "enable": true },
+		
+		"export_video": { "enable": true },
+		"export_job_done": { "enable": true },
+		
+		"upload_video": { "enable": true },
+		"upload_job_done": { "enable": true }
+	},
+	
+	"directories": {
+		"vods": "/root/.vodbot/vods",
+		"clips": "/root/.vodbot/clips",
+		
+		"temp": "/root/.vodbot/temp",
+		"stage": "/root/.vodbot/stage",
+		
+		"thumbnail": "/root/.vodbot/thumbnail"
+	}
+}
