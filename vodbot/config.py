@@ -98,11 +98,11 @@ class _ConfigExport():
 
 class _ConfigUpload():
 	def __init__(self,
-		client_path:str, credentials_path:str, chat_enable:bool=True,
+		client_path:str=None, session_path:str=None, chat_enable:bool=True,
 	**kwargs) -> None:
 		# JSON files that contain important information relating to interfacing with YouTube.
 		self.client_path = client_path # Must exist for functionality
-		self.credentials_path = credentials_path # Must be accessible
+		self.session_path = session_path # Must be accessible
 
 		# A simple toggle for managing whether chat is uploaded with a video, if available. More
 		# options are available in the chat config section. Only uploads YouTube Timed Text format.
@@ -178,7 +178,8 @@ class _ConfigDirectories():
 		# on slow, dense storage devices `temp` is a working directory where video data is sliced,
 		# spliced, and processed, recommended to be on a high speed storage device. `stage` is a
 		# directory for storing information about to-be-processed files. `thumbnail` is for storing
-		# lots of images used for generating thumbnails for processed videos.
+		# lots of images used for generating thumbnails for processed videos, it is the prefix to
+		# the filepaths in the thumbnail config for heads and games.
 		self.vod = Path(vod)
 		self.clip = Path(clip)
 		self.temp = Path(temp)
@@ -197,26 +198,74 @@ class Config:
 			self.channels[name] = _ConfigChannel(**settings)
 		
 		# is actually optional
-		if _check_required_type(conf, "pull", dict):
+		if _check_optional_type(conf, "pull", dict):
 			pull = conf["pull"]
 			_check_optional_type(pull, "save_chat", bool)
 			_check_optional_type(pull, "gql_client_id", str)
-			_check_optional_type(pull, "api_use_alt", bool)
-			_check_optional_type(pull, "api_client", str)
-			_check_optional_type(pull, "api_secret", str)
+			# _check_optional_type(pull, "api_use_alt", bool)
+			# _check_optional_type(pull, "api_client", str)
+			# _check_optional_type(pull, "api_secret", str)
 			self.pull = _ConfigPull(**pull)
 		else:
 			self.pull = _ConfigPull()
+		
+		if _check_optional_type(conf, "chat", dict):
+			chat = conf["chat"]
+			_check_optional_type(chat, "export_format", bool)
+			_check_optional_type(chat, "message_display_time", int)
+			_check_optional_type(chat, "randomize_uncolored_names", bool)
+			_check_optional_type(chat, "ytt_x", int)
+			_check_optional_type(chat, "ytt_y", int)
+			_check_optional_type(chat, "ytt_align", str)
+			_check_optional_type(chat, "ytt_weight", int)
+			self.pull = _ConfigChat(**chat)
+		else:
+			self.chat = _ConfigChat()
 
-		self.stage = _ConfigStage()
-		self.export = _ConfigExport()
-		self.upload = _ConfigUpload()
+		if _check_optional_type(conf, "stage", dict):
+			stage = conf["stage"]
+			# check each key to actually be a string
+			if _check_optional_type(stage, "description_macros", dict):
+				desc_macros = stage["description_macros"]
+				for key in desc_macros:
+					_check_required_type(desc_macros, key, str)
+			_check_optional_type(stage, "timezone", str)
+			self.stage = _ConfigStage(**stage)
+		else:
+			self.stage = _ConfigStage()
+
+		if _check_optional_type(conf, "export", dict):
+			export = conf["export"]
+			_check_optional_type(export, "ffmpeg_loglevel", str)
+			_check_optional_type(export, "chat_enable", bool)
+			_check_optional_type(export, "video_enable", bool)
+			self.export = _ConfigExport(**export)
+		else:
+			self.export = _ConfigExport()
+
+
+		if _check_optional_type(conf, "upload", dict):
+			upload = conf["upload"]
+			_check_optional_type(upload, "client_path", str)
+			_check_optional_type(upload, "session_path", str)
+			_check_optional_type(upload, "chat_enable", bool)
+			self.upload = _ConfigUpload(**upload)
+		else:
+			self.upload = _ConfigUpload()
 
 		#self.thumbnail = _ConfigThumbnail()
-
 		#self.webhooks = _ConfigWebhooks()
 
-		self.directories = _ConfigDirectories()
+		# Directories should maybe be optional?
+		_check_required_type(conf, "directories", dict)
+		directories = conf["directories"]
+		_check_required_type(directories, "vods", str)
+		_check_required_type(directories, "clips", str)
+		_check_required_type(directories, "temp", str)
+		_check_required_type(directories, "stage", str)
+		_check_required_type(directories, "thumbnail", str)
+		# validate paths here?
+		self.directories = _ConfigDirectories(**directories)
 
 # Errors if key does not exist or is not the correct type.
 def _check_required_type(conf:dict, key:str, ttype:type):
