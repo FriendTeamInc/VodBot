@@ -7,6 +7,45 @@ from typing import Dict, List, Literal, Tuple
 from pathlib import Path
 
 
+_DEFAULT_DIR = Path.home() / ".vodbot"
+_DEFAULT_PATH = _DEFAULT_DIR / "config.json"
+_DEFAULT_CONFIG = {
+	"channels": {},
+	"pull": {
+		"save_chat": True,
+		"gql_client_id": "kimne78kx3ncx6brgo4mv6wki5h1ko",
+	},
+	"chat": {
+		"export_format": "YTT",
+		"message_display_time": 10,
+		"randomize_uncolored_names": True,
+		"ytt_align": "left", "ytt_anchor": 6,
+		"ytt_position_x": 0, "ytt_position_x": 100
+	},
+	"stage": {
+		"timezone": "+0000",
+		"description_macros": {}
+	},
+	"export": {
+		"ffmpeg_loglevel": "warning",
+		"chat_enable": True,
+		"video_enable": True
+	},
+	"upload": {
+		"client_path": str(_DEFAULT_DIR / "yt-client.json"),
+		"session_path": str(_DEFAULT_DIR / "yt-session.json"),
+		"chat_enable": True
+	},
+	"directories": {
+		"vods": str(_DEFAULT_DIR / "vods"),
+		"clips": str(_DEFAULT_DIR / "clips"),
+		"temp": str(_DEFAULT_DIR / "temp"),
+		"stage": str(_DEFAULT_DIR / "stage"),
+		# "vods": _DEFAULT_DIR / "vods"
+	}
+}
+
+
 @dataclass
 class _ConfigChannel(DataClassJsonMixin):
 	username: str
@@ -46,10 +85,10 @@ class _ConfigChat(DataClassJsonMixin):
 	randomize_uncolored_names: bool = True
 	
 	# YouTube Timed Text formatting options TODO
-	ytt_align: str = "left"
-	ytt_position_weight: int = 6
-	ytt_position_x: int = 0
-	ytt_position_y: int = 100
+	ytt_align: Literal["left", "right", "center"] = "left"
+	ytt_anchor: Literal[tuple(range(9))] = 6
+	ytt_position_x: Literal[tuple(range(101))] = 0
+	ytt_position_y: Literal[tuple(range(101))] = 100
 
 @dataclass
 class _ConfigStage(DataClassJsonMixin):
@@ -107,9 +146,9 @@ class _ConfigThumbnail(DataClassJsonMixin):
 
 @dataclass
 class _ConfigWebhookBase(DataClassJsonMixin):
-	enable: bool
-	display_name: str
-	webhook_url: str
+	enable: bool = None
+	display_name: str = None
+	webhook_url: str = None
 
 @dataclass
 class _ConfigWebhooks(DataClassJsonMixin):
@@ -138,7 +177,7 @@ class _ConfigDirectories(DataClassJsonMixin):
 	clip: Path
 	temp: Path
 	stage: Path
-	thumbnail: Path
+	#thumbnail: Path
 
 @dataclass
 class Config(DataClassJsonMixin):

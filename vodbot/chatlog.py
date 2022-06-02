@@ -178,6 +178,7 @@ def chat_to_sami(msgs: List[ChatMessage], path: str, vid_duration:int, msg_durat
 		f.write("</body></SAMI>")
 
 
+# https://github.com/arcusmaximus/YTSubConverter/blob/master/ytt.ytt
 def chat_to_ytt(msgs: List[ChatMessage], path: str, vid_duration:int, msg_duration:int):
 	# get individual users and their info
 	chat_users, user_order = chat_to_userlist(msgs)
