@@ -18,7 +18,6 @@ def make_dir(directory):
 	"""
 	os.makedirs(str(directory), exist_ok=True)
 
-
 def load_conf(filename):
 	"""
 	Loads the config of VodBot at a specific directory.
@@ -53,10 +52,7 @@ def load_conf(filename):
 	# if conf["chat_export"] not in chat_format:
 	# 	exit_prog(10, f"Chat format for exporting not valid. Got `{conf['chat_export']}`, expected any of the following `{chat_format}`. Fix your config to continue.")
 	
-	# TODO: Check all important config options
-
 	return conf
-
 
 def exit_prog(code=0, errmsg=None):
 	"""

@@ -1,5 +1,6 @@
 from . import util, config, __project__, __version__
 from .printer import colorize
+from .config import DEFAULT_CONFIG_PATH
 
 import argparse
 from pathlib import Path
@@ -22,30 +23,26 @@ def deffered_main():
 
 
 def main():
-	titletext = colorize(f'#r#fM#l* {__project__} {__version__} (c) 2020-22 Logan "NotQuiteApex" Hickok-Dickson *#r')
+	titletext = f'* {__project__} {__version__} (c) 2020-22 Logan "NotQuiteApex" Hickok-Dickson *'
 
 	# Process arguments
 	parser = argparse.ArgumentParser(description="Downloads and processes VODs and clips from Twitch.tv channels.")
 	parser.add_argument("-v","--version", action="version", version=titletext)
 	parser.add_argument("-c","--config", type=Path, dest="config",
-		help="location of the Twitch config file to use", default=config.DEFAULT_CONFIG_PATH)
+		help="location of the Twitch config file to use", default=DEFAULT_CONFIG_PATH)
 
 	# Subparsers for different commands
 	subparsers = parser.add_subparsers(title="command", dest="cmd", help="command to run.")
 
 	# `vodbot init`
-	initparse = subparsers.add_parser("init",
-		description="Runs the setup process for VodBot")
-	initparse.add_argument("-o", "--output", help="path to save the config to",
-		type=Path, default=config.DEFAULT_CONFIG_PATH, dest="output", metavar="PATH")
+	initparse = subparsers.add_parser("init", description="Runs the setup process for VodBot")
+	initparse.add_argument("-o", "--output", type=Path, default=DEFAULT_CONFIG_PATH, dest="output", metavar="PATH",
+		help="path to save the config to")
 
 	# `vodbot pull <vods/clips/both> [channel ...]`
-	download = subparsers.add_parser("download", aliases=["pull", "download"],
-		description="Downloads VODs and/or clips.")
+	download = subparsers.add_parser("pull", description="Downloads VODs and/or clips.")
 	download.add_argument("type", type=str, default="both", nargs="?",
-		help='content type flag, can be "vods", "clips", or "both"; defaults to "both"')
-	download.add_argument("channels", metavar="channel", type=str, default=[], nargs="*",
-		help="twitch.tv channel name to pull VODs from; optional, defaults to config")
+		help='content type flag, can be "vods", "clips", or "both"')
 
 	# `vodbot stage`
 	stager = subparsers.add_parser("stage",
@@ -59,67 +56,50 @@ def main():
 	# `<other_id> [--ss "0:20:0"] [--to "2:59:06"] \`
 	# `<other_id> [--ss "3:20:0"] [--to "4:59:06"] \`
 	# `<also_id> [--ss "0:40:0"] [--to "6:59:59"]`
-	stager_add = stager_subparser.add_parser("new",
-		description="creates a new stage for videos and clips to be mixed")
-	stager_add.add_argument("id", help="id of the VOD or Clip to stage",
-		type=str, nargs="+")
-	stager_add.add_argument("--title", help="title of finished video",
-		type=str, default="")
-	stager_add.add_argument("--desc", help="description of finished video",
-		type=str, default="")
-	stager_add.add_argument("--ss", help="start time of video",
-		type=str, default=[], nargs="?", action="append")
-	stager_add.add_argument("--to", help="end time of video",
-		type=str, default=[], nargs="?", action="append")
+	stager_add = stager_subparser.add_parser("new", description="creates a new stage for videos and clips to be mixed")
+	stager_add.add_argument("id", help="id of the VOD or Clip to stage", type=str, nargs="+")
+	stager_add.add_argument("--title", help="title of finished video", type=str, default="")
+	stager_add.add_argument("--desc", help="description of finished video", type=str, default="")
+	stager_add.add_argument("--ss", help="start time of video", type=str, default=[], nargs="?", action="append")
+	stager_add.add_argument("--to", help="end time of video", type=str, default=[], nargs="?", action="append")
 
 	# `vodbot stage rm <id>`
-	stager_rm = stager_subparser.add_parser("rm",
-		description="removes a VOD or Clip from the staging area")
+	stager_rm = stager_subparser.add_parser("rm", description="removes a VOD or Clip from the staging area")
 	stager_rm.add_argument("id", type=str, help="id of the staged video data")
 
 	# `vodbot stage list [id]`
-	stager_list = stager_subparser.add_parser("list",
-		description="lists info on staging area or staged items")
+	stager_list = stager_subparser.add_parser("list", description="lists info on staging area or staged items")
 	stager_list.add_argument("id", nargs="?", type=str, help="id of the staged video data", default=None)
 
 	# `vodbot upload <id/all>`
-	upload = subparsers.add_parser("upload", aliases=["upload", "push"],
-		description="Uploads stage(s) to YouTube.")
+	upload = subparsers.add_parser("push", description="Uploads stage(s) to YouTube.")
 	upload.add_argument("id", type=str,
 		help='id of the staged video data, "all" to upload all stages, or "logout" to remove existing YouTube credentials')
 	
 	# `vodbot export <id/all>`
-	export = subparsers.add_parser("export", aliases=["export", "slice"],
-		description="Uploads stage(s) to YouTube.")
+	export = subparsers.add_parser("export", description="Uploads stage(s) to YouTube.")
 	export.add_argument("id", type=str, help="id of the staged video data, or `all` for all stages")
 	export.add_argument("path", type=Path, help="directory to export the video(s) to")
 
 	# `vodbot upload <id/all>`
-	info = subparsers.add_parser("info",
-		description="Prints out info on the Channel, Clip, or VOD given.")
+	info = subparsers.add_parser("info", description="Prints out info on the Channel, Clip, or VOD given.")
 	info.add_argument("id", type=str, help="id/url of the Channel, Clip, or VOD")
 	
 	args = parser.parse_args()
 
 	# Handle commands
 	if args.cmd == "init":
-		init = import_module(".commands.init", "vodbot")
-		init.run(args)
-	elif args.cmd == "pull" or args.cmd == "download":
-		pull = import_module(".commands.pull", "vodbot")
-		pull.run(args)
+		import_module(".commands.init", "vodbot").run(args)
+	elif args.cmd == "pull":
+		import_module(".commands.pull", "vodbot").run(args)
 	elif args.cmd == "stage":
-		stage = import_module(".commands.stage", "vodbot")
-		stage.run(args)
-	elif args.cmd == "upload" or args.cmd == "push":
-		upload = import_module(".commands.upload", "vodbot")
-		upload.run(args)
-	elif args.cmd == "export" or args.cmd == "slice":
-		export = import_module(".commands.export", "vodbot")
-		export.run(args)
+		import_module(".commands.stage", "vodbot").run(args)
+	elif args.cmd == "push":
+		import_module(".commands.upload", "vodbot").run(args)
+	elif args.cmd == "export":
+		import_module(".commands.export", "vodbot").run(args)
 	elif args.cmd == "info":
-		info = import_module(".commands.info", "vodbot")
-		info.run(args)
+		import_module(".commands.info", "vodbot").run(args)
 
 
 if __name__ == "__main__":
