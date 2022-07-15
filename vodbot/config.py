@@ -7,45 +7,6 @@ from typing import Dict, List, Literal, Tuple
 from pathlib import Path
 
 
-_DEFAULT_DIR = Path.home() / ".vodbot"
-_DEFAULT_PATH = _DEFAULT_DIR / "config.json"
-_DEFAULT_CONFIG = {
-	"channels": {},
-	"pull": {
-		"save_chat": True,
-		"gql_client_id": "kimne78kx3ncx6brgo4mv6wki5h1ko",
-	},
-	"chat": {
-		"export_format": "YTT",
-		"message_display_time": 10,
-		"randomize_uncolored_names": True,
-		"ytt_align": "left", "ytt_anchor": 6,
-		"ytt_position_x": 0, "ytt_position_x": 100
-	},
-	"stage": {
-		"timezone": "+0000",
-		"description_macros": {}
-	},
-	"export": {
-		"ffmpeg_loglevel": "warning",
-		"chat_enable": True,
-		"video_enable": True
-	},
-	"upload": {
-		"client_path": str(_DEFAULT_DIR / "yt-client.json"),
-		"session_path": str(_DEFAULT_DIR / "yt-session.json"),
-		"chat_enable": True
-	},
-	"directories": {
-		"vods": str(_DEFAULT_DIR / "vods"),
-		"clips": str(_DEFAULT_DIR / "clips"),
-		"temp": str(_DEFAULT_DIR / "temp"),
-		"stage": str(_DEFAULT_DIR / "stage"),
-		# "vods": _DEFAULT_DIR / "vods"
-	}
-}
-
-
 @dataclass
 class _ConfigChannel(DataClassJsonMixin):
 	username: str
@@ -190,3 +151,41 @@ class Config(DataClassJsonMixin):
 	# thumbnail: _ConfigThumbnail
 	# webhooks: _ConfigWebhooks
 	directories: _ConfigDirectories
+	
+
+DEFAULT_CONFIG_DIRECTORY = Path.home() / ".vodbot"
+DEFAULT_CONFIG_PATH = DEFAULT_CONFIG_DIRECTORY / "config.json"
+DEFAULT_CONFIG = Config.from_dict({
+	"channels": {},
+	"pull": {
+		"save_chat": True,
+		"gql_client_id": "kimne78kx3ncx6brgo4mv6wki5h1ko",
+	},
+	"chat": {
+		"export_format": "YTT",
+		"message_display_time": 10,
+		"randomize_uncolored_names": True,
+		"ytt_align": "left", "ytt_anchor": 6,
+		"ytt_position_x": 0, "ytt_position_x": 100,
+	},
+	"stage": {
+		"timezone": "+0000",
+		"description_macros": {},
+	},
+	"export": {
+		"ffmpeg_loglevel": "warning",
+		"chat_enable": True,
+		"video_enable": True,
+	},
+	"upload": {
+		"client_path":  str(DEFAULT_CONFIG_DIRECTORY / "yt-client.json"),
+		"session_path": str(DEFAULT_CONFIG_DIRECTORY / "yt-session.json"),
+		"chat_enable": True,
+	},
+	"directories": {
+		"vods":  str(DEFAULT_CONFIG_DIRECTORY / "vods"),
+		"clips": str(DEFAULT_CONFIG_DIRECTORY / "clips"),
+		"temp":  str(DEFAULT_CONFIG_DIRECTORY / "temp"),
+		"stage": str(DEFAULT_CONFIG_DIRECTORY / "stage"),
+	},
+})
