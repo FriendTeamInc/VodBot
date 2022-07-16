@@ -2,7 +2,6 @@
 
 from os import write
 from .commands.stage import StageData
-from .printer import cprint
 from .twitch import ChatMessage
 from .config import Config
 from . import util
@@ -267,7 +266,7 @@ def process_stage(conf: Config, stage: StageData, mode:str) -> Path:
 	tempdir = Path(conf.directories.temp)
 	msg_duration = int(conf.chat.message_display_time)
 
-	cprint(f"#rLoading all chat messages for `#fM{stage.id}#r`.", end="")
+	print(f"Loading all chat messages for `{stage.id}`.", end="")
 	total_offset = 0
 	chat_list = []
 	for slc in stage.slices:
@@ -303,10 +302,10 @@ def process_stage(conf: Config, stage: StageData, mode:str) -> Path:
 	export_type = conf.chat.export_format
 
 	if len(chat_list) == 0:
-		cprint(f" No chat found in `#fY{export_type}#r` stage. Skipping...")
+		print(f" No chat found in `{export_type}` stage. Skipping...")
 		return False
 
-	cprint(f" Exporting as format `#fY{export_type}#r`.")
+	print(f" Exporting as format `{export_type}`.")
 
 	returnpath = None
 	if export_type == "raw":

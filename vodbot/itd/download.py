@@ -2,9 +2,8 @@ from pathlib import Path
 
 from . import gql, worker
 from vodbot import chatlog
-from vodbot.util import make_dir, vodbotdir
-from vodbot.printer import cprint
-from vodbot.twitch import Vod, Clip, ChatMessage, get_video_comments
+from vodbot.util import make_dir
+from vodbot.twitch import Vod, Clip, get_video_comments
 
 import subprocess
 import requests
@@ -74,7 +73,7 @@ def dl_video(video: Vod, TEMP_DIR: Path, path: str, max_workers: int, LOG_LEVEL:
 	# Download VOD chunks to the temp folder
 	path_map = worker.download_files(video_id, base_uri, tempdir, vod_paths, max_workers)
 	# TODO: rewrite this output to look nicer and remove ffmpeg output using COLOR_CODES["F"]
-	cprint("#dDone, now to ffmpeg join...#r")
+	print("Done, now to ffmpeg join...")
 
 	# join the vods using ffmpeg at specified path
 	# TODO: change this to the concat function in video?
@@ -99,13 +98,13 @@ def dl_video_chat(video: Vod, path: str):
 	video_id = video.id
 
 	# Download all chat from video
-	cprint(f"#fM#lVOD Chat#r `#fM{video_id}#r` (0%)", end="")
+	print(f"VOD Chat `{video_id}` (0%)", end="\r")
 	msgs = get_video_comments(video_id)
-	cprint(f"\r#fM#lVOD Chat#r `#fM{video_id}#r` (100%); Done, now to write...", end="")
+	print(f"VOD Chat `{video_id}` (100%); Done, now to write...", end="\r")
 
 	chatlog.chat_to_logfile(msgs, path)
 
-	cprint(f"\r#fM#lVOD Chat#r `#fM{video_id}#r` (100%); Done, now to write... Done")
+	print(f"VOD Chat `{video_id}` (100%); Done, now to write... Done.")
 
 
 def dl_clip(clip: Clip, path: str):
@@ -119,4 +118,4 @@ def dl_clip(clip: Clip, path: str):
 	size, _existed = worker.download_file(source_url, path)
 
 	# Print progress
-	cprint(f"#fM#lClip#r ({clip_id})`#fM{clip_slug}#r` #fB#l~{worker.format_size(size)}#r")
+	print(f"Clip ({clip_id}) `{clip_slug}` ~{worker.format_size(size)}")

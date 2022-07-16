@@ -1,6 +1,5 @@
 # Module to make API calls to Twitch.tv
 
-from turtle import position
 from typing import List
 from .itd import gql
 
