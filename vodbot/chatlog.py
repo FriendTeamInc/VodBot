@@ -1,10 +1,11 @@
 # Module that parses chatlogs to and from files
 
 from os import write
-from vodbot.commands.stage import StageData
-from vodbot.printer import cprint
-from vodbot.twitch import ChatMessage
-import vodbot.util as util
+from .commands.stage import StageData
+from .printer import cprint
+from .twitch import ChatMessage
+from .config import Config
+from . import util
 
 import json
 from typing import List, Tuple
@@ -262,9 +263,9 @@ def timestring_as_seconds(time:str, default:int=0):
 	return hours * 60 * 60 + minutes * 60 + seconds
 
 
-def process_stage(conf: dict, stage: StageData, mode:str) -> Path:
-	tempdir = Path(conf["temp_dir"])
-	msg_duration = int(conf["chat_msg_time"])
+def process_stage(conf: Config, stage: StageData, mode:str) -> Path:
+	tempdir = Path(conf.directories.temp)
+	msg_duration = int(conf.chat.message_display_time)
 
 	cprint(f"#rLoading all chat messages for `#fM{stage.id}#r`.", end="")
 	total_offset = 0
@@ -299,7 +300,7 @@ def process_stage(conf: dict, stage: StageData, mode:str) -> Path:
 	if mode != "upload" and mode != "export":
 		util.exit_prog(94, f"Cannot export chat with export mode {mode}")
 	
-	export_type = conf["chat_"+mode]
+	export_type = conf.chat.export_format
 
 	if len(chat_list) == 0:
 		cprint(f" No chat found in `#fY{export_type}#r` stage. Skipping...")
