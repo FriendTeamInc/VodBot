@@ -1,7 +1,7 @@
 # Dedicated module for the config class and associated classes
 # having a dedicated type makes accessing specific members easier and dictated
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from dataclasses_json import DataClassJsonMixin
 from typing import Dict, List, Literal, Tuple
 from pathlib import Path
@@ -58,7 +58,7 @@ class _ConfigStage(DataClassJsonMixin):
 	timezone: str = "+0000"
 	# A dictionary of keys and related strings to make typing descriptions for stages easier,
 	# such as adding a lot of social media links at the end of a YouTube description.
-	description_macros: Dict[str, str] = {}
+	description_macros: Dict[str, str] = field(default_factory=lambda: {})
 
 @dataclass
 class _ConfigExport(DataClassJsonMixin):
@@ -127,15 +127,15 @@ class _ConfigWebhooks(DataClassJsonMixin):
 @dataclass
 class _ConfigDirectories(DataClassJsonMixin):
 	# Each key relates to a specific directory. 
-	# - `vod` is for storing VOD files, with metadata and chat (as applicable).
-	# - `clip` is the same as the previous. Both are recommended to be on dense storage devices.
+	# - `vods` is for storing VOD files, with metadata and chat (as applicable).
+	# - `clips` is the same as the previous. Both are recommended to be on dense storage devices.
 	# - `temp` is a working directory where video data is sliced, spliced, and processed,
 	# recommended to be on a high speed storage device.
 	# - `stage` is a directory for storing information about to-be-processed video files.
 	# - `thumbnail` is for storing lots of images used for generating thumbnails for processed
 	# videos, it is the prefix to the filepaths in the thumbnail config for heads and games.
-	vod: Path
-	clip: Path
+	vods: Path
+	clips: Path
 	temp: Path
 	stage: Path
 	#thumbnail: Path

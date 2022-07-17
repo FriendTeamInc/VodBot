@@ -1,15 +1,10 @@
-from . import util, config, __project__, __version__
-from .printer import colorize
+from . import util, __project__, __version__
 from .config import DEFAULT_CONFIG_PATH
 
 import argparse
 from pathlib import Path
 from importlib import import_module
 from requests.exceptions import ConnectionError
-
-
-# Default path
-vodbotdir = util.vodbotdir
 
 
 def deffered_main():
@@ -28,8 +23,10 @@ def main():
 	# Process arguments
 	parser = argparse.ArgumentParser(description="Downloads and processes VODs and clips from Twitch.tv channels.")
 	parser.add_argument("-v","--version", action="version", version=titletext)
-	parser.add_argument("-c","--config", type=Path, dest="config",
-		help="location of the Twitch config file to use", default=DEFAULT_CONFIG_PATH)
+	parser.add_argument("-c","--config", type=Path, dest="config", default=DEFAULT_CONFIG_PATH,
+		help="location of the Twitch config file to use")
+	parser.add_argument("-n", "--no-color", action="store_true", dest="color_toggle", default=False,
+		help="disables colorful output of the program")
 
 	# Subparsers for different commands
 	subparsers = parser.add_subparsers(title="command", dest="cmd", help="command to run.")
@@ -100,6 +97,9 @@ def main():
 		import_module(".commands.export", "vodbot").run(args)
 	elif args.cmd == "info":
 		import_module(".commands.info", "vodbot").run(args)
+	else:
+		print(titletext)
+		print("* run with `-h` to find what commands are available *")
 
 
 if __name__ == "__main__":
