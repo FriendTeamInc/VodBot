@@ -1,6 +1,7 @@
 # Info, command to inspect a piece of media from Twitch
 
 import re
+from vodbot.printer import cprint
 
 from vodbot import util
 from vodbot.itd import gql
@@ -44,7 +45,7 @@ def run(args):
 	tid = args.id
 
 	# Get the proper id and type of content we need to pull
-	print("Determining type...", end=" ")
+	cprint("#dDetermining type...#r", end=" ")
 	cid, ctype = get_type(tid)
 
 	# The call the appropriate info query for GQL
@@ -59,7 +60,7 @@ def run(args):
 		util.exit_prog(92, "Could not determine content type from input.")
 	cword = KEYTRANS[ctype]
 		
-	print(f"Querying {cword} content for `{cid}`...")
+	cprint(f"#dQuerying {cword} content for `{cid}`...#r")
 	
 	# run the query
 	resp = gql.gql_query(query=query).json()
@@ -72,28 +73,28 @@ def run(args):
 		r = resp['video']
 		c = r['creator']
 		g = r['game']
-		print(f"Title: `{r['title']}` - ID: `{r['id']}`")
-		print(f"Broadcaster: {c['displayName']} - {c['login']} ({c['id']})")
-		print(f"Playing: {g['name']} ({g['id']})")
-		print(f"At: {r['publishedAt']} - For: {r['lengthSeconds']} seconds")
+		cprint(f"#fGTitle: `{r['title']}`#r - ID: `{r['id']}`")
+		cprint(f"#fMBroadcaster: {c['displayName']} - {c['login']} ({c['id']})#r")
+		cprint(f"#fCPlaying: {g['name']} ({g['id']})#r")
+		cprint(f"#fYAt: {r['publishedAt']} - For: {r['lengthSeconds']} seconds#r")
 	elif ctype == "clip":
 		r = resp['clip']
 		c = r['curator']
 		b = r['broadcaster']
 		g = r['game']
-		print(f"Title: `{r['title']}` - ID: `{r['id']}`")
-		print(f"Slug: `{r['slug']}`")
-		print(f"Clipper: {c['displayName']} - {c['login']} ({c['id']})")
-		print(f"Broadcaster: {b['displayName']} - {b['login']} ({b['id']})")
-		print(f"Playing: {g['name']} ({g['id']})")
-		print(f"At: {r['createdAt']} - For: {r['durationSeconds']} seconds - With: {r['viewCount']} views")
+		cprint(f"#fGTitle: `{r['title']}`#r - ID: `{r['id']}`")
+		cprint(f"Slug: `{r['slug']}`")
+		cprint(f"#fBClipper: {c['displayName']} - {c['login']} ({c['id']})#r")
+		cprint(f"#fMBroadcaster: {b['displayName']} - {b['login']} ({b['id']})#r")
+		cprint(f"#fCPlaying: {g['name']} ({g['id']})#r")
+		cprint(f"#fYAt: {r['createdAt']} - For: {r['durationSeconds']} seconds - With: {r['viewCount']} views#r")
 	elif ctype == "channel":
 		r = resp['user']
-		print(f"Broadcaster: {r['displayName']} - {r['login']} (ID: `{r['id']}`)")
-		print(f"Description: {r['description']}")
-		print(f"Channel Created At: {r['createdAt']}")
+		cprint(f"#fMBroadcaster: {r['displayName']} - {r['login']} (ID: `{r['id']}`)#r")
+		cprint(f"#fRDescription: {r['description']}#r")
+		cprint(f"#fYChannel Created At: {r['createdAt']}#r")
 		r = r['roles']
-		print(f"Roles: Affiliate={r['isAffiliate']} - Partner={r['isPartner']}")
+		cprint(f"#fBRoles: Affiliate={r['isAffiliate']} - Partner={r['isPartner']}#r")
 		#cprint(f"Site Roles: Staff={r['isStaff']} - GlobalMod={r['isGlobalMod']} - SiteAdmin={r['isSiteAdmin']}")
 
 	# Done!

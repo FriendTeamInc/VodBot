@@ -1,4 +1,5 @@
-from . import util, __project__, __version__
+from . import util, config, __project__, __version__
+from .printer import colorize
 from .config import DEFAULT_CONFIG_PATH
 
 import argparse

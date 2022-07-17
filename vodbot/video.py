@@ -1,5 +1,6 @@
 # Module that manages shelling out commands to ffmpeg, with functions returning paths to the final video.
 
+from .printer import cprint
 from .commands.stage import StageData, VideoSlice
 
 import os
@@ -25,7 +26,7 @@ class FailedToCleanUp(VideoFailure):
 
 def slice_video(TEMP_DIR: Path, LOG_LEVEL: str, vslice: VideoSlice, i: int=1, total: int=1) -> Path:
 	tmpfile = TEMP_DIR / f"{vslice.video_id}={i}.mp4"
-	print(f"Slicing stage part ({i}/{total}) `{vslice.video_id}` ({vslice.ss} - {vslice.to})")
+	cprint(f"#rSlicing stage part ({i}/{total}) `#fM{vslice.video_id}#r` #d({vslice.ss} - {vslice.to})#r")
 
 	cmd = [ "ffmpeg", "-hide_banner", "-ss", vslice.ss ]
 
@@ -62,7 +63,7 @@ def concat_video(TEMP_DIR: Path, LOG_LEVEL: str, stage_id: str, slice_paths: Lis
 	]
 	
 	print()
-	print(f"Concatentating videos for `{stage_id}`")
+	cprint(f"#rConcatentating videos for `#fM{stage_id}#r`")
 	
 	# we need to hop directories real fast to perform this function.
 	# we'll come back when we're done.
@@ -76,7 +77,7 @@ def concat_video(TEMP_DIR: Path, LOG_LEVEL: str, stage_id: str, slice_paths: Lis
 
 	os.chdir(cwd)
 
-	print(f"Cleaning up after stage `{stage_id}`...")
+	cprint(f"Cleaning up after stage `#fM{stage_id}#r`...")
 
 	try:
 		os.remove(str(list_path))

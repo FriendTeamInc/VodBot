@@ -3,6 +3,8 @@
 # Modifications include shortening some functions, removing redundant bits,
 # and changing certain printouts to be more colorful.
 
+from vodbot.printer import cprint
+
 import os
 import requests
 
@@ -107,7 +109,7 @@ def _print_progress(video_id, futures):
 			])
 
 			max_msg_size = max(len(msg), max_msg_size)
-			print("\r" + msg.ljust(max_msg_size), end="")
+			cprint("\r" + msg.ljust(max_msg_size), end="")
 	except KeyboardInterrupt:
 		done, not_done = wait(futures, timeout=0)
 		for future in not_done:

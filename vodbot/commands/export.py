@@ -5,6 +5,7 @@ from .stage import StageData
 import vodbot.util as util
 import vodbot.video as vbvid
 import vodbot.chatlog as vbchat
+from vodbot.printer import cprint
 
 from datetime import datetime
 from pathlib import Path
@@ -33,13 +34,13 @@ def handle_stage(conf: dict, stage: StageData) -> Path:
 	try:
 		tmpfile = vbvid.process_stage(conf, stage)
 	except vbvid.FailedToSlice as e:
-		print(f"Skipping stage `{stage.id}`, failed to slice video with ID of `{e.vid}`.\n")
+		cprint(f"#r#fRSkipping stage `{stage.id}`, failed to slice video with ID of `{e.vid}`.#r\n")
 		return None
 	except vbvid.FailedToConcat:
-		print(f"Skipping stage `{stage.id}`, failed to concatenate videos.\n")
+		cprint(f"#r#fRSkipping stage `{stage.id}`, failed to concatenate videos.#r\n")
 		return None
 	except vbvid.FailedToCleanUp as e:
-		print(f"Skipping stage `{stage.id}`, failed to clean up temp files.\n\n{e.vid}")
+		cprint(f"#r#fRSkipping stage `{stage.id}`, failed to clean up temp files.#r\n\n{e.vid}")
 		return None
 	
 	return tmpfile
@@ -57,7 +58,7 @@ def run(args):
 	# load stages, but dont slice
 	# Handle id/all
 	if args.id == "all":
-		print("Loading and slicing stages...")
+		cprint("#dLoading and slicing stages...#r")
 
 		# create a list of all the hashes and sort by date streamed, slice chronologically
 		stagedatas = StageData.load_all_stages(stagedir)
@@ -85,7 +86,7 @@ def run(args):
 			if conf["stage_export_delete"]:
 				os_remove(str(stagedir / f"{stage.id}.stage"))
 	else:
-		print("Loading stage...", end=" ")
+		cprint("#dLoading stage...", end=" ")
 		
 		# check if stage exists, and prep it for slice
 		stagedata = StageData.load_from_id(stagedir, args.id)
@@ -113,4 +114,4 @@ def run(args):
 			os_remove(str(stagedir / f"{stagedata.id}.stage"))
 
 	# say "Done!"
-	print("Done!")
+	cprint("#fG#lDone!#r")
