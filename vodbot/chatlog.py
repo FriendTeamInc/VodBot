@@ -10,6 +10,12 @@ import json
 from typing import List, Tuple
 from pathlib import Path
 
+HTML_FXIED_SYMBOLS = {
+	"&": "&#38;",
+	"<": "&#60;",
+	">": "&#62;",
+}
+
 
 def chat_to_logfile(msgs: List[ChatMessage], path: str) -> None:
 	# create preamble (contains all chatter's names and their colors)
@@ -141,7 +147,9 @@ def chat_to_realtext(msgs: List[ChatMessage], path: str, vid_duration:int, msg_d
 				f.write("<clear/>\n")
 				continue
 			for m in c["msgs"]:
-				msg = m["msg"].replace("<", "&lt;").replace(">", "&gt;").replace("&", "&amp;")
+				msg = m["msg"]
+				for k,v in HTML_FXIED_SYMBOLS.items():
+					msg = msg.replace(k, v)
 				f.write(f'<font color="#{m["clr"]}"><b>{m["usr"]}</b></font>: {msg}')
 				if m != c["msgs"][-1]:
 					f.write("<br/>")
@@ -167,7 +175,9 @@ def chat_to_sami(msgs: List[ChatMessage], path: str, vid_duration:int, msg_durat
 		for c in chat_lists:
 			f.write(f"<sync start={c['begin']*1000}><p>")
 			for m in c["msgs"]:
-				msg = m["msg"].replace("<", "&lt;").replace(">", "&gt;").replace("&", "&amp;")
+				msg = m["msg"]
+				for k,v in HTML_FXIED_SYMBOLS.items():
+					msg = msg.replace(k, v)
 				f.write(f'<font color="#{m["clr"]}"><b>{m["usr"]}</b></font>: {msg}')
 				if m != c["msgs"][-1]:
 					f.write("<br/>")
@@ -206,9 +216,11 @@ def chat_to_ytt(msgs: List[ChatMessage], path: str, vid_duration:int, msg_durati
 			f.write(f'<p t="{c["begin"]*1000}" d="{(c["end"]-c["begin"])*1000}" wp="1" ws="1">')
 			count += 1
 			for m in c["msgs"]:
-				msg = m["msg"].replace("<", "&lt;").replace(">", "&gt;").replace("&", "&amp;")
+				msg = m["msg"]
+				for k,v in HTML_FXIED_SYMBOLS.items():
+					msg = msg.replace(k, v)
 				u = chat_users[m["usr"]]
-				f.write(f'<s p="{u["id"]+2}">{m["usr"]}</s>&#8203;<s p="1">: {msg}</s>')
+				f.write(f'<s p="{u["id"]+2}">{m["usr"]}</s><s p="1">: {msg}</s>')
 				if m != c["msgs"][-1]:
 					f.write("\n")
 				
@@ -236,7 +248,9 @@ def chat_to_ttml(msgs: List[ChatMessage], path: str, vid_duration:int, msg_durat
 			f.write(f'<p xml:id="a{count}" style="s" begin="{c["begin"]}.0s" end="{c["end"]}.0s">')
 			count += 1
 			for m in c["msgs"]:
-				msg = m["msg"].replace("<", "&lt;").replace(">", "&gt;").replace("&", "&amp;")
+				msg = m["msg"]
+				for k,v in HTML_FXIED_SYMBOLS.items():
+					msg = msg.replace(k, v)
 				f.write(f'<font color="#{m["clr"]}"><b>{m["usr"]}</b></font>: {msg}')
 				if m != c["msgs"][-1]:
 					f.write("<br/>")
