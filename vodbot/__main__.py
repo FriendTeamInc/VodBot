@@ -1,5 +1,5 @@
 from . import util, __project__, __version__
-from .config import DEFAULT_CONFIG_PATH
+from .config import DEFAULT_CONFIG_PATH, DEFAULT_CONFIG
 
 import argparse
 from pathlib import Path
@@ -12,13 +12,15 @@ def deffered_main():
 	try:
 		main()
 	except ConnectionError:
-		util.exit_prog(-2, "Failed to connect to Twitch.")
+		util.exit_prog(-2, "Failed to connect to the Internet/Intranet/ARPAnet/etc.")
 	except KeyboardInterrupt:
 		util.exit_prog(-1, "Interrupted by user.")
 
 
 def main():
 	titletext = f'* {__project__} {__version__} (c) 2020-22 Logan "NotQuiteApex" Hickok-Dickson *'
+
+	#print(type(DEFAULT_CONFIG.directories.clips))
 
 	# Process arguments
 	parser = argparse.ArgumentParser(description="Downloads and processes VODs and clips from Twitch.tv channels.")
@@ -36,7 +38,7 @@ def main():
 	initparse.add_argument("-o", "--output", type=Path, default=DEFAULT_CONFIG_PATH, dest="output", metavar="PATH",
 		help="path to save the config to")
 
-	# `vodbot pull <vods/clips/both> [channel ...]`
+	# `vodbot pull <vods/clips/both>`
 	download = subparsers.add_parser("pull", description="Downloads VODs and/or clips.")
 	download.add_argument("type", type=str, default="both", nargs="?",
 		help='content type flag, can be "vods", "clips", or "both"')
@@ -68,17 +70,17 @@ def main():
 	stager_list = stager_subparser.add_parser("list", description="lists info on staging area or staged items")
 	stager_list.add_argument("id", nargs="?", type=str, help="id of the staged video data", default=None)
 
-	# `vodbot upload <id/all>`
+	# `vodbot upload <stage_id/all>`
 	upload = subparsers.add_parser("push", description="Uploads stage(s) to YouTube.")
 	upload.add_argument("id", type=str,
 		help='id of the staged video data, "all" to upload all stages, or "logout" to remove existing YouTube credentials')
 	
-	# `vodbot export <id/all>`
+	# `vodbot export <stage_id/all>`
 	export = subparsers.add_parser("export", description="Uploads stage(s) to YouTube.")
 	export.add_argument("id", type=str, help="id of the staged video data, or `all` for all stages")
 	export.add_argument("path", type=Path, help="directory to export the video(s) to")
 
-	# `vodbot upload <id/all>`
+	# `vodbot info <vod/clip/channel_id/url>`
 	info = subparsers.add_parser("info", description="Prints out info on the Channel, Clip, or VOD given.")
 	info.add_argument("id", type=str, help="id/url of the Channel, Clip, or VOD")
 	

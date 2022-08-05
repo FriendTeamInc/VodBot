@@ -28,7 +28,7 @@ COLOR_CODES = {
 	"bW": "\033[47m"
 }
 
-USE_COLOR = "--no-color" not in sys_argv
+USE_COLOR = "--no-color" not in sys_argv and "-n" not in sys_argv
 
 def colorize(text: str):
 	for k, v in COLOR_CODES.items():

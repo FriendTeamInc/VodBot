@@ -2,20 +2,42 @@
 # having a dedicated type makes accessing specific members easier and dictated
 
 from dataclasses import dataclass, field
-from dataclasses_json import DataClassJsonMixin
-from typing import Dict, List, Literal, Tuple
+from dataclasses_json import dataclass_json, config
+from marshmallow import fields, ValidationError
+from typing import Dict, List, Literal, Tuple, Any, Mapping
 from pathlib import Path
 
 
+class MMPath(fields.Field):
+	def _serialize(self, value: Any, attr: str, obj: Any, **kwargs):
+		return str(value)
+	
+	def _deserialize(self, value: Any, attr: str | None, data: Mapping[str, Any] | None, **kwargs):
+		try:
+			return Path(value)
+		except ValueError as e:
+			raise ValidationError("String must be a valid file/directory path") from e
+
+path_field = field(
+	metadata=config(
+		encoder=lambda x: str(x),
+		decoder=lambda x: Path(x),
+		mm_field=MMPath
+	)
+)
+
+
+@dataclass_json
 @dataclass
-class _ConfigChannel(DataClassJsonMixin):
+class _ConfigChannel:
 	username: str
 	save_vods: bool
 	save_clips: bool
 	save_chat: bool
 
+@dataclass_json
 @dataclass
-class _ConfigPull(DataClassJsonMixin):
+class _ConfigPull:
 	# Determines if chat logs get pulled with VODs and saved alongside metadata. This is a master
 	# switch for every channel, if false then no chat gets saved.
 	save_chat: bool
@@ -33,10 +55,10 @@ class _ConfigPull(DataClassJsonMixin):
 	#api_use_alt: bool = False
 	#api_client: str = ""
 	#api_secret: str = ""
-	pass
 
+@dataclass_json
 @dataclass
-class _ConfigChat(DataClassJsonMixin):
+class _ConfigChat:
 	# Dictates what closed caption format the chat logs should be exported to when exporting. This
 	# is ignored when uploading as uploading to YouTube will always use the YTT format.
 	export_format: Literal["raw","RealText","SAMI","YTT"] = "YTT"
@@ -51,8 +73,9 @@ class _ConfigChat(DataClassJsonMixin):
 	ytt_position_x: Literal[tuple(range(101))] = 0
 	ytt_position_y: Literal[tuple(range(101))] = 100
 
+@dataclass_json
 @dataclass
-class _ConfigStage(DataClassJsonMixin):
+class _ConfigStage:
 	# A UTC timezone code string, like "+0000" (GMT), "-0500" (EDT) or "+0930" (ACST). Used for
 	# calculating certain dates relating to videos (which store their date as ISO 8601).
 	timezone: str = "+0000"
@@ -60,8 +83,9 @@ class _ConfigStage(DataClassJsonMixin):
 	# such as adding a lot of social media links at the end of a YouTube description.
 	description_macros: Dict[str, str] = field(default_factory=lambda: {})
 
+@dataclass_json
 @dataclass
-class _ConfigExport(DataClassJsonMixin):
+class _ConfigExport:
 	# This is used to describe to FFMPEG what type of output there should be regarding when
 	# the program directs it to manage video files. "warning" is recommended as it displays very
 	# little unless otherwise necessary.
@@ -76,21 +100,24 @@ class _ConfigExport(DataClassJsonMixin):
 	# TODO?
 	pass
 
+@dataclass_json
 @dataclass
-class _ConfigUpload(DataClassJsonMixin):
-	client_path: Path
-	session_path: Path
+class _ConfigUpload:
 	chat_enable: bool
+	client_path: Path = path_field
+	session_path: Path = path_field
 
+@dataclass_json
 @dataclass
-class _ConfigThumbnailIcon(DataClassJsonMixin):
+class _ConfigThumbnailIcon:
 	offset_x: int
 	offset_y: int
 	scale: int
-	filepath: Path
+	filepath: Path = path_field
 
+@dataclass_json
 @dataclass
-class _ConfigThumbnail(DataClassJsonMixin):
+class _ConfigThumbnail:
 	enable: bool
 	thumbnail_x: int; thumbnail_y: int
 	thumbnail_width: int; thumbnail_height: int
@@ -105,14 +132,16 @@ class _ConfigThumbnail(DataClassJsonMixin):
 	games: dict[str, _ConfigThumbnailIcon]
 	game_x: int; game_y: int; game_gravity: str
 
+@dataclass_json
 @dataclass
-class _ConfigWebhookBase(DataClassJsonMixin):
+class _ConfigWebhookBase:
 	enable: bool = None
 	display_name: str = None
 	webhook_url: str = None
 
+@dataclass_json
 @dataclass
-class _ConfigWebhooks(DataClassJsonMixin):
+class _ConfigWebhooks:
 	enable: bool
 	display_name: str
 	webhook_url: str
@@ -124,8 +153,9 @@ class _ConfigWebhooks(DataClassJsonMixin):
 	upload_video: _ConfigWebhookBase
 	upload_job_done: _ConfigWebhookBase
 
+@dataclass_json
 @dataclass
-class _ConfigDirectories(DataClassJsonMixin):
+class _ConfigDirectories:
 	# Each key relates to a specific directory. 
 	# - `vods` is for storing VOD files, with metadata and chat (as applicable).
 	# - `clips` is the same as the previous. Both are recommended to be on dense storage devices.
@@ -134,14 +164,15 @@ class _ConfigDirectories(DataClassJsonMixin):
 	# - `stage` is a directory for storing information about to-be-processed video files.
 	# - `thumbnail` is for storing lots of images used for generating thumbnails for processed
 	# videos, it is the prefix to the filepaths in the thumbnail config for heads and games.
-	vods: Path
-	clips: Path
-	temp: Path
-	stage: Path
-	#thumbnail: Path
+	vods: Path = path_field
+	clips: Path = path_field
+	temp: Path = path_field
+	stage: Path = path_field
+	#thumbnail: Path = path_field
 
+@dataclass_json
 @dataclass
-class Config(DataClassJsonMixin):
+class Config:
 	channels: Dict[str, _ConfigChannel]
 	pull: _ConfigPull
 	chat: _ConfigChat
