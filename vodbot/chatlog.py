@@ -66,7 +66,7 @@ def logfile_to_chat(path: str) -> List[ChatMessage]:
 					user = user.split(";")
 					if len(user) < 2:
 						util.exit_prog(code=130, errmsg=f"Could not find enough elements in `{path}`'s preamble for a user.")
-					if len(user[0]) != 6 or any((c in "0123456789abcdefgABCDEFG") for c in user[0]):
+					if len(user[0]) != 6 or not all((c in "0123456789abcdefgABCDEFG") for c in user[0]):
 						util.exit_prog(code=131, errmsg=f"Color string for user \"{user[1]}\" in `{path}` must be 6 hexadecimal characters.")
 					preamb.append((user[0], user[1]))
 				readfirst = True

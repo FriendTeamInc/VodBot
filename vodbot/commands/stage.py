@@ -4,6 +4,7 @@ import vodbot.util as util
 from vodbot.printer import cprint, colorize
 
 import re
+import sys
 import json
 import string
 import random
@@ -18,7 +19,7 @@ from typing import List, Tuple
 # Default path
 vodbotdir = util.vodbotdir
 
-DISALLOWED_CHARACTERS = [chr(x) for x in range(32)] # just in case...
+DISALLOWED_CHARACTERS = [chr(x) for x in range(10)] + [chr(x) for x in range(11,32)] # just in case...
 
 
 class VideoSlice():
@@ -138,16 +139,21 @@ def create_format_dict(conf, streamers, utcdate=None, truedate=None):
 		"streamers": streamers,
 	}
 
-	# first pass format
+	# first and second pass format
 	for x in range(2):
-		for item, string in conf["stage_format"].items():
+		for item, fmtstring in conf["stage_format"].items():
 			try:
-				string = string.format(**formatdict)
-				formatdict[item] = string
+				fmtstring = fmtstring.format(**formatdict)
+				if "<" in fmtstring or ">" in fmtstring:
+					util.exit_prog(80, "Format strings cannot contain angled brackets (\"<\", \">\").")
+				if any((c in DISALLOWED_CHARACTERS) for c in fmtstring):
+					util.exit_prog(82, "Format strings cannot contain control characters.")
+
+				formatdict[item] = fmtstring
 			except KeyError as err:
 				# ignore errors on first pass
 				if x == 1:
-					util.exit_prog(81, f"Format failed: {err}")
+					util.exit_prog(81, f"Format failed: `{err}`.")
 
 	return formatdict, datestring
 
@@ -283,12 +289,18 @@ def check_streamers(default=None) -> List[str]:
 					cprint("#l#fRMissing streamer name!#r")
 					streamers = ""
 					break
+				
+				if not all((c.isalnum() or c=="_") for c in streamer):
+					if len(streamer) == 0:
+						cprint("#l#fRStreamer names must be alphanumeric with underscores!#r")
+						streamers = ""
+						break
 	
 	return streamers
 
 
 RESERVED_NAMES = [
-	"CON", "PRN", "AUX", "NUL",
+	"\\0", "CON", "PRN", "AUX", "NUL",
 	"COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
 	"LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
 ]
@@ -301,10 +313,18 @@ def check_title(default=None):
 			# blank title
 			if title == "":
 				cprint("#fRTitle cannot be blank.#r")
+				continue
 			# reserved names
-			if title in RESERVED_NAMES:
-				cprint("#fRTitle cannot be a reserved name.#r")
+			# upper is necessary because windows still reads lowercase versions as reserved
+			if title.upper() in RESERVED_NAMES :
+				cprint("#fRTitle cannot be a reserved name such as NUL, COM1, etc.#r")
 				title = ""
+				continue
+
+			if any((c in DISALLOWED_CHARACTERS) for c in title):
+				cprint("#fRTitle cannot use control characters.#r")
+				title = ""
+				continue
 	
 	return title
 
@@ -319,7 +339,7 @@ def check_description(formatdict, inputdefault=None):
 		except KeyError as err:
 			cprint(f"#fRDescription format error from default: {err}.#r")
 			desc = ""
-	
+
 	while desc == "":
 		desc = input(colorize("#fW#lDescription of Video#r #d(--desc)#r: "))
 		if desc == "":
@@ -332,7 +352,18 @@ def check_description(formatdict, inputdefault=None):
 		except KeyError as err:
 			cprint(f"#fRDescription format error: {err}.#r")
 			desc = ""
-	
+			continue
+
+		if "<" in desc or ">" in desc or any((c in DISALLOWED_CHARACTERS) for c in desc):
+			cprint(f"#fRDescription cannot contain angled brackets (\"<\", \">\") or control characters.#r")
+			desc = ""
+			continue
+
+		if len(desc.encode("utf-8")) > 5000:
+			cprint(f"#fRDescription cannot be longer than 5000 unicode characters (codepoints).#r")
+			desc = ""
+			continue
+
 	return desc
 
 # time in seconds to a timestamp string
@@ -419,7 +450,7 @@ def _new(args, conf, stagedir):
 
 	print()
 	cprint(f"#r`#fC{stage.title}#r` #fM{' '.join(stage.streamers)}#r #d({stage.id})#r")
-	cprint(f"#d'''#fG{stage.desc}#r#d'''#r")
+	cprint(f"#d'''\n#fG{stage.desc}#r\n#d'''#r")
 	for vid in stage.slices:
 		cprint(f"#fM{vid.video_id}#r > #fY{vid.ss}#r - #fY{vid.to}#r")
 	

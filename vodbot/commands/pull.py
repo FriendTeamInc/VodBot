@@ -79,11 +79,11 @@ def download_twitch_video(args):
 
 		# Print content found and save it
 		if args.type == "both":
-			cprint(f"#fC#l{len(vods)} #fM#lVODSs#r & #fC#l{len(clips)} #fM#lClips#r")
+			cprint(f"#fC#l{len(vods)} #fM#lVODs#r & #fC#l{len(clips)} #fM#lClips#r")
 			videos += vods
 			videos += clips
 		elif args.type == "vods":
-			cprint(f"#fC#l{len(vods)} #fM#lVODSs#r")
+			cprint(f"#fC#l{len(vods)} #fM#lVODs#r")
 			videos += vods
 		elif args.type == "clips":
 			cprint(f"#fC#l{len(clips)} #fM#lClips#r")
