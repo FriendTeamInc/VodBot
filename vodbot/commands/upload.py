@@ -42,6 +42,68 @@ def sort_stagedata(stagedata):
 	return (date - EPOCH).total_seconds()
 
 
+def _upload_artifact(upload_string, response_upload, tmpfile, stagedata, getting_video=False):
+	video_id = "" # youtube video id
+	resp = None
+	errn = 0
+
+	while resp is None:
+		try:
+			status, resp = response_upload.next_chunk()
+			if status:
+				cprint(f"#fCUploading {upload_string}, progress: #fC{int(status.progress()*100)}#fY%#r #d...#r", end="\r")
+			if resp is not None:
+				cprint(f"#fCUploading {upload_string}, progress: #fC100#fY%#r!")
+				if getting_video:
+					cprint(f"#l#fGVideo was successfully uploaded!#r #dhttps://youtu.be/{resp['id']}#r")
+					video_id = resp["id"]
+		except ResumableUploadError as err:
+			if err.resp.status in [400, 401, 402, 403]:
+				try:
+					jsondata = json.loads(err.content)['error']['errors'][0]
+					util.exit_prog(40, f"API Error: `{jsondata['reason']}`. Message: `{jsondata['message']}`")
+				except (json.JSONDecodeError, KeyError):
+					util.exit_prog(40, f"Unknown API Error has occured, ({err.resp.status}, {err.content})")
+			print(f"A Resumeable error has occured, retrying in 5 sec... ({err.resp.status}, {err.content})")
+			errn += 1
+			sleep(5)
+		except HttpError as err:
+			if err.resp.status in [500, 502, 503, 504]:
+				print(f"An HTTP error has occured, retrying in 5 sec... ({err.resp.status}, {err.content})")
+				errn += 1
+				sleep(5)
+			else:
+				raise
+		except RETRIABLE_EXCEPTS as err:
+			print(f"An HTTP error has occured, retrying in 5 sec... ({err})")
+			errn += 1
+			sleep(5)
+		
+		if errn >= 10:
+			if getting_video:
+				print("Skipping video upload, errored too many times.")
+				return ""
+			else:
+				print("Skipping chatlog upload, errored too many times.")
+				return False
+	
+	# we're done, lets clean up
+	else:
+		try:
+			# delete vars to release the files
+			del media_file
+			del response_upload
+			sleep(1)
+			os_remove(str(tmpfile))
+		except Exception as e:
+			util.exit_prog(90, f"Failed to remove temp slice file of stage `{stagedata.id}` after upload. {e}")
+	
+	if getting_video:
+		return video_id
+	else:
+		return True
+
+
 def upload_video(conf: dict, service, stagedata: StageData) -> str:
 	tmpfile = None
 	try:
@@ -77,62 +139,8 @@ def upload_video(conf: dict, service, stagedata: StageData) -> str:
 		media_body=media_file
 	)
 
-	video_id = None # youtube video id
-	resp = None
-	errn = 0
 	cprint(f"#fCUploading stage #r`#fM{stagedata.id}#r`, progress: #fC0#fY%#r #d...#r", end="\r")
-	
-	# Below is taken from Google's documentation, rewrite?
-	while resp is None:
-		try:
-			status, resp = response_upload.next_chunk()
-			if status:
-				cprint(f"#fCUploading stage #r`#fM{stagedata.id}#r`, progress: #fC{int(status.progress()*100)}#fY%#r #d...#r", end="\r")
-			if resp is not None:
-				if "id" in resp:
-					cprint(f"#fCUploading stage #r`#fM{stagedata.id}#r`, progress: #fC100#fY%#r!")
-					cprint(f"#l#fGVideo was successfully uploaded!#r #dhttps://youtu.be/{resp['id']}#r")
-					video_id = resp["id"]
-				else:
-					util.exit_prog(99, f"Unexpected upload failure occurred, \"{resp}\"")
-		except ResumableUploadError as err:
-			if err.resp.status in [400, 401, 402, 403]:
-				try:
-					jsondata = json.loads(err.content)['error']['errors'][0]
-					util.exit_prog(40, f"API Error: `{jsondata['reason']}`. Message: `{jsondata['message']}`")
-				except (json.JSONDecodeError, KeyError):
-					util.exit_prog(40, f"Unknown API Error has occured, ({err.resp.status}, {err.content})")
-			print(f"A Resumeable error has occured, retrying in 5 sec... ({err.resp.status}, {err.content})")
-			errn += 1
-			sleep(5)
-		except HttpError as err:
-			if err.resp.status in [500, 502, 503, 504]:
-				print(f"An HTTP error has occured, retrying in 5 sec... ({err.resp.status}, {err.content})")
-				errn += 1
-				sleep(5)
-			else:
-				raise
-		except RETRIABLE_EXCEPTS as err:
-			print(f"An HTTP error has occured, retrying in 5 sec... ({err})")
-			errn += 1
-			sleep(5)
-		
-		if errn >= 10:
-			print("Skipping video upload, errored too many times.")
-			break
-	
-	# we're done, lets clean up
-	else:
-		try:
-			# delete vars to release the files
-			del media_file
-			del response_upload
-			sleep(1)
-			os_remove(str(tmpfile))
-		except Exception as e:
-			util.exit_prog(90, f"Failed to remove temp slice file of stage `{stagedata.id}` after upload. {e}")
-	
-	return video_id
+	return _upload_artifact(f"stage #r`#fM{stagedata.id}#r`", response_upload, str(tmpfile), stagedata, getting_video=True)
 
 
 def upload_captions(conf: dict, service, stagedata: StageData, vid_id: str) -> bool:
@@ -158,56 +166,8 @@ def upload_captions(conf: dict, service, stagedata: StageData, vid_id: str) -> b
 		media_body=media_file
 	)
 
-	resp = None
-	errn = 0
 	cprint(f"#fCUploading stage chatlog #r`#fM{stagedata.id}#r`, progress: #fC0#fY%#r #d...#r", end="\r")
-	
-	while resp is None:
-		try:
-			status, resp = response_upload.next_chunk()
-			if status:
-				cprint(f"#fCUploading stage chatlog #r`#fM{stagedata.id}#r`, progress: #fC{int(status.progress()*100)}#fY%#r #d...#r", end="\r")
-			if resp is not None:
-				cprint(f"#fCUploading stage chatlog #r`#fM{stagedata.id}#r`, progress: #fC100#fY%#r!")
-				cprint(f"#l#fGVideo captions were successfully uploaded!#r")
-		except ResumableUploadError as err:
-			if err.resp.status in [400, 401, 402, 403]:
-				try:
-					jsondata = json.loads(err.content)['error']['errors'][0]
-					util.exit_prog(40, f"API Error: `{jsondata['reason']}`. Message: `{jsondata['message']}`")
-				except (json.JSONDecodeError, KeyError):
-					util.exit_prog(40, f"Unknown API Error has occured, ({err.resp.status}, {err.content})")
-			print(f"A Resumeable error has occured, retrying in 5 sec... ({err.resp.status}, {err.content})")
-			errn += 1
-			sleep(5)
-		except HttpError as err:
-			if err.resp.status in [500, 502, 503, 504]:
-				print(f"An HTTP error has occured, retrying in 5 sec... ({err.resp.status}, {err.content})")
-				errn += 1
-				sleep(5)
-			else:
-				raise
-		except RETRIABLE_EXCEPTS as err:
-			print(f"An HTTP error has occured, retrying in 5 sec... ({err})")
-			errn += 1
-			sleep(5)
-		
-		if errn >= 10:
-			print("Skipping chatlog upload, errored too many times.")
-			return False
-	
-	# we're done, lets clean up
-	else:
-		try:
-			# delete vars to release the files
-			del media_file
-			del response_upload
-			sleep(1)
-			os_remove(str(tmpfile))
-		except Exception as e:
-			util.exit_prog(90, f"Failed to remove temp slice file of stage `{stagedata.id}` after upload. {e}")
-	
-	return True
+	return _upload_artifact(f"stage chatlog #r`#fM{stagedata.id}#r`", response_upload, str(tmpfile), stagedata, getting_video=False)
 
 
 def run(args):
