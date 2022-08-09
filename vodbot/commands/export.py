@@ -9,7 +9,8 @@ from vodbot.printer import cprint
 
 from datetime import datetime
 from pathlib import Path
-from os import remove as os_remove, replace as os_replace
+from os import remove as os_remove
+from shutil import move as shutil_move
 
 
 # Default path
@@ -78,9 +79,9 @@ def run(args):
 
 			# move appropriate files
 			if tmpfile is not None:
-				os_replace(tmpfile, args.path / (title+tmpfile.suffix))
+				shutil_move(str(tmpfile), str(args.path / (title+tmpfile.suffix)))
 			if tmpchat is not None:
-				os_replace(tmpchat, args.path / (title+tmpchat.suffix))
+				shutil_move(str(tmpchat), str(args.path / (title+tmpchat.suffix)))
 			
 			# deal with old stage
 			if conf["stage_export_delete"]:
@@ -105,9 +106,9 @@ def run(args):
 
 		# move appropriate files
 		if tmpfile is not None:
-			os_replace(tmpfile, args.path / (title+tmpfile.suffix))
+			shutil_move(str(tmpfile), str(args.path / (title+tmpfile.suffix)))
 		if tmpchat is not None:
-			os_replace(tmpchat, args.path / (title+tmpchat.suffix))
+			shutil_move(str(tmpchat), str(args.path / (title+tmpchat.suffix)))
 		
 		# Deal with old stage
 		if conf["stage_export_delete"]:
