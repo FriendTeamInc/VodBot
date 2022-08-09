@@ -11,7 +11,6 @@ import vodbot.chatlog as vbchat
 from vodbot.printer import cprint
 
 import json
-import pickle
 from datetime import datetime
 from pathlib import Path
 from os import remove as os_remove
@@ -26,6 +25,7 @@ from googleapiclient.http import MediaFileUpload
 from googleapiclient.errors import HttpError, ResumableUploadError
 from google.auth.transport.requests import Request
 from google.auth.exceptions import RefreshError
+from google.oauth2.credentials import Credentials
 
 
 # Default path
@@ -219,28 +219,27 @@ def run(args):
 	cprint("Authenticating with Google...", end=" ")
 
 	service = None
-	credentials = None
+	creds = None
 
 	if os_exists(PICKLE_FILE):
-		with open(PICKLE_FILE, "rb") as f:
-			credentials = pickle.load(f)
+		creds = Credentials.from_authorized_user_file(PICKLE_FILE, SCOPES)
 	
-	if not credentials or credentials.expired:
+	if not creds or not creds.valid:
 		try:
-			if credentials and credentials.expired and credentials.refresh_token:
-				credentials.refresh(Request())
+			if creds and creds.expired and creds.refresh_token:
+				creds.refresh(Request())
 			else:
 				flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET_FILE, SCOPES)
-				credentials = flow.run_console()
+				creds = flow.run_console()
 		except RefreshError:
 			flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET_FILE, SCOPES)
-			credentials = flow.run_console()
+			creds = flow.run_console()
 		
-		with open(PICKLE_FILE, "wb") as f:
-			pickle.dump(credentials, f)
+		with open(PICKLE_FILE, "w") as f:
+			f.write(creds.to_json())
 	
 	try:
-		service = build(API_NAME, API_VERSION, credentials=credentials)
+		service = build(API_NAME, API_VERSION, credentials=creds)
 	except Exception as err:
 		util.exit_prog(50, f"Failed to connect to YouTube API, \"{err}\"")
 	
