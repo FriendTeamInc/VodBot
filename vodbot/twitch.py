@@ -65,7 +65,8 @@ class Vod:
 		self.has_chat = has_chat
 	
 	def __repr__(self):
-		return f"Vod({self.id}, {self.created_at}, {self.user_name}, {self.duration})"
+		# ID by STREAMER at DATETIME, LENGTH
+		return f"Vod({self.id}, {self.user_name}, {self.created_at}, {self.length}s)"
 	
 	def write_meta(self, filename):
 		jsondict = {
@@ -117,7 +118,8 @@ class Clip:
 		self.url = f"twitch.tv/{self.user_name}/clip/{self.id}"
 	
 	def __repr__(self):
-		return f"Clip({self.title}, {self.created_at}, {self.user_name}, {self.clipper_name})"
+		# ID by CLIPPER of STREAMER at DATETIME, LENGTH
+		return f"Clip({self.slug}, {self.clipper_name}, {self.user_name}, {self.created_at}, {self.length}s)"
 	
 	def write_meta(self, filename):
 		jsondict = {
@@ -410,8 +412,10 @@ def get_video_comments(video_id: str) -> List[ChatMessage]:
 		pagination = resp["edges"][-1]["cursor"]
 		for comment in resp["edges"]:
 			c = comment["node"]
-
-			usr = c["commenter"]["displayName"]
+			
+			usr = "-BANNED?_USER-"
+			if c["commenter"] is not None:
+				usr = c["commenter"]["displayName"]
 			clr = c["message"]["userColor"] or "FFFFFF"
 			clr = clr.strip("#")
 

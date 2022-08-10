@@ -33,10 +33,7 @@ def get_playlist_uris(video_id, access_token):
 	data = resp.content.decode("utf-8")
 
 	playlist = m3u8.loads(data)
-	playlist_uris = []
-
-	for p in playlist.playlists:
-		playlist_uris += [p.uri]
+	playlist_uris = [p.uri for p in playlist.playlists]
 	
 	return playlist_uris
 
@@ -66,11 +63,8 @@ def dl_video(video: Vod, TEMP_DIR: Path, path: str, max_workers: int, LOG_LEVEL:
 
 	# Get all the necessary vod paths for the uri
 	base_uri = "/".join(source_uri.split("/")[:-1]) + "/"
-	vod_paths = []
-	for segment in playlist.segments:
-		if segment.uri not in vod_paths:
-			vod_paths.append(segment.uri)
-
+	vod_paths = [segment.uri for segment in playlist.segments]
+	
 	# Download VOD chunks to the temp folder
 	path_map = worker.download_files(video_id, base_uri, tempdir, vod_paths, max_workers)
 	# TODO: rewrite this output to look nicer and remove ffmpeg output using COLOR_CODES["F"]

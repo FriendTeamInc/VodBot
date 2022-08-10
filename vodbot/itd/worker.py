@@ -58,11 +58,11 @@ def format_duration(total_seconds):
 	seconds = total_seconds % 60
 
 	if hours:
-		return f"{hours} h {minutes} min"
+		return f"{hours}h{minutes}m{seconds}s"
 	elif minutes:
-		return f"{minutes} min {seconds} sec"
+		return f"{minutes}m{seconds}s"
 	else:
-		return f"{seconds} sec"
+		return f"{seconds}s"
 
 def format_size(bytes_, digits=1):
 	units = ["B", "kB", "MB"]
@@ -98,7 +98,7 @@ def _print_progress(video_id, futures):
 			percentage = 100 * downloaded_count // total_count
 			est_total_size = int(total_count * downloaded_size / downloaded_count)
 			duration = (datetime.now() - start_time).seconds
-			speed = (downloaded_size-existing_size) // duration if duration else 0
+			speed = (downloaded_size - existing_size) // duration if duration else 0
 			remaining = (total_count - downloaded_count) * duration / downloaded_count
 
 			msg = " ".join([
@@ -120,7 +120,7 @@ def _print_progress(video_id, futures):
 
 def download_files(video_id, base_url, target_dir, vod_paths, max_workers):
 	urls = [base_url + path for path in vod_paths]
-	targets = [str(target_dir / f"{k}.ts") for k, _ in enumerate(vod_paths)]
+	targets = [str(target_dir / path) for path in vod_paths]
 	partials = (partial(download_file, url, path) for url, path in zip(urls, targets))
 
 	with ThreadPoolExecutor(max_workers=max_workers) as executor:

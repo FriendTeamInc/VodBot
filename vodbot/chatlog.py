@@ -11,6 +11,12 @@ import json
 from typing import List, Tuple
 from pathlib import Path
 
+HTML_FXIED_SYMBOLS = {
+	"&": "&#38;",
+	"<": "&#60;",
+	">": "&#62;",
+}
+
 
 def chat_to_logfile(msgs: List[ChatMessage], path: str) -> None:
 	# create preamble (contains all chatter's names and their colors)
@@ -59,6 +65,10 @@ def logfile_to_chat(path: str) -> List[ChatMessage]:
 				# first line is preamble, so we unravel it
 				for user in line.split("\0"):
 					user = user.split(";")
+					if len(user) < 2:
+						util.exit_prog(code=130, errmsg=f"Could not find enough elements in `{path}`'s preamble for a user.")
+					if len(user[0]) != 6 or not all((c in "0123456789abcdefgABCDEFG") for c in user[0]):
+						util.exit_prog(code=131, errmsg=f"Color string for user \"{user[1]}\" in `{path}` must be 6 hexadecimal characters.")
 					preamb.append((user[0], user[1]))
 				readfirst = True
 			else:
@@ -66,6 +76,8 @@ def logfile_to_chat(path: str) -> List[ChatMessage]:
 				# from the preamble, grab all the other info, make a ChatMessage object, and tack it
 				# on to the list.
 				line = line.split("\0")
+				if len(line) == 0:
+					continue # nothing here to parse, try next line
 				info = int(line[2])
 				chats.append(
 					ChatMessage(
@@ -142,7 +154,9 @@ def chat_to_realtext(msgs: List[ChatMessage], path: str, vid_duration:int, msg_d
 				f.write("<clear/>\n")
 				continue
 			for m in c["msgs"]:
-				msg = m["msg"].replace("<", "&lt;").replace(">", "&gt;").replace("&", "&amp;")
+				msg = m["msg"]
+				for k,v in HTML_FXIED_SYMBOLS.items():
+					msg = msg.replace(k, v)
 				f.write(f'<font color="#{m["clr"]}"><b>{m["usr"]}</b></font>: {msg}')
 				if m != c["msgs"][-1]:
 					f.write("<br/>")
@@ -168,7 +182,9 @@ def chat_to_sami(msgs: List[ChatMessage], path: str, vid_duration:int, msg_durat
 		for c in chat_lists:
 			f.write(f"<sync start={c['begin']*1000}><p>")
 			for m in c["msgs"]:
-				msg = m["msg"].replace("<", "&lt;").replace(">", "&gt;").replace("&", "&amp;")
+				msg = m["msg"]
+				for k,v in HTML_FXIED_SYMBOLS.items():
+					msg = msg.replace(k, v)
 				f.write(f'<font color="#{m["clr"]}"><b>{m["usr"]}</b></font>: {msg}')
 				if m != c["msgs"][-1]:
 					f.write("<br/>")
@@ -208,9 +224,11 @@ def chat_to_ytt(msgs: List[ChatMessage], path: str, vid_duration:int, msg_durati
 			f.write(f'<p t="{c["begin"]*1000}" d="{(c["end"]-c["begin"])*1000}" wp="1" ws="1">')
 			count += 1
 			for m in c["msgs"]:
-				msg = m["msg"].replace("<", "&lt;").replace(">", "&gt;").replace("&", "&amp;")
+				msg = m["msg"]
+				for k,v in HTML_FXIED_SYMBOLS.items():
+					msg = msg.replace(k, v)
 				u = chat_users[m["usr"]]
-				f.write(f'<s p="{u["id"]+2}">{m["usr"]}</s>&#8203;<s p="1">: {msg}</s>')
+				f.write(f'<s p="{u["id"]+2}">{m["usr"]}</s><s p="1">: {msg}</s>')
 				if m != c["msgs"][-1]:
 					f.write("\n")
 				
@@ -238,7 +256,9 @@ def chat_to_ttml(msgs: List[ChatMessage], path: str, vid_duration:int, msg_durat
 			f.write(f'<p xml:id="a{count}" style="s" begin="{c["begin"]}.0s" end="{c["end"]}.0s">')
 			count += 1
 			for m in c["msgs"]:
-				msg = m["msg"].replace("<", "&lt;").replace(">", "&gt;").replace("&", "&amp;")
+				msg = m["msg"]
+				for k,v in HTML_FXIED_SYMBOLS.items():
+					msg = msg.replace(k, v)
 				f.write(f'<font color="#{m["clr"]}"><b>{m["usr"]}</b></font>: {msg}')
 				if m != c["msgs"][-1]:
 					f.write("<br/>")
@@ -304,7 +324,7 @@ def process_stage(conf: Config, stage: StageData, mode:str) -> Path:
 
 	if len(chat_list) == 0:
 		cprint(f" No chat found in `#fY{export_type}#r` stage. Skipping...")
-		return False
+		return None
 
 	cprint(f" Exporting as format `#fY{export_type}#r`.")
 

@@ -16,7 +16,10 @@ def make_dir(directory):
 
 	:param directory: A string of where the directory structure should be made.
 	"""
-	os.makedirs(str(directory), exist_ok=True)
+	try:
+		os.makedirs(str(directory), exist_ok=True)
+	except OSError as e:
+		exit_prog(code=-3, errmsg=str(e))
 
 def load_conf(filename):
 	"""
