@@ -6,6 +6,36 @@ from .config import Config, DEFAULT_CONFIG_SCHEMA
 import os
 import sys
 from marshmallow import ValidationError
+from typing import Tuple
+
+
+# time in seconds to a timestamp string
+def int_to_timestamp(i:int) -> str:
+	if i >= 3600: # hours position
+		return f"{int(i // 3600)}:{int((i // 60) % 60)}:{int(i % 60)}"
+	elif i >= 60: # minutes position
+		return f"0:{int(i // 60)}:{int(i % 60)}"
+	else:
+		return f"0:0:{int(i)}"
+
+
+# position and duration to a proper timestamp string
+def posdur_to_timestamp(pos:int, dur:int) -> Tuple[str, str]:
+	return (int_to_timestamp(pos), int_to_timestamp(pos + dur))
+
+
+def timestring_as_seconds(time:str, default:int=0):
+	if time == "EOF":
+		return default
+	
+	s = time.split(":")
+	
+	seconds = int(s[-1]) if len(s) >= 1 else 0
+	minutes = int(s[-2]) if len(s) >= 2 else 0
+	hours = int(s[-3]) if len(s) >= 3 else 0
+
+	# Hours, minutes, seconds
+	return hours * 60 * 60 + minutes * 60 + seconds
 
 
 def make_dir(directory):

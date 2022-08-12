@@ -5,16 +5,15 @@ from vodbot.config import DEFAULT_CONFIG_DIRECTORY
 from vodbot.printer import cprint, colorize
 
 import re
-import sys
 import json
 import string
-import random
 import datetime
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from os import remove as os_remove, listdir as os_listdir
 from os.path import isfile, isdir
-from typing import List, Tuple
+from typing import List
+from random import choice
 
 
 DISALLOWED_CHARACTERS = [chr(x) for x in range(10)] + [chr(x) for x in range(11,32)] # just in case...
@@ -58,34 +57,23 @@ class StageData():
 		with open(filename, "w") as f:
 			jsondump = {
 				"streamers": self.streamers,
-				"title": self.title,
-				"desc": self.desc,
+				"title": self.title, "desc": self.desc,
 				"datestring": self.datestring,
-				"id": self.id,
-				"slices": []
+				"id": self.id, "slices": [vid.get_as_dict() for vid in self.slices]
 			}
-
-			for vid in self.slices:
-				jsondump["slices"] += [vid.get_as_dict()]
 
 			json.dump(jsondump, f)
 	
 	def gen_new_id(self):
-		self.id = ""
-		for _ in range(4):
-			self.id += random.choice(string.ascii_lowercase + string.digits)
+		self.id = "".join([choice(string.ascii_lowercase + string.digits) for _ in range(4)])
 	
 	@staticmethod
-	def load_from_json(data: dict) -> 'StageData':
-		slices = [VideoSlice(v["id"], v["ss"], v["to"], v["path"]) for v in data["slices"]]
-		streamers = data["streamers"]
-		title = data["title"]
-		desc = data["desc"]
-		datestr = data["datestring"]
-		_id = data["id"]
-
-		new_data = StageData(streamers=streamers, title=title, desc=desc, datestring=datestr, slices=slices)
-		new_data.id = _id
+	def load_from_json(d: dict) -> 'StageData':
+		slices = [VideoSlice(v["id"], v["ss"], v["to"], v["path"]) for v in d["slices"]]
+		new_data = StageData(
+			streamers=d["streamers"], title=d["title"], desc=d["desc"], 
+			datestring=d["datestring"], slices=slices)
+		new_data.id = d["id"]
 
 		return new_data
 	
@@ -364,19 +352,6 @@ def check_description(formatdict, inputdefault=None):
 
 	return desc
 
-# time in seconds to a timestamp string
-def int_to_timestamp(i:int) -> str:
-	if i >= 3600: # hours position
-		return f"{int(i // 3600)}:{int((i // 60) % 60)}:{int(i % 60)}"
-	elif i >= 60: # minutes position
-		return f"0:{int(i // 60)}:{int(i % 60)}"
-	else:
-		return f"0:0:{int(i)}"
-
-# position and duration to a proper timestamp string
-def posdur_to_timestamp(pos:int, dur:int) -> Tuple[str, str]:
-	return (int_to_timestamp(pos), int_to_timestamp(pos + dur))
-
 
 def _new(args, conf):
 	VODS_DIR = conf.directories.vods
@@ -420,11 +395,11 @@ def _new(args, conf):
 			cprint(f"#dChapters: ", end="")
 			ch = []
 			for c in vid["chapters"]:
-				(pos, end) = posdur_to_timestamp(c['pos'], c['dur'])
+				(pos, end) = util.posdur_to_timestamp(c['pos'], c['dur'])
 				ch.append(f"`{c['desc']}` ({pos}-{end})")
 			cprint(" | ".join(ch) + " | EOF#r")
 		else:
-			(pos, end) = posdur_to_timestamp(0, vid['length'])
+			(pos, end) = util.posdur_to_timestamp(0, vid['length'])
 			cprint(f"#dChapter: `{vid['game_name']}` ({pos}-{end}) | EOF#r")
 		args.ss += [check_time("Start", args.ss[x] if x < len(args.ss) else None)]
 		args.to += [check_time("End", args.to[x] if x < len(args.to) else None)]

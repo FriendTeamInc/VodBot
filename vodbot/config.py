@@ -61,7 +61,7 @@ class _ConfigChat:
 	# Dictates what closed caption format the chat logs should be exported to when exporting. This
 	# is ignored when uploading as uploading to YouTube will always use the YTT format.
 	export_format: str = field(default="YTT", metadata=config(mm_field=fields.Str(
-		validate=validate.OneOf(["raw","RealText","SAMI","YTT"]))))
+		validate=validate.OneOf(["raw", "YTT"])))) # ["raw", "RealText", "SAMI", "YTT"]
 	# Dictates how long a single message should appear in the closed caption export.
 	message_display_time: int = 10
 	# Toggle for giving white names (uncolored) a random color.
