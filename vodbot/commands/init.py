@@ -1,8 +1,6 @@
 # Initialization of VodBot, setting up config, etc.
 
-import json
-import re
-from os.path import isabs, exists
+from os.path import exists
 
 import vodbot.util as util
 import vodbot.config as config

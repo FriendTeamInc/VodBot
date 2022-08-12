@@ -6,8 +6,7 @@ from .config import Config
 import os
 import sys
 import json
-from pathlib import Path
-from collections import OrderedDict
+from marshmallow import ValidationError
 
 
 def make_dir(directory):
@@ -21,6 +20,7 @@ def make_dir(directory):
 	except OSError as e:
 		exit_prog(code=-3, errmsg=str(e))
 
+
 def load_conf(filename):
 	"""
 	Loads the config of VodBot at a specific directory.
@@ -32,12 +32,14 @@ def load_conf(filename):
 	conf = None
 	try:
 		with open(filename) as f:
-			conf = Config.from_json(f.read())
+			conf = Config.schema().loads(f.read())
 	except FileNotFoundError:
 		exit_prog(2, f"Config not found. You can configure VodBot with the init command.")
-	except json.decoder.JSONDecodeError as e:
-		exit_prog(98, f"Failed to decode config. \"{e.msg}\"")
-		
+	except ValidationError as e:
+		exit_prog(98, f'Failed to validate config. \n"{e.messages}"')
+
+	return conf
+
 	# for key in DEFAULT_CONFIG:
 	# 	if key not in conf:
 	# 		exit_prog(79, f"Missing key \"{key}\" in config, please edit your config to continue.")
@@ -54,8 +56,7 @@ def load_conf(filename):
 	# chat_format.append("raw")
 	# if conf["chat_export"] not in chat_format:
 	# 	exit_prog(10, f"Chat format for exporting not valid. Got `{conf['chat_export']}`, expected any of the following `{chat_format}`. Fix your config to continue.")
-	
-	return conf
+
 
 def exit_prog(code=0, errmsg=None):
 	"""
