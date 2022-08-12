@@ -2,16 +2,15 @@ from pathlib import Path
 
 from . import gql, worker
 from vodbot import chatlog
-from vodbot.util import make_dir, vodbotdir
+from vodbot.util import make_dir
 from vodbot.printer import cprint
-from vodbot.twitch import Vod, Clip, ChatMessage, get_video_comments
+from vodbot.twitch import Vod, Clip, get_video_comments
 
 import subprocess
 import requests
 import shutil
 import m3u8
 import os
-import json
 
 class JoiningFailed(Exception):
 	pass

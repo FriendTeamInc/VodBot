@@ -1,15 +1,13 @@
+# Pull, downloads VODs and Clips from Twitch.tv
+
 from vodbot import util, twitch
 from vodbot.itd import download as itd_dl, worker as itd_work
-from vodbot.twitch import Channel, Vod, Clip
 from vodbot.printer import cprint
+from vodbot.itd.gql import set_client_id
 
 from pathlib import Path
 from os import listdir
 from os.path import isfile
-
-
-# Default path
-vodbotdir = util.vodbotdir
 
 
 def run(args):
@@ -22,6 +20,7 @@ def run(args):
 	TEMP_DIR = conf.directories.temp
 	LOG_LEVEL = conf.export.ffmpeg_loglevel
 	PULL_CHAT = conf.pull.save_chat
+	set_client_id(conf.pull.gql_client)
 	
 	cprint("#r#dLoading channel data...#r", end=" ", flush=True)
 	channels = twitch.get_channels([channel.username for channel in CHANNEL_IDS])
