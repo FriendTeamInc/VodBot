@@ -1,5 +1,6 @@
 from . import util, __project__, __version__
-from .config import DEFAULT_CONFIG_PATH, DEFAULT_CONFIG
+from .config import DEFAULT_CONFIG_PATH
+from .printer import cprint, colorize
 
 import argparse
 from pathlib import Path
@@ -18,7 +19,7 @@ def deffered_main():
 
 
 def main():
-	titletext = f'* {__project__} {__version__} (c) 2020-22 Logan "NotQuiteApex" Hickok-Dickson *'
+	titletext = colorize(f'#fM* {__project__} {__version__} (c) 2020-22 Logan "NotQuiteApex" Hickok-Dickson *#r')
 
 	#print(type(DEFAULT_CONFIG.directories.clips))
 
@@ -100,8 +101,8 @@ def main():
 	elif args.cmd == "info":
 		import_module(".commands.info", "vodbot").run(args)
 	else:
-		print(titletext)
-		print("* run with `-h` to find what commands are available *")
+		cprint(titletext)
+		cprint("#fM* run with `-h` to find what commands are available *#r")
 
 
 if __name__ == "__main__":

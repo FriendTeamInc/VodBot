@@ -31,8 +31,12 @@ COLOR_CODES = {
 USE_COLOR = "--no-color" not in sys_argv and "-n" not in sys_argv
 
 def colorize(text: str):
+	if not USE_COLOR:
+		return strip_color(text)
+
 	for k, v in COLOR_CODES.items():
 		text = text.replace("#" + k, v)
+
 	return text
 
 def strip_color(text: str):
@@ -41,5 +45,5 @@ def strip_color(text: str):
 	return text
 
 def cprint(*args, **kwargs):
-	args = [colorize(txt) if USE_COLOR else strip_color(txt) for txt in args]
+	args = [colorize(txt) for txt in args]
 	print(*args, **kwargs)
