@@ -32,6 +32,7 @@ class _ConfigChannel:
 	save_vods: bool
 	save_clips: bool
 	save_chat: bool
+	#thumbnail_icon: _ConfigThumbnailIcon
 
 @dataclass_json
 @dataclass
@@ -189,4 +190,4 @@ class Config:
 	directories: _ConfigDirectories = field(default_factory=lambda: _ConfigDirectories())
 
 
-DEFAULT_CONFIG = Config.schema().load({})
+DEFAULT_CONFIG_SCHEMA = Config.schema()

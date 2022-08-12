@@ -1,12 +1,18 @@
 # Initialization of VodBot, setting up config, etc.
 
 from os.path import exists
+from pathlib import Path
 
 import vodbot.util as util
 import vodbot.config as config
 
 
+DEFAULT_CONFIG = config.DEFAULT_CONFIG_SCHEMA.load({})
+
+
 def run(args):
+	args.output = Path(args.output)
+
 	# check if the config exists and ask if it should be overwritten
 	if exists(args.output):
 		input("It seems a file already exists here. Press enter if you wish to continue, press Ctrl+C to quit.")
@@ -23,15 +29,15 @@ def run(args):
 	print("Creating default config...")
 	
 	# create directories now
-	util.make_dir(config.DEFAULT_CONFIG.vods)
-	util.make_dir(config.DEFAULT_CONFIG.clips)
-	util.make_dir(config.DEFAULT_CONFIG.temp)
-	util.make_dir(config.DEFAULT_CONFIG.stage)
+	util.make_dir(DEFAULT_CONFIG.vods)
+	util.make_dir(DEFAULT_CONFIG.clips)
+	util.make_dir(DEFAULT_CONFIG.temp)
+	util.make_dir(DEFAULT_CONFIG.stage)
 
 	# now write the config
 	try:
 		with open(str(args.output), "w") as f:
-			f.write(config.DEFAULT_CONFIG.to_json(indent="\t"))
+			f.write(DEFAULT_CONFIG.to_json(indent="\t"))
 	except FileNotFoundError:
 		util.exit_prog(68, f"Cannot create file at `{args.output}`, despite being able to before.")
 
