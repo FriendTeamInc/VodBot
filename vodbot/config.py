@@ -20,7 +20,7 @@ class _MMPath(fields.Field):
 
 _path_encode = lambda x: str(x)
 _path_decode = lambda x: Path(x)
-_path_field_config = config(encoder=_path_encode, decoder=_path_decode, mm_field=_MMPath)
+_path_field_config = config(encoder=_path_encode, decoder=_path_decode, mm_field=_MMPath())
 
 @dataclass_json
 @dataclass
@@ -56,17 +56,17 @@ class _ConfigPull:
 class _ConfigChat:
 	# Dictates what closed caption format the chat logs should be exported to when exporting. This
 	# is ignored when uploading as uploading to YouTube will always use the YTT format.
-	export_format: Literal["raw","RealText","SAMI","YTT"] = "YTT"
+	export_format: str = "YTT" # Literal["raw","RealText","SAMI","YTT"]
 	# Dictates how long a single message should appear in the closed caption export.
 	message_display_time: int = 10
 	# Toggle for giving white names (uncolored) a random color.
 	randomize_uncolored_names: bool = True
 	
 	# YouTube Timed Text formatting options TODO
-	ytt_align: Literal["left", "right", "center"] = "left"
-	ytt_anchor: Literal[tuple(range(9))] = 6
-	ytt_position_x: Literal[tuple(range(101))] = 0
-	ytt_position_y: Literal[tuple(range(101))] = 100
+	ytt_align: str = "left" # Literal["left", "right", "center"]
+	ytt_anchor: int = 6 # Literal[tuple(range(9))]
+	ytt_position_x: int = 0 # Literal[tuple(range(101))]
+	ytt_position_y: int = 100 # Literal[tuple(range(101))]
 
 @dataclass_json
 @dataclass
@@ -84,7 +84,7 @@ class _ConfigExport:
 	# This is used to describe to FFMPEG what type of output there should be regarding when
 	# the program directs it to manage video files. "warning" is recommended as it displays very
 	# little unless otherwise necessary.
-	ffmpeg_loglevel: Literal["warning", "error", "fatal"] = "warning"
+	ffmpeg_loglevel: str = "warning" # Literal["warning", "error", "fatal"]
 	# A simple toggle for managing whether chat is exported with a stage, if available. More
 	# options are available in the chat config section.
 	chat_enable: bool = True
@@ -181,11 +181,11 @@ class Config:
 
 DEFAULT_CONFIG_DIRECTORY = Path.home() / ".vodbot"
 DEFAULT_CONFIG_PATH = DEFAULT_CONFIG_DIRECTORY / "config.json"
-DEFAULT_CONFIG = Config.from_dict({
+DEFAULT_CONFIG = Config.schema().load({
 	"channels": {},
 	"pull": {
 		"save_chat": True,
-		"gql_client_id": "kimne78kx3ncx6brgo4mv6wki5h1ko",
+		"gql_client": "kimne78kx3ncx6brgo4mv6wki5h1ko",
 	},
 	"chat": {
 		"export_format": "YTT",
@@ -206,7 +206,7 @@ DEFAULT_CONFIG = Config.from_dict({
 	"upload": {
 		"client_path":  str(DEFAULT_CONFIG_DIRECTORY / "yt-client.json"),
 		"session_path": str(DEFAULT_CONFIG_DIRECTORY / "yt-session.json"),
-		"chat_enable": True,
+		"chat_enable": 0,
 	},
 	"directories": {
 		"vods":  str(DEFAULT_CONFIG_DIRECTORY / "vods"),
