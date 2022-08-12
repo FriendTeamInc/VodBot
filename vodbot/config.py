@@ -29,9 +29,9 @@ _path_field_config = config(encoder=lambda x: str(x), decoder=lambda x: Path(x),
 @dataclass
 class _ConfigChannel:
 	username: str
-	save_vods: bool
-	save_clips: bool
-	save_chat: bool
+	save_vods: bool = True
+	save_clips: bool = True
+	save_chat: bool = True
 	#thumbnail_icon: _ConfigThumbnailIcon
 
 @dataclass_json
@@ -179,7 +179,7 @@ class _ConfigDirectories:
 @dataclass
 class Config:
 	# The master copy of the config, the default.
-	channels: Dict[str, _ConfigChannel] = field(default_factory=lambda: {}) # TODO: validate channels dict?
+	channels: List[_ConfigChannel] = field(default_factory=lambda: {}) # TODO: validate channels dict?
 	pull: _ConfigPull = field(default_factory=lambda: _ConfigPull())
 	chat: _ConfigChat = field(default_factory=lambda: _ConfigChat())
 	stage: _ConfigStage = field(default_factory=lambda: _ConfigStage())
