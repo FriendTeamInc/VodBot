@@ -1,7 +1,7 @@
 # Module to pull and create different files and directories on the OS
 
 from .printer import cprint
-from .config import Config, DEFAULT_CONFIG
+from .config import Config
 
 import os
 import sys

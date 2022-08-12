@@ -8,7 +8,7 @@ from typing import Dict, List, Literal, Tuple, Any, Mapping
 from pathlib import Path
 
 
-class MMPath(fields.Field):
+class _MMPath(fields.Field):
 	def _serialize(self, value: Any, attr: str, obj: Any, **kwargs):
 		return str(value)
 	
@@ -18,14 +18,9 @@ class MMPath(fields.Field):
 		except ValueError as e:
 			raise ValidationError("String must be a valid file/directory path") from e
 
-path_field = field(
-	metadata=config(
-		encoder=lambda x: str(x),
-		decoder=lambda x: Path(x),
-		mm_field=MMPath
-	)
-)
-
+_path_encode = lambda x: str(x)
+_path_decode = lambda x: Path(x)
+_path_field_config = config(encoder=_path_encode, decoder=_path_decode, mm_field=_MMPath)
 
 @dataclass_json
 @dataclass
@@ -78,7 +73,7 @@ class _ConfigChat:
 class _ConfigStage:
 	# A UTC timezone code string, like "+0000" (GMT), "-0500" (EDT) or "+0930" (ACST). Used for
 	# calculating certain dates relating to videos (which store their date as ISO 8601).
-	timezone: str = "+0000"
+	timezone: str = field(default_factory=lambda: "+0000")
 	# A dictionary of keys and related strings to make typing descriptions for stages easier,
 	# such as adding a lot of social media links at the end of a YouTube description.
 	description_macros: Dict[str, str] = field(default_factory=lambda: {})
@@ -104,8 +99,8 @@ class _ConfigExport:
 @dataclass
 class _ConfigUpload:
 	chat_enable: bool
-	client_path: Path = path_field
-	session_path: Path = path_field
+	client_path: Path = field(metadata=_path_field_config)
+	session_path: Path = field(metadata=_path_field_config)
 
 @dataclass_json
 @dataclass
@@ -113,7 +108,7 @@ class _ConfigThumbnailIcon:
 	offset_x: int
 	offset_y: int
 	scale: int
-	filepath: Path = path_field
+	filepath: Path = field(metadata=_path_field_config)
 
 @dataclass_json
 @dataclass
@@ -164,11 +159,11 @@ class _ConfigDirectories:
 	# - `stage` is a directory for storing information about to-be-processed video files.
 	# - `thumbnail` is for storing lots of images used for generating thumbnails for processed
 	# videos, it is the prefix to the filepaths in the thumbnail config for heads and games.
-	vods: Path = path_field
-	clips: Path = path_field
-	temp: Path = path_field
-	stage: Path = path_field
-	#thumbnail: Path = path_field
+	vods: Path = field(metadata=_path_field_config)
+	clips: Path = field(metadata=_path_field_config)
+	temp: Path = field(metadata=_path_field_config)
+	stage: Path = field(metadata=_path_field_config)
+	#thumbnail: Path = field(metadata=_path_field_config)
 
 @dataclass_json
 @dataclass
