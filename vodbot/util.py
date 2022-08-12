@@ -1,7 +1,7 @@
 # Module to pull and create different files and directories on the OS
 
 from .printer import cprint
-from .config import DEFAULT_CONFIG_SCHEMA
+from .config import Config, DEFAULT_CONFIG_SCHEMA
 
 import os
 import sys
@@ -20,7 +20,7 @@ def make_dir(directory):
 		exit_prog(code=-3, errmsg=str(e))
 
 
-def load_conf(filename):
+def load_conf(filename) -> Config:
 	"""
 	Loads the config of VodBot at a specific directory.
 

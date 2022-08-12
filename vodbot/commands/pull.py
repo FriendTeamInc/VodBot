@@ -137,7 +137,7 @@ def run(args):
 			# write meta file
 			vod.write_meta(metaname)
 	
-	cprint("\n#fM#l* All done, goodbye! *#r\n")
+	#cprint("\n#fM#l* All done, goodbye! *#r\n")
 
 
 def compare_existant_file(path, allvods):

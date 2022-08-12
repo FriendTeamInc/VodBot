@@ -87,6 +87,9 @@ class _ConfigStage:
 	# such as adding a lot of social media links at the end of a YouTube description.
 	description_macros: Dict[str, str] = field(default_factory=lambda: {})
 
+	delete_on_export: bool = True
+	delete_on_upload: bool = True
+
 @dataclass_json
 @dataclass
 class _ConfigExport:
