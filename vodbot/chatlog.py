@@ -1,10 +1,12 @@
 # Module that parses chatlogs to and from files
 
 from os import write
-from vodbot.commands.stage import StageData
-from vodbot.printer import cprint
-from vodbot.twitch import ChatMessage
-import vodbot.util as util
+from random import randint
+from .commands.stage import StageData
+from .printer import cprint
+from .twitch import ChatMessage
+from .config import Config
+from . import util
 
 import json
 from typing import List, Tuple
@@ -138,63 +140,23 @@ def chat_to_listwithbounds(msgs: List[ChatMessage], vid_duration:int, msg_durati
 	return chat_lists
 
 
-def chat_to_realtext(msgs: List[ChatMessage], path: str, vid_duration:int, msg_duration:int):
-	# get chat with message in bounds
-	chat_lists = chat_to_listwithbounds(msgs, vid_duration, msg_duration)
+# https://github.com/arcusmaximus/YTSubConverter/blob/master/ytt.ytt
+def chat_to_ytt(conf: Config, msgs: List[ChatMessage], path: str, vid_duration:int):
+	msg_duration = conf.chat.message_display_time
+	msg_alignment = conf.chat.ytt_align
+	msg_anchor = conf.chat.ytt_anchor
+	pos_x = conf.chat.ytt_position_x
+	pos_y = conf.chat.ytt_position_y
 
-	# write actual realtext stuff
-	with open(path, "w", encoding="utf8") as f:
-		# add preamble (stuff like opening tags)
-		f.write('<window type="generic" wordwrap="true"><font color="#ffffff" text-align="left">\n')
-
-		for c in chat_lists:
-			f.write(f'<time begin="{c["begin"]}" end="{c["end"]}">')
-			if c["break"]:
-				f.write("<clear/>\n")
-				continue
-			for m in c["msgs"]:
-				msg = m["msg"]
-				for k,v in HTML_FXIED_SYMBOLS.items():
-					msg = msg.replace(k, v)
-				f.write(f'<font color="#{m["clr"]}"><b>{m["usr"]}</b></font>: {msg}')
-				if m != c["msgs"][-1]:
-					f.write("<br/>")
-			
-			f.write("\n")
-		
-		# finish up
-		f.write("</font></window>")
-
-
-def chat_to_sami(msgs: List[ChatMessage], path: str, vid_duration:int, msg_duration:int):
-	# get chat with message in bounds
-	chat_lists = chat_to_listwithbounds(msgs, vid_duration, msg_duration)
-
-	with open(path, "w", encoding="utf8") as f:
-		# write preamble stuff
-		f.write("<SAMI><head><SAMIParam>\n")
-		f.write(f"Metrics {{time:ms; duration: {vid_duration*1000};}}\nSpec {{MSFT:1.0;}}\n")
-		f.write('</SAMIParam><style type="text/css"><!--\n')
-		f.write(f"p {{text-align: left; color: white}}\n")
-		f.write("--></style></head><body>\n")
-
-		for c in chat_lists:
-			f.write(f"<sync start={c['begin']*1000}><p>")
-			for m in c["msgs"]:
-				msg = m["msg"]
-				for k,v in HTML_FXIED_SYMBOLS.items():
-					msg = msg.replace(k, v)
-				f.write(f'<font color="#{m["clr"]}"><b>{m["usr"]}</b></font>: {msg}')
-				if m != c["msgs"][-1]:
-					f.write("<br/>")
-				
-			f.write("</p>\n")
-
-		# finish up
-		f.write("</body></SAMI>")
-
-
-def chat_to_ytt(msgs: List[ChatMessage], path: str, vid_duration:int, msg_duration:int):
+	if msg_alignment == "left":
+		msg_alignment = 0
+	elif msg_alignment == "right":
+		msg_alignment = 1
+	elif msg_alignment == "center":
+		msg_alignment = 2
+	else:
+		msg_alignment = 0
+	
 	# get individual users and their info
 	chat_users, user_order = chat_to_userlist(msgs)
 	# get chat with message in bounds
@@ -210,9 +172,13 @@ def chat_to_ytt(msgs: List[ChatMessage], path: str, vid_duration:int, msg_durati
 		# user name text
 		for user in user_order:
 			u = chat_users[user]
+			clr = u["clr"]
+			if conf.chat.randomize_uncolored_names and clr == "FFFFFF":
+				clr = f"{randint(127,255):02x} {randint(127,255):02x} {randint(127, 255):02x}"
+				chat_users[user]["clr"] = clr
 			f.write(f'<pen id="{u["id"]+2}" fc="#{u["clr"]}" fo="254" b="1" />\n')
-		f.write(f'<ws id="1" ju="0" />\n')
-		f.write(f'<wp id="1" ap="6" ah="0" av="100" />\n')
+		f.write(f'<ws id="1" ju="{msg_alignment}" />\n')
+		f.write(f'<wp id="1" ap="{msg_anchor}" ah="{pos_x}" av="{pos_y}" />\n')
 		f.write('</head><body>\n')
 
 		count = 0
@@ -236,54 +202,8 @@ def chat_to_ytt(msgs: List[ChatMessage], path: str, vid_duration:int, msg_durati
 		f.write("</body></timedtext>")
 
 
-def chat_to_ttml(msgs: List[ChatMessage], path: str, vid_duration:int, msg_duration:int):
-	# DOES NOT CURRENTLY WORK
-	# get chat with message in bounds
-	chat_lists = chat_to_listwithbounds(msgs, vid_duration, msg_duration)
-
-	with open(path, "w", encoding="utf8") as f:
-		# write preamble stuffs
-		f.write('<?xml version="1.0" encoding="utf-8"?>\n')
-		f.write('<tt xmlns="http://www.w3.org/ns/ttml"><head>\n')
-		f.write('<styling xmlns:tts="http://www.w3.org/ns/ttml#styling">\n')
-		f.write('<style xml:id="s" tts:textAlign="left" tts:color="#ffffff"/>\n')
-		f.write('</styling></head><body>\n')
-
-		count = 0
-		for c in chat_lists:
-			f.write(f'<p xml:id="a{count}" style="s" begin="{c["begin"]}.0s" end="{c["end"]}.0s">')
-			count += 1
-			for m in c["msgs"]:
-				msg = m["msg"]
-				for k,v in HTML_FXIED_SYMBOLS.items():
-					msg = msg.replace(k, v)
-				f.write(f'<font color="#{m["clr"]}"><b>{m["usr"]}</b></font>: {msg}')
-				if m != c["msgs"][-1]:
-					f.write("<br/>")
-				
-			f.write("</p>\n")
-		
-		# finish up
-		f.write("</body></tt>")
-
-
-def timestring_as_seconds(time:str, default:int=0):
-	if time == "EOF":
-		return default
-	
-	s = time.split(":")
-	
-	seconds = int(s[-1]) if len(s) >= 1 else 0
-	minutes = int(s[-2]) if len(s) >= 2 else 0
-	hours = int(s[-3]) if len(s) >= 3 else 0
-
-	# Hours, minutes, seconds
-	return hours * 60 * 60 + minutes * 60 + seconds
-
-
-def process_stage(conf: dict, stage: StageData, mode:str) -> Path:
-	tempdir = Path(conf["temp_dir"])
-	msg_duration = int(conf["chat_msg_time"])
+def process_stage(conf: Config, stage: StageData, mode:str) -> Path:
+	tempdir = Path(conf.directories.temp)
 
 	cprint(f"#rLoading all chat messages for `#fM{stage.id}#r`.", end="")
 	total_offset = 0
@@ -299,8 +219,8 @@ def process_stage(conf: dict, stage: StageData, mode:str) -> Path:
 		duration = meta.get("length", 0)
 		chat_path = slc.filepath[:-4] + ".chat"
 		# start and end times as seconds
-		start_sec = timestring_as_seconds(slc.ss)
-		end_sec = timestring_as_seconds(slc.to, duration)
+		start_sec = util.timestring_as_seconds(slc.ss)
+		end_sec = util.timestring_as_seconds(slc.to, duration)
 		
 		# keep each list of chat separate, compare timestamps to offsets to make
 		# sure theyre inbetween the slices
@@ -318,10 +238,10 @@ def process_stage(conf: dict, stage: StageData, mode:str) -> Path:
 	if mode != "upload" and mode != "export":
 		util.exit_prog(94, f"Cannot export chat with export mode {mode}")
 	
-	export_type = conf["chat_"+mode]
+	export_type = conf.chat.export_format if mode != "upload" else "YTT"
 
 	if len(chat_list) == 0:
-		cprint(f" No chat found in `#fY{export_type}#r` stage. Skipping...")
+		cprint(f" No chat found in `#fM{stage.id}#r` stage. Skipping...")
 		return None
 
 	cprint(f" Exporting as format `#fY{export_type}#r`.")
@@ -329,24 +249,12 @@ def process_stage(conf: dict, stage: StageData, mode:str) -> Path:
 	returnpath = None
 	if export_type == "raw":
 		# chat to logfile time
-		returnpath = tempdir / (stage.id + ".chat")
+		returnpath = tempdir / f"{stage.id}.chat"
 		chat_to_logfile(chat_list, str(returnpath))
-	elif export_type == "RealText":
-		# load from archive, parse and write to temp
-		returnpath = tempdir / (stage.id + ".rt")
-		chat_to_realtext(chat_list, str(returnpath), total_offset, msg_duration)
-	elif export_type == "SAMI":
-		# load from archive, parse and write to temp
-		returnpath = tempdir / (stage.id + ".sami")
-		chat_to_sami(chat_list, str(returnpath), total_offset, msg_duration)
 	elif export_type == "YTT":
 		# load from archive, parse and write to temp
-		returnpath = tempdir / (stage.id + ".ytt")
-		chat_to_ytt(chat_list, str(returnpath), total_offset, msg_duration)
-	elif export_type == "TTML":
-		# load from archive, parse and write to temp
-		returnpath = tempdir / (stage.id + ".ttml")
-		chat_to_ttml(chat_list, str(returnpath), total_offset, msg_duration)
+		returnpath = tempdir / f"{stage.id}.ytt"
+		chat_to_ytt(conf, chat_list, str(returnpath), total_offset)
 
 	return returnpath
 

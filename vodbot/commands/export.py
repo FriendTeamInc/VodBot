@@ -5,17 +5,13 @@ from .stage import StageData
 import vodbot.util as util
 import vodbot.video as vbvid
 import vodbot.chatlog as vbchat
+from vodbot.config import Config
 from vodbot.printer import cprint
 
 from datetime import datetime
 from pathlib import Path
 from os import remove as os_remove
 from shutil import move as shutil_move
-
-
-# Default path
-vodbotdir = util.vodbotdir
-stagedir = None
 
 
 DISALLOWED_CHARACTERS = [
@@ -30,7 +26,7 @@ def sort_stagedata(stagedata):
 	return (date - EPOCH).total_seconds()
 
 
-def handle_stage(conf: dict, stage: StageData) -> Path:
+def handle_stage(conf: Config, stage: StageData) -> Path:
 	tmpfile = None
 	try:
 		tmpfile = vbvid.process_stage(conf, stage)
@@ -48,10 +44,8 @@ def handle_stage(conf: dict, stage: StageData) -> Path:
 
 
 def run(args):
-	global stagedir
-
 	conf = util.load_conf(args.config)
-	stagedir = Path(conf["stage_dir"])
+	STAGE_DIR = conf.directories.stage
 
 	util.make_dir(args.path)
 	args.path = Path(args.path)
@@ -59,10 +53,10 @@ def run(args):
 	# load stages, but dont slice
 	# Handle id/all
 	if args.id == "all":
-		cprint("#dLoading and slicing stages...#r")
+		cprint("#dLoading and slicing stages...#r", flush=True)
 
 		# create a list of all the hashes and sort by date streamed, slice chronologically
-		stagedatas = StageData.load_all_stages(stagedir)
+		stagedatas = StageData.load_all_stages(STAGE_DIR)
 		stagedatas.sort(key=sort_stagedata)
 
 		for stage in stagedatas:
@@ -84,13 +78,13 @@ def run(args):
 				shutil_move(str(tmpchat), str(args.path / (title+tmpchat.suffix)))
 			
 			# deal with old stage
-			if conf["stage_export_delete"]:
-				os_remove(str(stagedir / f"{stage.id}.stage"))
+			if conf.stage.delete_on_export:
+				os_remove(str(STAGE_DIR / f"{stage.id}.stage"))
 	else:
-		cprint("#dLoading stage...", end=" ")
+		cprint("#dLoading stage...#r", flush=True)
 		
 		# check if stage exists, and prep it for slice
-		stagedata = StageData.load_from_id(stagedir, args.id)
+		stagedata = StageData.load_from_id(STAGE_DIR, args.id)
 		
 		tmpfile = None
 		tmpchat = None
@@ -111,8 +105,8 @@ def run(args):
 			shutil_move(str(tmpchat), str(args.path / (title+tmpchat.suffix)))
 		
 		# Deal with old stage
-		if conf["stage_export_delete"]:
-			os_remove(str(stagedir / f"{stagedata.id}.stage"))
+		if conf.stage.delete_on_export:
+			os_remove(str(STAGE_DIR / f"{stagedata.id}.stage"))
 
 	# say "Done!"
 	cprint("#fG#lDone!#r")

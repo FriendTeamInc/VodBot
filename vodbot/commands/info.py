@@ -40,12 +40,16 @@ def get_type(cid):
 
 
 def run(args):
+	cprint("#dLoading config...#r", end=" ", flush=True)
+	conf = util.load_conf(args.config)
+	gql.set_client_id(conf.pull.gql_client)
+
 	# First determine what kind of data it is...
 	# We should allow people to paste full links or just the ID too.
 	tid = args.id
 
 	# Get the proper id and type of content we need to pull
-	cprint("#dDetermining type...#r", end=" ")
+	cprint("#dDetermining type...#r", end=" ", flush=True)
 	cid, ctype = get_type(tid)
 
 	# The call the appropriate info query for GQL

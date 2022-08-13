@@ -15,12 +15,13 @@ VodBot can be installed with `pip install vodbot`. You can also install by cloni
 
 Dependencies/Requirements:
 * [FFmpeg](https://www.ffmpeg.org/) (Must be in your PATH environment variable)
-* [Python 3.6+](https://www.python.org/)
-    * [Requests 2.20+](https://pypi.org/project/requests/)
-    * [M3U8 0.8+](https://pypi.org/project/m3u8/)
-    * [Google API Client 2.0+](https://pypi.org/project/google-api-python-client/)
-    * [Google Auth OAuthLib 0.4.4](https://pypi.org/project/google-auth-oauthlib/)
-    * [Google Auth httplib2 0.1.0](https://pypi.org/project/google-auth-httplib2/)
+* [Python 3.7+](https://www.python.org/)
+    * [Requests](https://pypi.org/project/requests/)
+    * [dataclasses-json](https://pypi.org/project/dataclasses-json/)
+    * [M3U8](https://pypi.org/project/m3u8/)
+    * [Google API Client](https://pypi.org/project/google-api-python-client/)
+    * [Google Auth OAuthLib](https://pypi.org/project/google-auth-oauthlib/)
+    * [Google Auth httplib2](https://pypi.org/project/google-auth-httplib2/)
 
 # Wiki
 All documentation of VodBot and its usage is managed on the repo wiki, which can be found [here](https://github.com/NotQuiteApex/VodBot/wiki)! Please consult the wiki before contributing or opening issues.

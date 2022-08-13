@@ -1,14 +1,17 @@
 # Module to call GQL queries
 
-from vodbot import TWITCH_CLIENT_ID
-
 import requests
 from urllib.parse import urlencode
 
 
 GQL_URL = "https://gql.twitch.tv/gql"
-GQL_HEADERS = {"Client-ID": TWITCH_CLIENT_ID} # We use Twitch's private client ID for GQL calls
+GQL_HEADERS = {"Client-ID": ""}
 
+
+# We use Twitch's private client ID for GQL calls
+def set_client_id(client_id: str):
+	global GQL_HEADERS
+	GQL_HEADERS["Client-ID"] = client_id
 
 def _process_query_errors(resp):
 	if 400 <= resp.status_code < 500:
@@ -46,7 +49,7 @@ GET_CHANNEL_VIDEOS_QUERY = """
 			totalCount
 			edges {{ cursor
 				node {{ id title
-					publishedAt broadcastType
+					publishedAt broadcastType status
 					lengthSeconds thumbnailURLs
 					game {{ id name }}
 					creator {{ id login displayName }}

@@ -272,7 +272,12 @@ def get_channel_vods(channel: Channel) -> List[Vod]:
 		for vod in resp["edges"]:
 			v, c, g = vod["node"], v["creator"], v["game"]
 
+			if v["broadcastType"] == "ARCHIVE" and v["status"] == "RECORDING":
+				# This broadcast is currently live, we need to skip it.
+				continue
+
 			game_id = game_name = ""
+      
 			if g:
 				game_id, game_name = g["id"], g["name"]
 			
