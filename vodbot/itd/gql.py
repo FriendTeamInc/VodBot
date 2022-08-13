@@ -49,7 +49,7 @@ GET_CHANNEL_VIDEOS_QUERY = """
 			totalCount
 			edges {{ cursor
 				node {{ id title
-					publishedAt broadcastType
+					publishedAt broadcastType status
 					lengthSeconds thumbnailURLs
 					game {{ id name }}
 					creator {{ id login displayName }}

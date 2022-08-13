@@ -1,6 +1,7 @@
 # Module that parses chatlogs to and from files
 
 from os import write
+from random import randint
 from .commands.stage import StageData
 from .printer import cprint
 from .twitch import ChatMessage
@@ -171,6 +172,10 @@ def chat_to_ytt(conf: Config, msgs: List[ChatMessage], path: str, vid_duration:i
 		# user name text
 		for user in user_order:
 			u = chat_users[user]
+			clr = u["clr"]
+			if conf.chat.randomize_uncolored_names and clr == "FFFFFF":
+				clr = f"{randint(127,255):02x} {randint(127,255):02x} {randint(127, 255):02x}"
+				chat_users[user]["clr"] = clr
 			f.write(f'<pen id="{u["id"]+2}" fc="#{u["clr"]}" fo="254" b="1" />\n')
 		f.write(f'<ws id="1" ju="{msg_alignment}" />\n')
 		f.write(f'<wp id="1" ap="{msg_anchor}" ah="{pos_x}" av="{pos_y}" />\n')

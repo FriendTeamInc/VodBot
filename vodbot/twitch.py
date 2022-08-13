@@ -275,6 +275,10 @@ def get_channel_vods(channel: Channel) -> List[Vod]:
 			c = v["creator"]
 			g = v["game"]
 
+			if v["broadcastType"] == "ARCHIVE" and v["status"] == "RECORDING":
+				# This broadcast is currently live, we need to skip it.
+				continue
+
 			game_id = ""
 			game_name = ""
 			if g:
