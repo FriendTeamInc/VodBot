@@ -112,4 +112,4 @@ def dl_clip(clip: Clip, path: str):
 	size, _existed = worker.download_file(source_url, path)
 
 	# Print progress
-	cprint(f"#fM#lClip#r ({clip_id})`#fM{clip_slug}#r` #fB#l~{worker.format_size(size)}#r")
+	cprint(f"#fM#lClip#r `#fM{clip_slug}#r` ({clip_id}) #fB#l~{worker.format_size(size)}#r")
