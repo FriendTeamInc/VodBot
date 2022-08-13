@@ -2,16 +2,15 @@ from pathlib import Path
 
 from . import gql, worker
 from vodbot import chatlog
-from vodbot.util import make_dir, vodbotdir
+from vodbot.util import make_dir
 from vodbot.printer import cprint
-from vodbot.twitch import Vod, Clip, ChatMessage, get_video_comments
+from vodbot.twitch import Vod, Clip, get_video_comments
 
 import subprocess
 import requests
 import shutil
 import m3u8
 import os
-import json
 
 class JoiningFailed(Exception):
 	pass
@@ -33,10 +32,7 @@ def get_playlist_uris(video_id, access_token):
 	data = resp.content.decode("utf-8")
 
 	playlist = m3u8.loads(data)
-	playlist_uris = []
-
-	for p in playlist.playlists:
-		playlist_uris += [p.uri]
+	playlist_uris = [p.uri for p in playlist.playlists]
 	
 	return playlist_uris
 
@@ -66,11 +62,8 @@ def dl_video(video: Vod, TEMP_DIR: Path, path: str, max_workers: int, LOG_LEVEL:
 
 	# Get all the necessary vod paths for the uri
 	base_uri = "/".join(source_uri.split("/")[:-1]) + "/"
-	vod_paths = []
-	for segment in playlist.segments:
-		if segment.uri not in vod_paths:
-			vod_paths.append(segment.uri)
-
+	vod_paths = [segment.uri for segment in playlist.segments]
+	
 	# Download VOD chunks to the temp folder
 	path_map = worker.download_files(video_id, base_uri, tempdir, vod_paths, max_workers)
 	# TODO: rewrite this output to look nicer and remove ffmpeg output using COLOR_CODES["F"]
@@ -119,4 +112,4 @@ def dl_clip(clip: Clip, path: str):
 	size, _existed = worker.download_file(source_url, path)
 
 	# Print progress
-	cprint(f"#fM#lClip#r ({clip_id})`#fM{clip_slug}#r` #fB#l~{worker.format_size(size)}#r")
+	cprint(f"#fM#lClip#r `#fM{clip_slug}#r` ({clip_id}) #fB#l~{worker.format_size(size)}#r")

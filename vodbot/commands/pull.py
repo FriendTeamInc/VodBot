@@ -1,152 +1,143 @@
+# Pull, downloads VODs and Clips from Twitch.tv
+
+from typing import List
 from vodbot import util, twitch
 from vodbot.itd import download as itd_dl, worker as itd_work
-from vodbot.twitch import Channel, Vod, Clip
 from vodbot.printer import cprint
+from vodbot.itd.gql import set_client_id
 
 from pathlib import Path
 from os import listdir
 from os.path import isfile
 
 
-# Default path
-vodbotdir = util.vodbotdir
-
-
 def run(args):
-	download_twitch_video(args)
-
-
-def download_twitch_video(args):
 	# Load the config and set up the access token
 	cprint("#r#dLoading config...#r", end=" ", flush=True)
 	conf = util.load_conf(args.config)
-	CHANNEL_IDS = conf["twitch_channels"]
-	VODS_DIR = conf["vod_dir"]
-	CLIPS_DIR = conf["clip_dir"]
-	TEMP_DIR = conf["temp_dir"]
-	LOG_LEVEL = conf["ffmpeg_loglevel"]
-	PULL_CHAT = conf["pull_chat_logs"]
-
-	# If channel arguments are provided, override config
-	if args.channels:
-		CHANNEL_IDS = args.channels
+	CHANNEL_IDS = conf.channels
+	VODS_DIR = conf.directories.vods
+	CLIPS_DIR = conf.directories.clips
+	TEMP_DIR = conf.directories.temp
+	LOG_LEVEL = conf.export.ffmpeg_loglevel
+	PULL_CHAT = conf.pull.save_chat
+	set_client_id(conf.pull.gql_client)
 	
-	cprint("#r#dLoading channel data...#r", flush=True)
-	channels = twitch.get_channels(CHANNEL_IDS)
+	cprint("#r#dLoading channel data...#r", end=" ", flush=True)
+	channels: List[twitch.Channel] = twitch.get_channels([channel.username for channel in CHANNEL_IDS])
+	for i, channel in enumerate(channels):
+		channel.save_vods = CHANNEL_IDS[i].save_vods
+		channel.save_clips = CHANNEL_IDS[i].save_clips
+		channel.save_chat = CHANNEL_IDS[i].save_chat and PULL_CHAT
 	
-	contentnoun = "video" # temp contentnoun until the rest is reworked
-	
+	cprint("#r#dChecking directories...#r", end=" ", flush=True)
 	# Setup directories for videos and temp
 	util.make_dir(TEMP_DIR)
-	voddir = Path(VODS_DIR)
-	util.make_dir(voddir)
-	clipdir = Path(CLIPS_DIR)
-	util.make_dir(clipdir)
+	util.make_dir(VODS_DIR)
+	util.make_dir(CLIPS_DIR)
 
+	cprint("#r#dPulling video lists...#r", flush=True)
 	# Get list of videos using channel object ID's from Twitch API
-	videos = []
 	totalvods = 0
 	totalclips = 0
-
-	channel_print = None
-	if args.type == "both":
-		channel_print = "Pulling #fM#lVOD#r & #fM#lClip#r list: #fY#l{}#r..."
-	elif args.type == "vods":
-		channel_print = "Pulling #fM#lVOD#r list: #fY#l{}#r..."
-	elif args.type == "clips":
-		channel_print = "Pulling #fM#lClip#r list: #fY#l{}#r..."
+	atboth = args.type == "both"
+	atvods = args.type == "vods"
+	atclips = args.type == "clips"
 
 	for channel in channels:
-		vods = None
-		clips = None
-		cprint(channel_print.format(channel.display_name), end=" ")
+		if not channel.save_vods and not channel.save_chat and not channel.save_clips:
+			continue
 
-		# Grab list of VODs and check against existing VODs
-		if args.type == "both" or args.type == "vods":
-			folder = voddir / channel.login
+		cprint(f"#fY#l{channel.display_name}#r:", end=" ", flush=True)
+
+		newvods = []
+		if (atboth or atvods) and (channel.save_vods or channel.save_chat):
+			folder = VODS_DIR / channel.login
 			util.make_dir(folder)
-			allvods = twitch.get_channel_vods(channel)
-			vods = compare_existant_file(folder, allvods)
-			totalvods += len(vods)
 
-		# Grab list of Clips and check against existing Clips
-		if args.type == "both" or args.type == "clips":
-			folder = clipdir / channel.login
+			channelvods = twitch.get_channel_vods(channel)
+			newvods = compare_existant_file(folder, channelvods)
+
+			totalvods += len(newvods)
+			cprint(f"#fC#l{len(newvods)} #fM#lVODs#r", end="", flush=True)
+		
+		if atboth:
+			cprint(" & ", end="", flush=True)
+		
+		newclips = []
+		if (atboth or atclips) and (channel.save_clips):
+			folder = CLIPS_DIR / channel.login
 			util.make_dir(folder)
-			allclips = twitch.get_channel_clips(channel)
-			clips = compare_existant_file(folder, allclips)
-			totalclips += len(clips)
 
-		# Print content found and save it
-		if args.type == "both":
-			cprint(f"#fC#l{len(vods)} #fM#lVODSs#r & #fC#l{len(clips)} #fM#lClips#r")
-			videos += vods
-			videos += clips
-		elif args.type == "vods":
-			cprint(f"#fC#l{len(vods)} #fM#lVODSs#r")
-			videos += vods
-		elif args.type == "clips":
-			cprint(f"#fC#l{len(clips)} #fM#lClips#r")
-			videos += clips
-			
-	if args.type == "both":
-		cprint(f"Total #fMVODs#r to download: #fC#l{totalvods}#r")
-		cprint(f"Total #fMClips#r to download: #fC#l{totalclips}#r")
-		cprint(f"Total #fM#lvideos#r to download: #fC#l{len(videos)}#r")
-	elif args.type == "vods":
-		cprint(f"Total #fMVODs#r to download: #fC#l{totalvods}#r")
-	elif args.type == "clips":
-		cprint(f"Total #fMClips#r to download: #fC#l{totalclips}#r")
+			channelclips = twitch.get_channel_clips(channel)
+			newclips = compare_existant_file(folder, channelclips)
+
+			totalclips += len(newclips)
+			cprint(f"#fC#l{len(newclips)} #fM#lClips#r", flush=True)
+		
+		channel.new_vods = newvods
+		channel.new_clips = newclips
+	
+	if atboth:
+		cprint(f"Total #fMVODs#r to pull: #fC#l{totalvods}#r")
+		cprint(f"Total #fMClips#r to pull: #fC#l{totalclips}#r")
+		cprint(f"Total #fMvideos#r to pull: #fC#l{totalvods+totalclips}#r")
+	elif atvods:
+		cprint(f"Total #fMVODs#r to pull: #fC#l{totalvods}#r")
+	elif atclips:
+		cprint(f"Total #fMClips#r to pull: #fC#l{totalclips}#r")
 
 	# Download all the videos we need.
-	previouschannel = None
-	for vod in videos:
-		# Print if we're on to a new user.
-		if previouschannel != vod.user_id:
-			previouschannel = vod.user_id
-			cprint(f"\nDownloading #fY#l{vod.user_name}#r's #fM#l{contentnoun}s#r...")
+	cprint("#r#dPulling videos...#r", flush=True)
+	for channel in channels:
+		cprint(f"Pulling videos for #fY#l{channel.display_name}#r...")
 
-		# Generate path for video
-		viddir = None
-		contentnoun = None
+		voddir = VODS_DIR / channel.login
+		for vod in channel.new_vods:
+			filepath = voddir / f"{vod.created_at}_{vod.id}".replace(":", ";")
+			filename = str(filepath) + ".mkv"
+			metaname = str(filepath) + ".meta"
+			chatname = str(filepath) + ".chat"
 
-		if isinstance(vod, Vod):
-			viddir = voddir / vod.user_name.lower()
-			contentnoun = "VOD"
-		elif isinstance(vod, Clip):
-			viddir = clipdir / vod.user_name.lower()
-			contentnoun = "Clip"
+			# download chat
+			if channel.save_chat:
+				itd_dl.dl_video_chat(vod, chatname)
+				vod.has_chat = True
+			# download video
+			if channel.save_vods:
+				try:
+					itd_dl.dl_video(vod, Path(TEMP_DIR), filename, 20, LOG_LEVEL)
+				except itd_dl.JoiningFailed:
+					cprint(f"#fR#lVOD `{vod.id}` joining failed! Skipping...#r")
+					continue
+				except itd_work.DownloadFailed:
+					cprint(f"#fR#lVOD `{vod.id}` download failed! Skipping...#r")
+					continue
+				except (itd_work.DownloadCancelled, KeyboardInterrupt):
+					cprint(f"\n#fR#lVOD `{vod.id}` download cancelled. Exiting...#r")
+					raise KeyboardInterrupt()
+			# write meta file
+			vod.write_meta(metaname)
 		
-		filepath = viddir / f"{vod.created_at}_{vod.id}".replace(":", ";")
-		filename = str(filepath) + ".mkv"
-		metaname = str(filepath) + ".meta"
-		chatname = str(filepath) + ".chat"
+		clipdir = CLIPS_DIR / channel.login
+		for clip in channel.new_clips:
+			filepath = clipdir / f"{clip.created_at}_{clip.id}".replace(":", ";")
+			filename = str(filepath) + ".mkv"
+			metaname = str(filepath) + ".meta"
 
-		# Write video data and handle exceptions
-		try:
-			if isinstance(vod, Vod):
-				# download chat
-				if PULL_CHAT:
-					itd_dl.dl_video_chat(vod, chatname)
-					vod.has_chat = True
-				# download video
-				itd_dl.dl_video(vod, Path(TEMP_DIR), filename, 20, LOG_LEVEL)
-				# write meta file
-				vod.write_meta(metaname)
-			elif isinstance(vod, Clip):
-				# download clip
-				itd_dl.dl_clip(vod, filename)
-				# write meta file
-				vod.write_meta(metaname)
-		except itd_dl.JoiningFailed:
-			cprint(f"#fR#lVOD `{vod.id}` joining failed! Preserving files...#r")
-		except itd_work.DownloadFailed:
-			cprint(f"Download failed! Skipping...#r")
-		except itd_work.DownloadCancelled:
-			cprint(f"\n#fR#l{contentnoun} download cancelled.#r")
-			raise KeyboardInterrupt()
+			# download clip
+			if channel.save_clips:
+				try:
+					itd_dl.dl_clip(clip, filename)
+				except itd_work.DownloadFailed:
+					cprint(f"#fR#lClip `{clip.id}` download failed! Skipping...#r")
+				except (itd_work.DownloadCancelled, KeyboardInterrupt):
+					cprint(f"\n#fR#lClip `{clip.id}` download cancelled. Exiting...#r")
+					raise KeyboardInterrupt()
+			# write meta file
+			clip.write_meta(metaname)
 	
-	cprint("\n#fM#l* All done, goodbye! *#r\n")
+	#cprint("\n#fM#l* All done, goodbye! *#r\n")
 
 
 def compare_existant_file(path, allvods):

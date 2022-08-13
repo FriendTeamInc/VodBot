@@ -1,5 +1,6 @@
 from . import util, __project__, __version__
 from .config import DEFAULT_CONFIG_PATH
+from .printer import cprint, colorize
 
 import argparse
 import argcomplete
@@ -36,13 +37,13 @@ def deffered_main():
 	try:
 		main()
 	except ConnectionError:
-		util.exit_prog(-2, "Failed to connect to Twitch.")
+		util.exit_prog(-2, "Failed to connect to the Internet/Intranet/ARPAnet/etc.")
 	except KeyboardInterrupt:
 		util.exit_prog(-1, "Interrupted by user.")
 
 
 def main():
-	titletext = f'* {__project__} {__version__} (c) 2020-22 Logan "NotQuiteApex" Hickok-Dickson *'
+	titletext = colorize(f'#fM* {__project__} {__version__} (c) 2020-22 Logan "NotQuiteApex" Hickok-Dickson *#r')
 
 	# Process arguments
 	parser = argparse.ArgumentParser(description="Downloads and processes VODs and clips from Twitch.tv channels.")
@@ -60,7 +61,7 @@ def main():
 	initparse.add_argument("-o", "--output", type=Path, default=DEFAULT_CONFIG_PATH, dest="output", metavar="PATH",
 		help="path to save the config to").completer = FilesCompleter
 
-	# `vodbot pull <vods/clips/both> [channel ...]`
+	# `vodbot pull <vods/clips/both>`
 	download = subparsers.add_parser("pull", description="Downloads VODs and/or clips.")
 	download.add_argument("type", type=str, default="both", nargs="?", choices=("vods", "clips", "both"),
 		help='what type of content to pull, can be "vods", "clips", or "both"')
@@ -93,17 +94,17 @@ def main():
 	stager_list.add_argument("id", type=str, help="id of the staged video data",
 		nargs="?", default=None).completer = stage_completer
 
-	# `vodbot upload <id/all>`
+	# `vodbot upload <stage_id/all>`
 	upload = subparsers.add_parser("push", description="Uploads stage(s) to YouTube.")
 	upload.add_argument("id", type=str,
 		help='id of the staged video data, "all" to upload all stages, or "logout" to remove existing YouTube credentials').completer = stage_completer
 	
-	# `vodbot export <id/all>`
+	# `vodbot export <stage_id/all>`
 	export = subparsers.add_parser("export", description="Uploads stage(s) to YouTube.")
 	export.add_argument("id", type=str, help="id of the staged video data, or `all` for all stages").completer = stage_completer
 	export.add_argument("path", type=Path, help="directory to export the video(s) to").completer = DirectoriesCompleter
 
-	# `vodbot info <id/all>`
+	# `vodbot info <vod/clip/channel_id/url>`
 	info = subparsers.add_parser("info", description="Prints out info on the Channel, Clip, or VOD given.")
 	info.add_argument("id", type=str, help="id/url of the Channel, Clip, or VOD")
 	
@@ -124,8 +125,8 @@ def main():
 	elif args.cmd == "info":
 		import_module(".commands.info", "vodbot").run(args)
 	else:
-		print(titletext)
-		print("* run with `-h` to find what commands are available *")
+		cprint(titletext)
+		cprint("#fM* run with `-h` to find what commands are available *#r")
 
 
 if __name__ == "__main__":

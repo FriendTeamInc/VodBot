@@ -2,6 +2,7 @@
 
 from .printer import cprint
 from .commands.stage import StageData, VideoSlice
+from .config import Config
 
 import os
 import subprocess
@@ -87,9 +88,9 @@ def concat_video(TEMP_DIR: Path, LOG_LEVEL: str, stage_id: str, slice_paths: Lis
 	return concat_path
 
 
-def process_stage(conf: dict, stage: StageData) -> Path:
-	tempdir = Path(conf["temp_dir"])
-	loglevel = conf["ffmpeg_loglevel"]
+def process_stage(conf: Config, stage: StageData) -> Path:
+	tempdir = Path(conf.directories.temp)
+	loglevel = conf.export.ffmpeg_loglevel
 
 	# slice all the slices
 	slices = len(stage.slices)
