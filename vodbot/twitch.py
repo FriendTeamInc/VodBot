@@ -262,8 +262,7 @@ def get_channel_vods(channel: Channel) -> List[Vod]:
 			after=pagination, first=100,
 			type="ARCHIVE", sort="TIME"
 		)
-		resp = gql.gql_query(query=query).json()
-		resp = resp ["data"]["user"]["videos"]
+		resp = gql.gql_query(query=query).json()["data"]["user"]["videos"]
 
 		if not resp or not resp["edges"]:
 			break
@@ -271,19 +270,16 @@ def get_channel_vods(channel: Channel) -> List[Vod]:
 		pagination = resp["edges"][-1]["cursor"]
 		
 		for vod in resp["edges"]:
-			v = vod["node"]
-			c = v["creator"]
-			g = v["game"]
+			v, c, g = vod["node"], v["creator"], v["game"]
 
 			if v["broadcastType"] == "ARCHIVE" and v["status"] == "RECORDING":
 				# This broadcast is currently live, we need to skip it.
 				continue
 
-			game_id = ""
-			game_name = ""
+			game_id = game_name = ""
+      
 			if g:
-				game_id = g["id"]
-				game_name = g["name"]
+				game_id, game_name = g["id"], g["name"]
 			
 			
 			# Get stream chapter info now
@@ -344,8 +340,7 @@ def get_channel_clips(channel: Channel) -> List[Clip]:
 			channel_id=channel.login,
 			after=pagination, first=100
 		)
-		resp = gql.gql_query(query=query).json()
-		resp = resp["data"]["user"]["clips"]
+		resp = gql.gql_query(query=query).json()["data"]["user"]["clips"]
 
 		if not resp or not resp["edges"]:
 			break
@@ -354,24 +349,16 @@ def get_channel_clips(channel: Channel) -> List[Clip]:
 		
 		for clip in resp["edges"]:
 			c = clip["node"]
-			b = c["broadcaster"]
-			w = c["curator"]
-			g = c["game"]
-			v = c["video"]
-			v_id = "unknown"
-			if v is not None:
-				v_id = v["id"]
+			b, w, g, v = c["broadcaster"], c["curator"], c["game"], c["video"]
+			v_id = "unknown" if v is None else v["id"]
 
-			w_id = b["id"]
-			w_login = b["login"]
-			w_name = b["displayName"]
+			w_id, w_login, w_name = b["id"], b["login"], b["displayName"]
 			if w is not None:
 				w_id = w["id"]
 				w_login = w["login"]
 				w_name = w["displayName"]
 			
-			g_id = ""
-			g_name = ""
+			g_id = g_name = ""
 			if g is not None:
 				g_id = g["id"]
 				g_name = g["name"]
@@ -407,8 +394,7 @@ def get_video_comments(video_id: str) -> List[ChatMessage]:
 		query = gql.GET_VIDEO_COMMENTS_QUERY.format(
 			video_id=video_id, first=100, after=pagination
 		)
-		resp = gql.gql_query(query=query).json()
-		resp = resp["data"]["video"]["comments"]
+		resp = gql.gql_query(query=query).json()["data"]["video"]["comments"]
 
 		if not resp or not resp["edges"]:
 			break
@@ -420,6 +406,7 @@ def get_video_comments(video_id: str) -> List[ChatMessage]:
 			usr = "-BANNED?_USER-"
 			if c["commenter"] is not None:
 				usr = c["commenter"]["displayName"]
+			
 			clr = c["message"]["userColor"] or "FFFFFF"
 			clr = clr.strip("#")
 
@@ -431,12 +418,10 @@ def get_video_comments(video_id: str) -> List[ChatMessage]:
 				msg += " "
 			msg = msg.strip()
 
-			ofst = c["contentOffsetSeconds"]
-			state = c["state"]
-
 			messages.append(
 				ChatMessage(
-					user=usr, color=clr, msg=msg, offset=ofst, state=state
+					user=usr, color=clr, msg=msg,
+					offset=c["contentOffsetSeconds"], state=c["state"]
 				)
 			)
 		
