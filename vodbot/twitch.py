@@ -270,9 +270,10 @@ def get_channel_vods(channel: Channel) -> List[Vod]:
 		pagination = resp["edges"][-1]["cursor"]
 		
 		for vod in resp["edges"]:
-			v, c, g = vod["node"], v["creator"], v["game"]
+			v = vod["node"]
+			c, g, b, s = v["creator"], v["game"], v["broadcastType"], v["status"]
 
-			if v["broadcastType"] == "ARCHIVE" and v["status"] == "RECORDING":
+			if b == "ARCHIVE" and s == "RECORDING":
 				# This broadcast is currently live, we need to skip it.
 				continue
 
