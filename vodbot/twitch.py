@@ -410,8 +410,10 @@ def get_video_comments(video_id: str) -> List[ChatMessage]:
 		pagination = resp["edges"][-1]["cursor"]
 		for comment in resp["edges"]:
 			c = comment["node"]
-
-			usr = c["commenter"]["displayName"]
+			
+			usr = "-BANNED?_USER-"
+			if c["commenter"] is not None:
+				usr = c["commenter"]["displayName"]
 			clr = c["message"]["userColor"] or "FFFFFF"
 			clr = clr.strip("#")
 
