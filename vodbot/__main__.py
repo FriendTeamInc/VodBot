@@ -2,9 +2,33 @@ from . import util, __project__, __version__
 from .config import DEFAULT_CONFIG_PATH
 
 import argparse
+import argcomplete
+from argcomplete.completers import FilesCompleter, DirectoriesCompleter
 from pathlib import Path
 from importlib import import_module
 from requests.exceptions import ConnectionError
+from os import listdir as os_listdir
+from os.path import isfile as os_isfile
+
+
+def video_completer(prefix, parsed_args, **kwargs):
+	# searches all vod and clip directories for meta files, and strips down the names to just the ID's
+	conf = util.load_conf(parsed_args.config)
+	
+	pass
+
+
+def stage_completer(prefix, parsed_args, **kwargs):
+	# searches stage directory for stage files, and strips down the names to just the ID's.
+	conf = util.load_conf(parsed_args.config)
+	stagedir = conf.directories.stage
+	
+	stages = [ d[:-6]
+		for d in os_listdir(stagedir)
+			if os_isfile(stagedir / d) and d[-5:] == "stage" and d.startswith(prefix)
+	]
+	
+	return stages
 
 
 def deffered_main():
@@ -24,7 +48,7 @@ def main():
 	parser = argparse.ArgumentParser(description="Downloads and processes VODs and clips from Twitch.tv channels.")
 	parser.add_argument("-v","--version", action="version", version=titletext)
 	parser.add_argument("-c","--config", type=Path, dest="config", default=DEFAULT_CONFIG_PATH,
-		help="location of the Twitch config file to use")
+		help="location of the Twitch config file to use").completer = FilesCompleter
 	parser.add_argument("-n", "--no-color", action="store_true", dest="color_toggle", default=False,
 		help="disables colorful output of the program")
 
@@ -34,12 +58,12 @@ def main():
 	# `vodbot init`
 	initparse = subparsers.add_parser("init", description="Runs the setup process for VodBot")
 	initparse.add_argument("-o", "--output", type=Path, default=DEFAULT_CONFIG_PATH, dest="output", metavar="PATH",
-		help="path to save the config to")
+		help="path to save the config to").completer = FilesCompleter
 
 	# `vodbot pull <vods/clips/both> [channel ...]`
 	download = subparsers.add_parser("pull", description="Downloads VODs and/or clips.")
-	download.add_argument("type", type=str, default="both", nargs="?",
-		help='content type flag, can be "vods", "clips", or "both"')
+	download.add_argument("type", type=str, default="both", nargs="?", choices=("vods", "clips", "both"),
+		help='what type of content to pull, can be "vods", "clips", or "both"')
 
 	# `vodbot stage`
 	stager = subparsers.add_parser("stage",
@@ -62,26 +86,28 @@ def main():
 
 	# `vodbot stage rm <id>`
 	stager_rm = stager_subparser.add_parser("rm", description="removes a VOD or Clip from the staging area")
-	stager_rm.add_argument("id", type=str, help="id of the staged video data")
+	stager_rm.add_argument("id", type=str, help="id of the staged video data").completer = stage_completer
 
 	# `vodbot stage list [id]`
 	stager_list = stager_subparser.add_parser("list", description="lists info on staging area or staged items")
-	stager_list.add_argument("id", nargs="?", type=str, help="id of the staged video data", default=None)
+	stager_list.add_argument("id", type=str, help="id of the staged video data",
+		nargs="?", default=None).completer = stage_completer
 
 	# `vodbot upload <id/all>`
 	upload = subparsers.add_parser("push", description="Uploads stage(s) to YouTube.")
 	upload.add_argument("id", type=str,
-		help='id of the staged video data, "all" to upload all stages, or "logout" to remove existing YouTube credentials')
+		help='id of the staged video data, "all" to upload all stages, or "logout" to remove existing YouTube credentials').completer = stage_completer
 	
 	# `vodbot export <id/all>`
 	export = subparsers.add_parser("export", description="Uploads stage(s) to YouTube.")
-	export.add_argument("id", type=str, help="id of the staged video data, or `all` for all stages")
-	export.add_argument("path", type=Path, help="directory to export the video(s) to")
+	export.add_argument("id", type=str, help="id of the staged video data, or `all` for all stages").completer = stage_completer
+	export.add_argument("path", type=Path, help="directory to export the video(s) to").completer = DirectoriesCompleter
 
-	# `vodbot upload <id/all>`
+	# `vodbot info <id/all>`
 	info = subparsers.add_parser("info", description="Prints out info on the Channel, Clip, or VOD given.")
 	info.add_argument("id", type=str, help="id/url of the Channel, Clip, or VOD")
 	
+	argcomplete.autocomplete(parser)
 	args = parser.parse_args()
 
 	# Handle commands
