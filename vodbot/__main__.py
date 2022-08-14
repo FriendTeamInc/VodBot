@@ -16,7 +16,11 @@ from os.path import isfile as os_isfile
 
 def video_completer(prefix, parsed_args, **kwargs):
 	# searches all vod and clip directories for meta files, and strips down the names to just the ID's
-	conf = util.load_conf(parsed_args.config)
+	conf = None
+	try:
+		conf = util.load_conf_wrapper(parsed_args.config)
+	except Exception as e:
+		argcomplete.warn(f"Failed to open/read/parse config, `{e}`.")
 
 	allvids = []
 
@@ -42,7 +46,12 @@ def video_completer(prefix, parsed_args, **kwargs):
 
 def stage_completer(prefix, parsed_args, **kwargs):
 	# searches stage directory for stage files, and strips down the names to just the ID's.
-	conf = util.load_conf(parsed_args.config)
+	conf = None
+	try:
+		conf = util.load_conf_wrapper(parsed_args.config)
+	except Exception as e:
+		argcomplete.warn(f"Failed to open/read/parse config, `{e}`.")
+	
 	stagedir = conf.directories.stage
 	
 	stages = [ d[:-6]

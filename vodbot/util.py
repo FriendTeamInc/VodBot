@@ -51,6 +51,11 @@ def make_dir(directory):
 		exit_prog(code=-3, errmsg=str(e))
 
 
+def load_conf_wrapper(filename) -> Config:
+	with open(filename) as f:
+		return DEFAULT_CONFIG_SCHEMA.loads(f.read())
+
+
 def load_conf(filename) -> Config:
 	"""
 	Loads the config of VodBot at a specific directory.
@@ -61,8 +66,7 @@ def load_conf(filename) -> Config:
 
 	conf = None
 	try:
-		with open(filename) as f:
-			conf = DEFAULT_CONFIG_SCHEMA.loads(f.read())
+		conf = load_conf_wrapper(filename)
 	except FileNotFoundError:
 		exit_prog(2, f"Config not found. You can configure VodBot with the init command.")
 	except JSONDecodeError as e:
