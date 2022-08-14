@@ -50,14 +50,15 @@ def stage_completer(prefix, parsed_args, **kwargs):
 			if os_isfile(stagedir / d) and d.endswith(".stage") and d.startswith(prefix)
 	]
 
-	cmd = parsed_args.cmd	
+	cmd = parsed_args.cmd
+	pushload = cmd == "push" or cmd == "upload"
 
 	addall = []
-	if (cmd == "push" or cmd == "upload") and "all".startswith(prefix):
+	if (pushload or cmd == "export") and "all".startswith(prefix):
 		addall = ["all"]
 
 	addlogout = []
-	if (cmd == "push" or cmd == "upload") and "logout".startswith(prefix):
+	if pushload and "logout".startswith(prefix):
 		addlogout = ["logout"]
 	
 	return stages + addall + addlogout
