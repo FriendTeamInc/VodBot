@@ -5,6 +5,7 @@ from .config import Config, DEFAULT_CONFIG_SCHEMA
 
 import os
 import sys
+from json.decoder import JSONDecodeError
 from marshmallow import ValidationError
 from typing import Tuple
 
@@ -64,8 +65,10 @@ def load_conf(filename) -> Config:
 			conf = DEFAULT_CONFIG_SCHEMA.loads(f.read())
 	except FileNotFoundError:
 		exit_prog(2, f"Config not found. You can configure VodBot with the init command.")
+	except JSONDecodeError as e:
+		exit_prog(97, f'Failed to parse config. "{e}"')
 	except ValidationError as e:
-		exit_prog(98, f'Failed to validate config. \n"{e.messages}"')
+		exit_prog(98, f'Failed to validate config. "{e.messages}"')
 
 	return conf
 

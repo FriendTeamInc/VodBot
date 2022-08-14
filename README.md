@@ -7,6 +7,8 @@ VodBot is command line VOD and Clip manager for Twitch. Vodbot can:
 * Export instances one at a time or all at once, with chatlogs converted to common formats such as RealText or SAMI.
 * Upload instances one at a time or all at once to YouTube, with chatlogs as captions/subtitles synced with the video.
 	* NOTE: Requires approval and credentials from Google, for now just use export and upload manually.
+* Bash tab completion, for quickly putting in commands.
+    * NOTE: Available through argcomplete, see its repo for more details. Requires `eval "$(register-python-argcomplete vodbot)"` to be placed in an appropriate location such as `~/.bashrc` after installation.
 
 ...with more features to come!
 
@@ -16,8 +18,9 @@ VodBot can be installed with `pip install vodbot`. You can also install by cloni
 Dependencies/Requirements:
 * [FFmpeg](https://www.ffmpeg.org/) (Must be in your PATH environment variable)
 * [Python 3.7+](https://www.python.org/)
-    * [Requests](https://pypi.org/project/requests/)
+    * [argcomplete](https://pypi.org/project/argcomplete/)
     * [dataclasses-json](https://pypi.org/project/dataclasses-json/)
+    * [Requests](https://pypi.org/project/requests/)
     * [M3U8](https://pypi.org/project/m3u8/)
     * [Google API Client](https://pypi.org/project/google-api-python-client/)
     * [Google Auth OAuthLib](https://pypi.org/project/google-auth-oauthlib/)

@@ -36,7 +36,8 @@ setup(
 		"google-auth-oauthlib>=0.4.4",
 		"requests>=2.20",
 		"m3u8>=0.8",
-		"dataclasses-json>=0.5.7"
+		"dataclasses-json>=0.5.7",
+		"argcomplete>=2.0.0"
 	],
 	entry_points={
 		'console_scripts': ['vodbot=vodbot.__main__:deffered_main'],

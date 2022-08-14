@@ -452,7 +452,7 @@ def _list(args, conf):
 		cprint(f"#r`#fC{stage.title}#r` #fM{' '.join(stage.streamers)}#r #d({stage.id})#r")
 		cprint(f"#d'''#fG{stage.desc}#r#d'''#r")
 		for vid in stage.slices:
-			cprint(f"#fM{vid['id']}#r > #fY{vid['ss']}#r - #fY{vid['to']}#r")
+			cprint(f"#fM{vid.video_id}#r > #fY{vid.ss}#r - #fY{vid.to}#r")
 
 
 def run(args):
