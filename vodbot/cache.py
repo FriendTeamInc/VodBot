@@ -56,7 +56,7 @@ def load_cache(conf: Config, update_cache: bool = False) -> Cache:
 	return _cached_cache
 
 
-def _refresh_cache(conf: Config):
+def _refresh_cache(conf: Config) -> Cache:
 	# here we manually refresh the cache by examining all the important stuff.
 
 	newchannels = {}

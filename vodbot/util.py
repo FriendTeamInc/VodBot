@@ -2,6 +2,7 @@
 
 from .printer import cprint
 from .config import Config, DEFAULT_CONFIG_SCHEMA
+from .cache import _cached_cache, save_cache
 
 import os
 import sys
@@ -92,8 +93,11 @@ def exit_prog(code=0, errmsg=None):
 	:param errmsg: The corresponding error message to print when exiting.
 	"""
 
-	print()
+	# save cached stuff
+	save_cache(_cached_config, _cached_cache)
 
+	# exit
+	print()
 	if code != 0:
 		msg = f"#r#fR#lERROR! #fY#l({code})#r"
 		if errmsg != None:
