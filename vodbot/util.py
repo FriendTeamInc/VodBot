@@ -51,17 +51,24 @@ def make_dir(directory):
 		exit_prog(code=-3, errmsg=str(e))
 
 
+# only one config per running instance.
+_cached_config = None
 def load_conf_wrapper(filename) -> Config:
-	with open(filename) as f:
-		return DEFAULT_CONFIG_SCHEMA.loads(f.read())
+	global _cached_config
+	
+	if _cached_config is None:
+		with open(filename) as f:
+			_cached_config = DEFAULT_CONFIG_SCHEMA.loads(f.read())
+	
+	return _cached_config
 
 
 def load_conf(filename) -> Config:
 	"""
-	Loads the config of VodBot at a specific directory.
+	Loads a VodBot JSON configuration file.
 
 	:param filename: File name of the JSON formatted configuration file.
-	:returns: Dictionary created from the conf file.
+	:returns: Config class with all members configured by the input file.
 	"""
 
 	conf = None

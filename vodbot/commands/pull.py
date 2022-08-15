@@ -24,6 +24,8 @@ def run(args):
 	set_client_id(conf.pull.gql_client)
 	
 	cprint("#r#dLoading channel data...#r", end=" ", flush=True)
+	# This function is actually useless, we don't need anything from it, just the channel login name which we already have.
+	# TODO: remove this useless query entirely, nothing from it is used that we don't already have.
 	channels: List[twitch.Channel] = twitch.get_channels([channel.username for channel in CHANNEL_IDS])
 	for i, channel in enumerate(channels):
 		channel.save_vods = CHANNEL_IDS[i].save_vods

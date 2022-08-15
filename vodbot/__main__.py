@@ -11,7 +11,7 @@ from pathlib import Path
 from importlib import import_module
 from requests.exceptions import ConnectionError
 from os import listdir as os_listdir
-from os.path import isfile as os_isfile
+from os.path import isfile as os_isfile, exists as os_exists
 
 
 def video_completer(prefix, parsed_args, **kwargs):
@@ -91,6 +91,8 @@ def main():
 	parser.add_argument("-v","--version", action="version", version=titletext)
 	parser.add_argument("-n", "--no-color", action="store_true", dest="color_toggle", default=False,
 		help="disables colorful output of the program")
+	parser.add_argument("-u", "--update-cache", action="store_true", dest="cache_toggle", default=False,
+		help="updates the local cache with ID's of users, VODs, and Clips")
 	parser.add_argument("-c","--config", type=Path, dest="config", metavar="CFG", default=DEFAULT_CONFIG_PATH,
 		help="location of the config file to use").completer = FilesCompleter
 
