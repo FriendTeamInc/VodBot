@@ -1,6 +1,7 @@
 # Staging, where videos get staged and set up with metadata to upload
 
 from calendar import c
+from cmath import inf
 from vodbot.cache import Cache, load_cache, save_cache
 import vodbot.util as util
 from vodbot.config import DEFAULT_CONFIG_DIRECTORY, Config
@@ -151,36 +152,63 @@ def create_format_dict(conf, streamers, utcdate=None, truedate=None):
 	return formatdict, datestring
 
 
-def find_video_by_id(vid_id, VODS_DIR, CLIPS_DIR):
+def find_video_by_id(vid_id, conf: Config, cache: Cache):
 	"""
 	Check where a video is by its ID
 
 	:param vid_id: ID of the video.
 	:returns: A tuple containing the path to the video file and the meta file.
 	"""
-	
-	VODS_DIR_PATH = Path(VODS_DIR)
-	CLIPS_DIR_PATH = Path(CLIPS_DIR)
-	vod_dirs = [d for d in os_listdir(VODS_DIR) if isdir(str(VODS_DIR_PATH / d))]
-	clip_dirs = [d for d in os_listdir(CLIPS_DIR) if isdir(str(CLIPS_DIR_PATH / d))]
 
-	filename = None
+	# check cache first
+	for channel, info in cache.channels.items():
+		metafile = None
+		folder = None
+		for x in [info.vods, info.clips, info.slugs]:
+			if vid_id in x:
+				metafile = x[vid_id]
+				if x is info.vods:
+					folder = conf.directories.vods / channel
+				else:
+					folder = conf.directories.clips / channel
+				break
+
+		try:
+			metajson = None
+			with open(folder / metafile) as f:
+				metajson = json.load(f)
+			filename = folder / f"{metajson['created_at']}_{metajson['id']}.mkv".replace(":", ";")
+			return (filename, metajson)
+		except FileNotFoundError:
+			pass
+		except ValueError:
+			pass
+
+		if metafile is not None:
+			break
+
+	# check full folder structure
+	voddir = conf.directories.vods
+	clipdir = conf.directories.clips
 	
-	directories = [(vod_dirs, VODS_DIR_PATH), (clip_dirs, CLIPS_DIR_PATH)]
+	directories = [
+		([d for d in os_listdir(voddir) if isdir(voddir / d)], voddir),
+		([d for d in os_listdir(clipdir) if isdir(clipdir / d)], clipdir)
+	]
 
 	for dir_t in directories:
 		for channel in dir_t[0]:
 			folder = dir_t[1] / Path(channel)
-			metas = [m[:-5] for m in os_listdir(str(folder)) if isfile(str(folder / Path(m))) and m[-4:]=="meta"]
+			metas = [m[:-5] for m in os_listdir(folder) if isfile(folder / Path(m)) and m[-4:]=="meta"]
 			metas = [m for m in metas if vid_id in m] # multiple types of id's exist, so we have to soft match
 			if len(metas) > 0:
 				vid_id = metas[0] # use first result of matching
 				metajson = None
 				try:
-					with open(str(folder / (vid_id+".meta"))) as f:
+					with open(folder / f"{vid_id}.meta") as f:
 						metajson = json.load(f)
 					filename = folder / f"{metajson['created_at']}_{metajson['id']}.mkv".replace(":", ";")
-					return (filename, metajson, "VOD" if dir_t[1] == VODS_DIR_PATH else "Clip")
+					return (filename, metajson, "VOD" if dir_t[1] == voddir else "Clip")
 				except FileNotFoundError:
 					pass
 				except ValueError:
@@ -356,16 +384,14 @@ def check_description(formatdict, inputdefault=None):
 
 
 def _new(args, conf: Config, cache: Cache):
-	VODS_DIR = conf.directories.vods
-	CLIPS_DIR = conf.directories.clips
 	STAGE_DIR = conf.directories.stage
 
 	# find the videos by their ids to confirm they exist
 	videos = []
 	for video in args.id:
 		try:
-			(filename, metadata, videotype) = find_video_by_id(video, VODS_DIR, CLIPS_DIR)
-			videos += [{"id":video, "file":filename, "meta":metadata, "type":videotype}]
+			(filename, metadata) = find_video_by_id(video, conf, cache)
+			videos += [{"id":video, "file":filename, "meta":metadata}]
 		except CouldntFindVideo:
 			util.exit_prog(13, f'Could not find video with ID "{args.id}"')
 	
@@ -466,7 +492,7 @@ def run(args):
 	util.make_dir(stagedir)
 
 	if args.action == "new":
-		_new(args, conf)
+		_new(args, conf, cache)
 	elif args.action == "rm":
 		if not isfile(str(stagedir / f"{args.id}.stage")):
 			util.exit_prog(45, f'Could not find stage "{args.id}".')

@@ -113,7 +113,7 @@ def main():
 	# `vodbot stage`
 	stager = subparsers.add_parser("stage",
 		description="Stages sections of video to upload or export",)
-	stager_subparser = stager.add_subparsers(title="action", dest="act", metavar="ACT",
+	stager_subparser = stager.add_subparsers(title="action", dest="action", metavar="ACT",
 		description='action for video stages: new, list, or rm.')
 
 	# `vodbot stage new \
