@@ -1,7 +1,6 @@
 # Module for the cache dataclass
 # dedicated type for easier processing of info
 
-from vodbot import twitch
 from vodbot.util import exit_prog
 from .config import Config
 
@@ -22,10 +21,6 @@ from os.path import isfile as os_isfile, exists as os_exists
 @dataclass_json
 @dataclass
 class _CacheChannel:
-	id: str
-	login: str
-	display_name: str
-	created_at: str
 	vods: Dict[str, str]
 	clips: Dict[str, str]
 	slugs: Dict[str, str]
@@ -66,10 +61,7 @@ def _refresh_cache(conf: Config):
 
 	newchannels = {}
 
-	queriedchannels: List[twitch.Channel] = twitch.get_channels([channel.username for channel in conf.channels])
-
-	for i, channel in enumerate(conf.channels):
-		
+	for channel in conf.channels:
 		login = channel.username
 
 		voddir = conf.directories.vods / login
@@ -102,11 +94,7 @@ def _refresh_cache(conf: Config):
 
 			slugs[slug] = filename
 		
-		newchannel = _CacheChannel.from_dict({
-			"id": queriedchannels[i].login, "login": queriedchannels[i].login,
-			"display_name": queriedchannels[i].display_name, "created_at": queriedchannels[i].created_at
-			"vods": vods, "clips": clips, "slugs": slugs
-		})
+		newchannel = _CacheChannel.from_dict({"vods": vods, "clips": clips, "slugs": slugs})
 		newchannels[login] = newchannel
 	
 	return Cache.from_dict(newchannels)
