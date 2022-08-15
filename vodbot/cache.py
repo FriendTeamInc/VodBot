@@ -1,7 +1,7 @@
 # Module for the cache dataclass
 # dedicated type for easier processing of info
 
-from vodbot.util import exit_prog
+from .util import exit_prog
 from .config import Config
 
 import json
@@ -46,9 +46,9 @@ def load_cache(conf: Config, update_cache: bool = False) -> Cache:
 		# check if cache exists
 		if not update_cache and os_exists(cachepath) and os_isfile(cachepath):
 			with open(cachepath) as f:
-				_cached_cache = Cache.loads(f.read())
+				_cached_cache = Cache.from_json(f.read())
 		elif update_cache:
-			_cached_cache = _refresh_cache()
+			_cached_cache = _refresh_cache(conf)
 			save_cache(conf, _cached_cache)
 		else:
 			# manually create cache
@@ -115,5 +115,5 @@ def save_cache(conf: Config, cache: Cache) -> None:
 
 	_cached_cache = cache
 
-	with open(conf.directories.temp / "cache.json") as f:
+	with open(conf.directories.temp / "cache.json", "w") as f:
 		f.write(cache.to_json())

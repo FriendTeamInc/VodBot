@@ -16,7 +16,7 @@ def run(args):
 	# Load the config and set up the access token
 	cprint("#r#dLoading config...#r", end=" ", flush=True)
 	conf = util.load_conf(args.config)
-	cache: Cache = load_cache(conf, args.toggle_cache)
+	cache: Cache = load_cache(conf, args.cache_toggle)
 	VODS_DIR = conf.directories.vods
 	CLIPS_DIR = conf.directories.clips
 	TEMP_DIR = conf.directories.temp
@@ -126,6 +126,7 @@ def run(args):
 					continue
 				except (itd_work.DownloadCancelled, KeyboardInterrupt):
 					cprint(f"\n#fR#lVOD `{vod.id}` download cancelled. Exiting...#r")
+					save_cache(conf, cache)
 					raise KeyboardInterrupt()
 			# write meta file
 			vod.write_meta(metaname)
@@ -146,12 +147,13 @@ def run(args):
 					cprint(f"#fR#lClip `{clip.id}` download failed! Skipping...#r")
 				except (itd_work.DownloadCancelled, KeyboardInterrupt):
 					cprint(f"\n#fR#lClip `{clip.id}` download cancelled. Exiting...#r")
+					save_cache(conf, cache)
 					raise KeyboardInterrupt()
 			# write meta file
 			clip.write_meta(metaname)
 			# write to cache
 			cache.channels[channel.login].clips[clip.id] = f"{clip.created_at}_{clip.id}.meta".replace(":", ";")
-			cache.channels[channel.login].slugs[clip.slug] = clip.id
+			cache.channels[channel.login].slugs[clip.slug] = f"{clip.created_at}_{clip.id}.meta".replace(":", ";")
 	
 	#cprint("\n#fM#l* All done, goodbye! *#r\n")
 	# save the cache

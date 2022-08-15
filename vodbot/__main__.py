@@ -37,6 +37,7 @@ def video_completer(prefix, parsed_args, **kwargs):
 
 		allvids += [d for d in cache.channels[login].vods if d.startswith(prefix)]
 		allvids += [d for d in cache.channels[login].clips if d.startswith(prefix)]
+		allvids += [d for d in cache.channels[login].slugs if d.startswith(prefix)]
 	
 	return allvids
 
@@ -96,7 +97,7 @@ def main():
 		help="location of the config file to use").completer = FilesCompleter
 
 	# Subparsers for different commands
-	subparsers = parser.add_subparsers(title="command", dest="command", metavar="CMD",
+	subparsers = parser.add_subparsers(title="command", dest="cmd", metavar="CMD",
 		help="command to run: init, info, pull, stage, or upload.")
 
 	# `vodbot init`
@@ -112,7 +113,7 @@ def main():
 	# `vodbot stage`
 	stager = subparsers.add_parser("stage",
 		description="Stages sections of video to upload or export",)
-	stager_subparser = stager.add_subparsers(title="action", dest="action", metavar="ACT",
+	stager_subparser = stager.add_subparsers(title="action", dest="act", metavar="ACT",
 		description='action for video stages: new, list, or rm.')
 
 	# `vodbot stage new \

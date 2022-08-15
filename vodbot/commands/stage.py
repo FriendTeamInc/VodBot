@@ -461,7 +461,7 @@ def run(args):
 	util.make_dir(DEFAULT_CONFIG_DIRECTORY)
 
 	conf = util.load_conf(args.config)
-	cache = load_cache(conf, args.toggle_cache)
+	cache = load_cache(conf, args.cache_toggle)
 	stagedir = conf.directories.stage
 	util.make_dir(stagedir)
 
