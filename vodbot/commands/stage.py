@@ -1,7 +1,9 @@
 # Staging, where videos get staged and set up with metadata to upload
 
+from calendar import c
+from vodbot.cache import Cache, load_cache, save_cache
 import vodbot.util as util
-from vodbot.config import DEFAULT_CONFIG_DIRECTORY
+from vodbot.config import DEFAULT_CONFIG_DIRECTORY, Config
 from vodbot.printer import cprint, colorize
 
 import re
@@ -18,7 +20,7 @@ from random import choice
 
 DISALLOWED_CHARACTERS = [chr(x) for x in range(10)] + [chr(x) for x in range(11,32)] # just in case...
 RESERVED_NAMES = [
-	"\\0", "CON", "PRN", "AUX", "NUL",
+	"\0", "CON", "PRN", "AUX", "NUL",
 	"COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
 	"LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
 ]
@@ -81,7 +83,7 @@ class StageData():
 	def load_from_id(stagedir: Path, sid: str) -> 'StageData':
 		jsonread = None
 		try:
-			with open(str(stagedir / (sid+".stage"))) as f:
+			with open(stagedir / f"{sid}.stage") as f:
 				jsonread = json.load(f)
 		except FileNotFoundError:
 			util.exit_prog(46, f'Could not find stage "{sid}". (FileNotFound)')
@@ -93,8 +95,8 @@ class StageData():
 	@staticmethod
 	def load_all_stages(stagedir: Path) -> List['StageData']:
 		stages = []
-		for d in os_listdir(str(stagedir)):
-			if isfile(str(stagedir / d)) and d[-5:] == "stage":
+		for d in os_listdir(stagedir):
+			if isfile(stagedir / d) and d.endswith(".stage"):
 				stages.append(StageData.load_from_id(stagedir, d[:-6]))
 		
 		return stages
@@ -353,7 +355,7 @@ def check_description(formatdict, inputdefault=None):
 	return desc
 
 
-def _new(args, conf):
+def _new(args, conf: Config, cache: Cache):
 	VODS_DIR = conf.directories.vods
 	CLIPS_DIR = conf.directories.clips
 	STAGE_DIR = conf.directories.stage
@@ -427,13 +429,13 @@ def _new(args, conf):
 		cprint(f"#fM{vid.video_id}#r > #fY{vid.ss}#r - #fY{vid.to}#r")
 	
 	# write stage
-	stagename = str(STAGE_DIR / (stage.id + ".stage"))
+	stagename = str(STAGE_DIR / f"{stage.id}.stage")
 	stage.write_stage(stagename)
-
+	cache.stages.append(stage.id)
 	# Done!
 
 
-def _list(args, conf):
+def _list(args, conf:Config, cache: Cache):
 	STAGE_DIR = conf.directories.stage
 
 	if args.id == None:
@@ -459,19 +461,23 @@ def run(args):
 	util.make_dir(DEFAULT_CONFIG_DIRECTORY)
 
 	conf = util.load_conf(args.config)
+	cache = load_cache(conf, args.toggle_cache)
 	stagedir = conf.directories.stage
 	util.make_dir(stagedir)
 
 	if args.action == "new":
 		_new(args, conf)
 	elif args.action == "rm":
-		if not isfile(str(stagedir / (args.id + ".stage"))):
+		if not isfile(str(stagedir / f"{args.id}.stage")):
 			util.exit_prog(45, f'Could not find stage "{args.id}".')
 			
 		try:
-			os_remove(str(stagedir / (args.id + ".stage")))
+			os_remove(str(stagedir / f"{args.id}.stage"))
+			cache.stages.remove(args.id)
 			cprint(f'Stage "#fY#l{args.id}#r" has been #fRremoved#r.')
 		except OSError as err:
 			util.exit_prog(88, f'Stage "{args.id}" could not be removed due to an error. {err}')
 	elif args.action == "list":
-		_list(args, conf)
+		_list(args, conf, cache)
+	
+	save_cache(conf, cache)
