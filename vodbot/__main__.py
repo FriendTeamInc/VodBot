@@ -3,6 +3,7 @@ from cmath import log
 from . import util, __project__, __version__
 from .config import DEFAULT_CONFIG_PATH
 from .printer import cprint, colorize
+from .cache import load_cache
 
 import argparse
 import argcomplete
@@ -11,7 +12,7 @@ from pathlib import Path
 from importlib import import_module
 from requests.exceptions import ConnectionError
 from os import listdir as os_listdir
-from os.path import isfile as os_isfile, exists as os_exists
+from os.path import isfile as os_isfile
 
 
 def video_completer(prefix, parsed_args, **kwargs):
@@ -21,25 +22,21 @@ def video_completer(prefix, parsed_args, **kwargs):
 		conf = util.load_conf_wrapper(parsed_args.config)
 	except Exception as e:
 		argcomplete.warn(f"Failed to open/read/parse config, `{e}`.")
+	
+	cache = None
+	try:
+		# TODO: get wrapper like with conf
+		cache = load_cache(conf, False)
+	except Exception as e:
+		argcomplete.warn(f"Failed to open/read/parse cache, `{e}`.")
 
 	allvids = []
 
 	for channel in conf.channels:
 		login = channel.username
 
-		voddir = conf.directories.vods / login
-		vods = [ d.split("_")[1][:-5] 
-			for d in os_listdir(voddir)
-				if os_isfile(voddir / d) and d.endswith(".meta")
-		]
-		clipdir = conf.directories.clips / login
-		clips = [ d.split("_")[1][:-5] 
-			for d in os_listdir(clipdir)
-				if os_isfile(clipdir / d) and d.endswith(".meta")
-		]
-
-		allvids += [d for d in vods if d.startswith(prefix)]
-		allvids += [d for d in clips if d.startswith(prefix)]
+		allvids += [d for d in cache.channels[login].vods if d.startswith(prefix)]
+		allvids += [d for d in cache.channels[login].clips if d.startswith(prefix)]
 	
 	return allvids
 
@@ -51,13 +48,15 @@ def stage_completer(prefix, parsed_args, **kwargs):
 		conf = util.load_conf_wrapper(parsed_args.config)
 	except Exception as e:
 		argcomplete.warn(f"Failed to open/read/parse config, `{e}`.")
+
+	cache = None
+	try:
+		# TODO: get wrapper like with conf
+		cache = load_cache(conf, False)
+	except Exception as e:
+		argcomplete.warn(f"Failed to open/read/parse cache, `{e}`.")
 	
-	stagedir = conf.directories.stage
-	
-	stages = [ d[:-6]
-		for d in os_listdir(stagedir)
-			if os_isfile(stagedir / d) and d.endswith(".stage") and d.startswith(prefix)
-	]
+	stages = [d for d in cache.stages if d.startswith(prefix)]
 
 	cmd = parsed_args.cmd
 	pushload = cmd == "push" or cmd == "upload"

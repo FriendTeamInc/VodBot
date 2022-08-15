@@ -16,6 +16,7 @@ from os.path import isfile as os_isfile, exists as os_exists
 # vods property maps a VOD ID to its local meta filename
 # clips property maps a Clip ID to its local meta filename
 # slugs property maps a Clip slug to its local meta filename
+# stages property is a list of all the current stages
 
 
 @dataclass_json
@@ -29,6 +30,7 @@ class _CacheChannel:
 @dataclass
 class Cache:
 	channels: Dict[str, _CacheChannel] = field(default_factory={})
+	stages: List[str] = field(default_factory=[])
 
 
 _cached_cache = None
@@ -60,7 +62,6 @@ def _refresh_cache(conf: Config) -> Cache:
 	# here we manually refresh the cache by examining all the important stuff.
 
 	newchannels = {}
-
 	for channel in conf.channels:
 		login = channel.username
 
@@ -97,7 +98,13 @@ def _refresh_cache(conf: Config) -> Cache:
 		newchannel = _CacheChannel.from_dict({"vods": vods, "clips": clips, "slugs": slugs})
 		newchannels[login] = newchannel
 	
-	return Cache.from_dict(newchannels)
+	stagedir = conf.directories.stage
+	newstages = []
+	for file in os_listdir(stagedir):
+		if os_isfile(stagedir / file) and file.endswith(".stage"):
+			newstages.append(file[:-6])
+	
+	return Cache.from_dict({"channels":newchannels, "stages":newstages})
 
 
 def save_cache(conf: Config, cache: Cache) -> None:
