@@ -25,8 +25,7 @@ def video_completer(prefix, parsed_args, **kwargs):
 	
 	cache = None
 	try:
-		# TODO: get wrapper like with conf
-		cache = load_cache(conf, False)
+		cache = load_cache(conf, False, True)
 	except Exception as e:
 		argcomplete.warn(f"Failed to open/read/parse cache, `{e}`.")
 
@@ -52,8 +51,7 @@ def stage_completer(prefix, parsed_args, **kwargs):
 
 	cache = None
 	try:
-		# TODO: get wrapper like with conf
-		cache = load_cache(conf, False)
+		cache = load_cache(conf, False, True)
 	except Exception as e:
 		argcomplete.warn(f"Failed to open/read/parse cache, `{e}`.")
 	

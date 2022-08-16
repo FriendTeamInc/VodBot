@@ -34,7 +34,7 @@ class Cache:
 
 
 _cached_cache = None
-def load_cache(conf: Config, update_cache: bool = False) -> Cache:
+def load_cache(conf: Config, update_cache: bool = False, bubble_up:bool=False) -> Cache:
 	"""
 	Loads a cache JSON file, containing ID's for Users, VODs, and Clips.
 	"""
@@ -42,18 +42,22 @@ def load_cache(conf: Config, update_cache: bool = False) -> Cache:
 
 	cachepath = conf.directories.temp / "cache.json"
 
-	if _cached_cache is None or update_cache:
-		# check if cache exists
-		if not update_cache and os_exists(cachepath) and os_isfile(cachepath):
-			with open(cachepath) as f:
-				_cached_cache = Cache.from_json(f.read())
-		elif update_cache:
-			_cached_cache = _refresh_cache(conf)
-			save_cache(conf, _cached_cache)
-		else:
-			# manually create cache
-			_cached_cache = Cache.from_dict({})
-			save_cache(conf, _cached_cache)
+	try:
+		if _cached_cache is None or update_cache:
+			# check if cache exists
+			if not update_cache and os_exists(cachepath) and os_isfile(cachepath):
+				with open(cachepath) as f:
+					_cached_cache = Cache.from_json(f.read())
+			elif update_cache:
+				_cached_cache = _refresh_cache(conf)
+				save_cache(conf, _cached_cache)
+			else:
+				# manually create cache
+				_cached_cache = Cache.from_dict({})
+				save_cache(conf, _cached_cache)
+	except Exception as e:
+		if bubble_up:
+
 	
 	return _cached_cache
 
