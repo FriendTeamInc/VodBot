@@ -4,6 +4,7 @@
 # https://developers.google.com/youtube/v3/guides/uploading_a_video
 # https://learndataanalysis.org/how-to-upload-a-video-to-youtube-using-youtube-data-api-in-python/
 
+from ..cache import load_cache, save_cache
 from .stage import StageData
 
 import vodbot.util as util
@@ -170,6 +171,7 @@ def upload_captions(conf: Config, service, stagedata: StageData, vid_id: str) ->
 def run(args):
 	# load config
 	conf = util.load_conf(args.config)
+	cache = load_cache(conf, args.cache_toggle)
 
 	# configure variables
 	STAGE_DIR = conf.directories.stage
@@ -244,13 +246,14 @@ def run(args):
 	for stage in stagedatas:
 		video_id = upload_video(conf, service, stage)
 		if video_id is not None:
-			chat_success = True
 			if conf.upload.chat_enable:
-				chat_success = upload_captions(conf, service, stage, video_id)
+				upload_captions(conf, service, stage, video_id)
 			
-			if conf.stage.delete_on_upload and chat_success:
+			if conf.stage.delete_on_upload:
 				try:
-					os_remove(str(STAGE_DIR / f"{stage.id}.stage"))
+					os_remove(STAGE_DIR / f"{stage.id}.stage")
+					cache.stages.remove(stage.id)
+					save_cache(conf, cache)
 				except:
 					util.exit_prog(90, f"Failed to remove stage `{stage.id}` after upload.")
 		print()
