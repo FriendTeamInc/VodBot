@@ -57,7 +57,11 @@ def load_cache(conf: Config, update_cache: bool = False, bubble_up:bool=False) -
 				save_cache(conf, _cached_cache)
 	except Exception as e:
 		if bubble_up:
-
+			raise e
+		else:
+			# warning, failed to parse or open cache! starting from scratch
+			_cached_cache = Cache.from_dict({})
+			save_cache(conf, _cached_cache)
 	
 	return _cached_cache
 
