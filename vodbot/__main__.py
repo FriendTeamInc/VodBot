@@ -3,6 +3,7 @@ from cmath import log
 from . import util, __project__, __version__
 from .config import DEFAULT_CONFIG_PATH
 from .printer import cprint, colorize
+from .cache import load_cache
 
 import argparse
 import argcomplete
@@ -21,25 +22,21 @@ def video_completer(prefix, parsed_args, **kwargs):
 		conf = util.load_conf_wrapper(parsed_args.config)
 	except Exception as e:
 		argcomplete.warn(f"Failed to open/read/parse config, `{e}`.")
+	
+	cache = None
+	try:
+		cache = load_cache(conf, False, True)
+	except Exception as e:
+		argcomplete.warn(f"Failed to open/read/parse cache, `{e}`.")
 
 	allvids = []
 
 	for channel in conf.channels:
 		login = channel.username
 
-		voddir = conf.directories.vods / login
-		vods = [ d.split("_")[1][:-5] 
-			for d in os_listdir(voddir)
-				if os_isfile(voddir / d) and d.endswith(".meta")
-		]
-		clipdir = conf.directories.clips / login
-		clips = [ d.split("_")[1][:-5] 
-			for d in os_listdir(clipdir)
-				if os_isfile(clipdir / d) and d.endswith(".meta")
-		]
-
-		allvids += [d for d in vods if d.startswith(prefix)]
-		allvids += [d for d in clips if d.startswith(prefix)]
+		allvids += [d for d in cache.channels[login].vods if d.startswith(prefix)]
+		allvids += [d for d in cache.channels[login].clips if d.startswith(prefix)]
+		allvids += [d for d in cache.channels[login].slugs if d.startswith(prefix)]
 	
 	return allvids
 
@@ -51,13 +48,14 @@ def stage_completer(prefix, parsed_args, **kwargs):
 		conf = util.load_conf_wrapper(parsed_args.config)
 	except Exception as e:
 		argcomplete.warn(f"Failed to open/read/parse config, `{e}`.")
+
+	cache = None
+	try:
+		cache = load_cache(conf, False, True)
+	except Exception as e:
+		argcomplete.warn(f"Failed to open/read/parse cache, `{e}`.")
 	
-	stagedir = conf.directories.stage
-	
-	stages = [ d[:-6]
-		for d in os_listdir(stagedir)
-			if os_isfile(stagedir / d) and d.endswith(".stage") and d.startswith(prefix)
-	]
+	stages = [d for d in cache.stages if d.startswith(prefix)]
 
 	cmd = parsed_args.cmd
 	pushload = cmd == "push" or cmd == "upload"
@@ -91,11 +89,13 @@ def main():
 	parser.add_argument("-v","--version", action="version", version=titletext)
 	parser.add_argument("-n", "--no-color", action="store_true", dest="color_toggle", default=False,
 		help="disables colorful output of the program")
+	parser.add_argument("-u", "--update-cache", action="store_true", dest="cache_toggle", default=False,
+		help="updates the local cache with ID's of users, VODs, and Clips")
 	parser.add_argument("-c","--config", type=Path, dest="config", metavar="CFG", default=DEFAULT_CONFIG_PATH,
 		help="location of the config file to use").completer = FilesCompleter
 
 	# Subparsers for different commands
-	subparsers = parser.add_subparsers(title="command", dest="command", metavar="CMD",
+	subparsers = parser.add_subparsers(title="command", dest="cmd", metavar="CMD",
 		help="command to run: init, info, pull, stage, or upload.")
 
 	# `vodbot init`

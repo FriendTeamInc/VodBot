@@ -1,10 +1,11 @@
 # Pull, downloads VODs and Clips from Twitch.tv
 
 from typing import List
-from vodbot import util, twitch
+from vodbot import util, twitch, cache
 from vodbot.itd import download as itd_dl, worker as itd_work
 from vodbot.printer import cprint
 from vodbot.itd.gql import set_client_id
+from vodbot.cache import Cache, load_cache, save_cache
 
 from pathlib import Path
 from os import listdir
@@ -15,7 +16,7 @@ def run(args):
 	# Load the config and set up the access token
 	cprint("#r#dLoading config...#r", end=" ", flush=True)
 	conf = util.load_conf(args.config)
-	CHANNEL_IDS = conf.channels
+	cache: Cache = load_cache(conf, args.cache_toggle)
 	VODS_DIR = conf.directories.vods
 	CLIPS_DIR = conf.directories.clips
 	TEMP_DIR = conf.directories.temp
@@ -24,11 +25,19 @@ def run(args):
 	set_client_id(conf.pull.gql_client)
 	
 	cprint("#r#dLoading channel data...#r", end=" ", flush=True)
-	channels: List[twitch.Channel] = twitch.get_channels([channel.username for channel in CHANNEL_IDS])
-	for i, channel in enumerate(channels):
-		channel.save_vods = CHANNEL_IDS[i].save_vods
-		channel.save_clips = CHANNEL_IDS[i].save_clips
-		channel.save_chat = CHANNEL_IDS[i].save_chat and PULL_CHAT
+	# This function is actually useless, we don't need anything from it, just the channel login name which we already have.
+	# TODO: remove this useless query entirely, nothing from it is used that we don't already have.
+	channels: List[twitch.Channel] = [] #twitch.get_channels([channel.username for channel in conf.channels])
+	for channel in conf.channels:
+		newchannel = twitch.Channel("", channel.username, channel.username, "")
+		newchannel.save_vods = channel.save_vods
+		newchannel.save_clips = channel.save_clips
+		newchannel.save_chat = channel.save_chat and PULL_CHAT
+		channels.append(newchannel)
+
+		# check cache
+		if channel.username not in cache.channels:
+			cache.channels[channel.username] = cache._CacheChannel.from_dict({"vods":{}, "clips":{}, "slugs":{}})
 	
 	cprint("#r#dChecking directories...#r", end=" ", flush=True)
 	# Setup directories for videos and temp
@@ -52,11 +61,11 @@ def run(args):
 
 		newvods = []
 		if (atboth or atvods) and (channel.save_vods or channel.save_chat):
-			folder = VODS_DIR / channel.login
-			util.make_dir(folder)
+			voddir = VODS_DIR / channel.login
+			util.make_dir(voddir)
 
-			channelvods = twitch.get_channel_vods(channel)
-			newvods = compare_existant_file(folder, channelvods)
+			channelvods = [vod for vod in twitch.get_channel_vods(channel) if vod.id not in cache.channels[channel.login].vods]
+			newvods = compare_existant_file(voddir, channelvods)
 
 			totalvods += len(newvods)
 			cprint(f"#fC#l{len(newvods)} #fM#lVODs#r", end="", flush=True)
@@ -66,14 +75,16 @@ def run(args):
 		
 		newclips = []
 		if (atboth or atclips) and (channel.save_clips):
-			folder = CLIPS_DIR / channel.login
-			util.make_dir(folder)
+			clipdir = CLIPS_DIR / channel.login
+			util.make_dir(clipdir)
 
-			channelclips = twitch.get_channel_clips(channel)
-			newclips = compare_existant_file(folder, channelclips)
+			channelclips = [clip for clip in twitch.get_channel_clips(channel) if clip.id not in cache.channels[channel.login].clips]
+			newclips = compare_existant_file(clipdir, channelclips)
 
 			totalclips += len(newclips)
-			cprint(f"#fC#l{len(newclips)} #fM#lClips#r", flush=True)
+			cprint(f"#fC#l{len(newclips)} #fM#lClips#r", end="", flush=True)
+		
+		print(flush=True)
 		
 		channel.new_vods = newvods
 		channel.new_clips = newclips
@@ -115,9 +126,12 @@ def run(args):
 					continue
 				except (itd_work.DownloadCancelled, KeyboardInterrupt):
 					cprint(f"\n#fR#lVOD `{vod.id}` download cancelled. Exiting...#r")
+					save_cache(conf, cache)
 					raise KeyboardInterrupt()
 			# write meta file
 			vod.write_meta(metaname)
+			# write to cache
+			cache.channels[channel.login].vods[vod.id] = f"{vod.created_at}_{vod.id}.meta".replace(":", ";")
 		
 		clipdir = CLIPS_DIR / channel.login
 		for clip in channel.new_clips:
@@ -133,27 +147,28 @@ def run(args):
 					cprint(f"#fR#lClip `{clip.id}` download failed! Skipping...#r")
 				except (itd_work.DownloadCancelled, KeyboardInterrupt):
 					cprint(f"\n#fR#lClip `{clip.id}` download cancelled. Exiting...#r")
+					save_cache(conf, cache)
 					raise KeyboardInterrupt()
 			# write meta file
 			clip.write_meta(metaname)
+			# write to cache
+			cache.channels[channel.login].clips[clip.id] = f"{clip.created_at}_{clip.id}.meta".replace(":", ";")
+			cache.channels[channel.login].slugs[clip.slug] = f"{clip.created_at}_{clip.id}.meta".replace(":", ";")
 	
 	#cprint("\n#fM#l* All done, goodbye! *#r\n")
+	# save the cache
+	save_cache(conf, cache)
 
 
 def compare_existant_file(path, allvods):
 	# Check for existing videos by finding the meta files
-	existingvods = [f[:-5] for f in listdir(str(path)) if isfile(str(path/f)) and f[-4:]=="meta"]
+	existingvods = [f[:-5] for f in listdir(path) if isfile(path/f) and f.endswith(".meta")]
 	# Compare vods, if they arent downloaded (meta is missing) then we need to queue them
 	result = [
-		vod 
-			for vod in allvods
-			# we use two methods of detection, one for the new format and one for the old
-			# this is so old archives don't get overwritten unecessarily
-			# TODO: remove this in a future update after deprecation
+		vod for vod in allvods
 			if not any(
 				f"{vod.created_at}_{vod.id}".replace(":", ";") == x
-				or vod.id == x for x in existingvods
 					for x in existingvods
 			)
-		]
+	]
 	return result

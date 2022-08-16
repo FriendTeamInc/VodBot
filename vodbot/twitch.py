@@ -218,7 +218,7 @@ class ChatMessage:
 		return CHAT_STATE[state]
 
 
-def get_channels(channel_ids: List[str]) -> List[Channel]:
+def get_channels(channel_logins: List[str]) -> List[Channel]:
 	"""
 	Uses a (blocking) HTTP request to retrieve channel information from Twitch's API.
 
@@ -228,13 +228,13 @@ def get_channels(channel_ids: List[str]) -> List[Channel]:
 
 	# Make channel objects and store them in a list
 	channels = []
-	for channel_id in channel_ids:
-		query = gql.GET_CHANNEL_QUERY.format(channel_id=channel_id)
+	for channel_login in channel_logins:
+		query = gql.GET_CHANNEL_QUERY.format(channel_login=channel_login)
 		resp = gql.gql_query(query=query).json()
 		c = resp["data"]["user"]
 
 		if c == None:
-			raise Exception(f"Channel `{channel_id}` does not exist!")
+			raise Exception(f"Channel `{channel_login}` does not exist!")
 		
 		channels.append(
 			Channel(

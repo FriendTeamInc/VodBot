@@ -7,6 +7,7 @@ import vodbot.video as vbvid
 import vodbot.chatlog as vbchat
 from vodbot.config import Config
 from vodbot.printer import cprint
+from vodbot.cache import load_cache, save_cache
 
 from datetime import datetime
 from pathlib import Path
@@ -45,6 +46,7 @@ def handle_stage(conf: Config, stage: StageData) -> Path:
 
 def run(args):
 	conf = util.load_conf(args.config)
+	cache = load_cache(conf, args.cache_toggle)
 	STAGE_DIR = conf.directories.stage
 
 	util.make_dir(args.path)
@@ -52,49 +54,23 @@ def run(args):
 	
 	# load stages, but dont slice
 	# Handle id/all
+	cprint("#dLoading and slicing stages...#r", flush=True)
+	stagedatas = []
 	if args.id == "all":
-		cprint("#dLoading and slicing stages...#r", flush=True)
-
-		# create a list of all the hashes and sort by date streamed, slice chronologically
 		stagedatas = StageData.load_all_stages(STAGE_DIR)
 		stagedatas.sort(key=sort_stagedata)
-
-		for stage in stagedatas:
-			tmpfile = None
-			tmpchat = None
-			# Export with ffmpeg
-			tmpfile = handle_stage(conf, stage)
-			# Export chat
-			tmpchat = vbchat.process_stage(conf, stage, "export")
-
-			title = stage.title.strip()
-			for x in DISALLOWED_CHARACTERS:
-				title = title.replace(x, "_")
-
-			# move appropriate files
-			if tmpfile is not None:
-				shutil_move(str(tmpfile), str(args.path / (title+tmpfile.suffix)))
-			if tmpchat is not None:
-				shutil_move(str(tmpchat), str(args.path / (title+tmpchat.suffix)))
-			
-			# deal with old stage
-			if conf.stage.delete_on_export:
-				os_remove(str(STAGE_DIR / f"{stage.id}.stage"))
 	else:
-		cprint("#dLoading stage...#r", flush=True)
-		
-		# check if stage exists, and prep it for slice
-		stagedata = StageData.load_from_id(STAGE_DIR, args.id)
-		
+		stagedatas = [args.id]
+	
+	for stage in stagedatas:
 		tmpfile = None
 		tmpchat = None
-		
 		# Export with ffmpeg
-		tmpfile = handle_stage(conf, stagedata)
+		tmpfile = handle_stage(conf, stage)
 		# Export chat
-		tmpchat = vbchat.process_stage(conf, stagedata, "export")
-		
-		title = stagedata.title.strip()
+		tmpchat = vbchat.process_stage(conf, stage, "export")
+
+		title = stage.title.strip()
 		for x in DISALLOWED_CHARACTERS:
 			title = title.replace(x, "_")
 
@@ -104,9 +80,11 @@ def run(args):
 		if tmpchat is not None:
 			shutil_move(str(tmpchat), str(args.path / (title+tmpchat.suffix)))
 		
-		# Deal with old stage
+		# deal with old stage
 		if conf.stage.delete_on_export:
-			os_remove(str(STAGE_DIR / f"{stagedata.id}.stage"))
-
+			os_remove(STAGE_DIR / f"{stage.id}.stage")
+			cache.stages.remove(stage.id)
+			save_cache(conf, cache)
+	
 	# say "Done!"
-	cprint("#fG#lDone!#r")
+	# cprint("#fG#lDone!#r")
