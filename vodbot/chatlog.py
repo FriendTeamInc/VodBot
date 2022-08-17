@@ -8,11 +8,13 @@ from .config import Config
 from . import util
 
 import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from dataclasses_json import dataclass_json
 from typing import List, Tuple
 from pathlib import Path
 
+
+# TODO: check for any and all unicode/symbols to change to hex entity codes
 HTML_FXIED_SYMBOLS = {
 	"&": "&#38;",
 	"<": "&#60;",
