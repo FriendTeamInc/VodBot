@@ -69,7 +69,8 @@ def logfile_to_chat(path: str) -> List[ChatMessage]:
 	
 	for chat in chatlog.msgs:
 		chats.append(ChatMessage(
-			user=chatlog.users[chat.user].username, color=chatlog.users[chat.user].color,
+			user=chatlog.users[chat.user].username,
+			color=chatlog.users[chat.user].color,
 			offset=chat.offset, msg=chat.message
 		))
 

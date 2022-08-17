@@ -11,8 +11,7 @@ from argcomplete.completers import FilesCompleter, DirectoriesCompleter
 from pathlib import Path
 from importlib import import_module
 from requests.exceptions import ConnectionError
-from os import listdir as os_listdir
-from os.path import isfile as os_isfile
+from shutil import which
 
 
 def video_completer(prefix, parsed_args, **kwargs):
@@ -152,6 +151,14 @@ def main():
 	
 	argcomplete.autocomplete(parser)
 	args = parser.parse_args()
+
+	# Check for ffmpeg and imagemagick
+	ffmpeg_check = which("ffmpeg")
+	magick_check = which("magick")
+	if ffmpeg_check is None:
+		util.exit_prog(-11, "FFMPEG could not be found in your PATH environment variable. You can download it at http://ffmpeg.org/ or https://github.com/BtbN/FFmpeg-Builds")
+	if magick_check is None:
+		util.exit_prog(-11, "ImageMagick could not be found in your PATH environment variable. You can download it at https://imagemagick.org/ or https://github.com/SoftCreatR/imei")
 
 	# Handle commands
 	if args.cmd == "init":
