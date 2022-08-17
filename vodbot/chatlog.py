@@ -1,6 +1,5 @@
 # Module that parses chatlogs to and from files
 
-from os import write
 from random import randint
 from .commands.stage import StageData
 from .printer import cprint
@@ -9,9 +8,13 @@ from .config import Config
 from . import util
 
 import json
+from dataclasses import dataclass
+from dataclasses_json import dataclass_json
 from typing import List, Tuple
 from pathlib import Path
 
+
+# TODO: check for any and all unicode/symbols to change to hex entity codes
 HTML_FXIED_SYMBOLS = {
 	"&": "&#38;",
 	"<": "&#60;",
@@ -19,73 +22,56 @@ HTML_FXIED_SYMBOLS = {
 }
 
 
-def chat_to_logfile(msgs: List[ChatMessage], path: str) -> None:
-	# create preamble (contains all chatter's names and their colors)
+@dataclass_json
+@dataclass
+class _ChatMember:
+	username: str
+	color: str
+
+@dataclass_json
+@dataclass
+class _ChatMessage:
+	user: int
+	offset: int
+	#state: str
+	message: str
+
+@dataclass_json
+@dataclass
+class _ChatLog:
+	users: List[_ChatMember]
+	msgs: List[_ChatMessage]
+
+
+def chat_to_logfile(chatmsgs: List[ChatMessage], path: str) -> None:
+	msgs = []
 	preamb = []
-	for m in msgs:
-		s = f"{m.color};{m.user}"
-		if s not in preamb:
-			preamb.append(s)
-
-	# open chat log file
-	# TODO: change to encoding="utf8"?
-	with open(path, "wb") as f:
-		# write pramble as one line, delimited by null characters
-		for s in preamb:
-			f.write(s.encode("utf-8"))
-
-			if s != preamb[-1]:
-				f.write("\0".encode("utf-8"))
+	users = {}
+	for m in chatmsgs:
+		s = m.user
+		if s not in users:
+			preamb.append({"username": s, "color": m.color})
+			users[s] = len(preamb)-1
 		
-		# preamble done
-		f.write("\n".encode("utf-8"))
-
-		# write the messages, each line a new message
-		for m in msgs:
-			idx = preamb.index(f"{m.color};{m.user}")
-			# each line is a unique message
-			# line string split with \0 for components
-			# m[0]=offset from start of stream, m[1]=state (published, deleted, etc),
-			# m[2]=user (in preamble), m[3:]=message they sent, encoded as a string
-			f.write(f"{m.offset}\0{m.enc_state}\0{idx}\0{m.enc_msg}".encode("utf-8"))
-
-			# newlines on every line except the last
-			if m != msgs[-1]:
-				f.write("\n".encode("utf-8"))
+		msgs.append({"user": users[s], "offset": m.offset, "message": m.msg})
+	
+	with open(path, "w") as f:
+		chatlog = _ChatLog.from_dict({"users": preamb, "msgs": msgs})
+		f.write(chatlog.to_json())
 
 
 def logfile_to_chat(path: str) -> List[ChatMessage]:
 	chats = []
 
-	with open(path, "rb") as f:
-		readfirst = False
-		preamb = []
-		for line in f.readlines():
-			line = line.decode("utf-8").strip("\n") # Remove newline character and decode as utf8
-			if not readfirst:
-				# first line is preamble, so we unravel it
-				for user in line.split("\0"):
-					user = user.split(";")
-					if len(user) < 2:
-						util.exit_prog(code=130, errmsg=f"Could not find enough elements in `{path}`'s preamble for a user.")
-					if len(user[0]) != 6 or not all((c in "0123456789abcdefgABCDEFG") for c in user[0]):
-						util.exit_prog(code=131, errmsg=f"Color string for user \"{user[1]}\" in `{path}` must be 6 hexadecimal characters.")
-					preamb.append((user[0], user[1]))
-				readfirst = True
-			else:
-				# succeeding lines are all chat messages, so we read each one, match it with a user
-				# from the preamble, grab all the other info, make a ChatMessage object, and tack it
-				# on to the list.
-				line = line.split("\0")
-				if len(line) == 0:
-					continue # nothing here to parse, try next line
-				info = int(line[2])
-				chats.append(
-					ChatMessage(
-						user=preamb[info][1], color=preamb[info][0],
-						offset=int(line[0]), enc_state=int(line[1]), enc_msg=line[3]
-					)
-				)
+	chatlog: _ChatLog = None
+	with open(path) as f:
+		chatlog = _ChatLog.from_json(f.read())
+	
+	for chat in chatlog.msgs:
+		chats.append(ChatMessage(
+			user=chatlog.users[chat.user].username, color=chatlog.users[chat.user].color,
+			offset=chat.offset, msg=chat.message
+		))
 
 	return chats
 
