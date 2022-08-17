@@ -142,23 +142,24 @@ class _ConfigThumbnail:
 @dataclass_json
 @dataclass
 class _ConfigWebhookBase:
-	enable: bool = None
-	display_name: str = None
-	webhook_url: str = None
+	enable: bool = True
+	message: str = ""
+	url: str = ""
 
 @dataclass_json
 @dataclass
 class _ConfigWebhooks:
-	enable: bool
-	display_name: str
-	webhook_url: str
-	pull_vod: _ConfigWebhookBase
-	pull_clip: _ConfigWebhookBase
-	pull_job_done: _ConfigWebhookBase
-	export_video: _ConfigWebhookBase
-	export_job_done: _ConfigWebhookBase
-	upload_video: _ConfigWebhookBase
-	upload_job_done: _ConfigWebhookBase
+	pull_vod: _ConfigWebhookBase = field(default_factory=lambda: _ConfigWebhookBase())
+	pull_clip: _ConfigWebhookBase = field(default_factory=lambda: _ConfigWebhookBase())
+	pull_job_done: _ConfigWebhookBase = field(default_factory=lambda: _ConfigWebhookBase())
+	export_video: _ConfigWebhookBase = field(default_factory=lambda: _ConfigWebhookBase())
+	export_job_done: _ConfigWebhookBase = field(default_factory=lambda: _ConfigWebhookBase())
+	upload_video: _ConfigWebhookBase = field(default_factory=lambda: _ConfigWebhookBase())
+	upload_job_done: _ConfigWebhookBase = field(default_factory=lambda: _ConfigWebhookBase())
+
+	enable: bool = False
+	message: str = ""
+	url: str = ""
 
 @dataclass_json
 @dataclass
@@ -189,7 +190,7 @@ class Config:
 	export: _ConfigExport = field(default_factory=lambda: _ConfigExport())
 	upload: _ConfigUpload = field(default_factory=lambda: _ConfigUpload())
 	# thumbnail: _ConfigThumbnail = field(default_factory=lambda: _ConfigThumbnail())
-	# webhooks: _ConfigWebhooks = field(default_factory=lambda: _ConfigWebhooks())
+	webhooks: _ConfigWebhooks = field(default_factory=lambda: _ConfigWebhooks())
 	directories: _ConfigDirectories = field(default_factory=lambda: _ConfigDirectories())
 
 
