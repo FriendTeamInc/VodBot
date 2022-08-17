@@ -1,6 +1,5 @@
 # Module that parses chatlogs to and from files
 
-from os import write
 from random import randint
 from .commands.stage import StageData
 from .printer import cprint
@@ -9,6 +8,8 @@ from .config import Config
 from . import util
 
 import json
+from dataclasses import dataclass, field
+from dataclasses_json import dataclass_json
 from typing import List, Tuple
 from pathlib import Path
 
@@ -17,6 +18,27 @@ HTML_FXIED_SYMBOLS = {
 	"<": "&#60;",
 	">": "&#62;",
 }
+
+
+@dataclass_json
+@dataclass
+class _ChatMember:
+	username: str
+	color: str
+
+@dataclass_json
+@dataclass
+class _ChatMessage:
+	user: int
+	offset: int
+	state: str
+	message: str
+
+@dataclass_json
+@dataclass
+class _ChatLog:
+	users: List[_ChatMember]
+	msgs: List[_ChatMessage]
 
 
 def chat_to_logfile(msgs: List[ChatMessage], path: str) -> None:
@@ -57,35 +79,15 @@ def chat_to_logfile(msgs: List[ChatMessage], path: str) -> None:
 def logfile_to_chat(path: str) -> List[ChatMessage]:
 	chats = []
 
-	with open(path, "rb") as f:
-		readfirst = False
-		preamb = []
-		for line in f.readlines():
-			line = line.decode("utf-8").strip("\n") # Remove newline character and decode as utf8
-			if not readfirst:
-				# first line is preamble, so we unravel it
-				for user in line.split("\0"):
-					user = user.split(";")
-					if len(user) < 2:
-						util.exit_prog(code=130, errmsg=f"Could not find enough elements in `{path}`'s preamble for a user.")
-					if len(user[0]) != 6 or not all((c in "0123456789abcdefgABCDEFG") for c in user[0]):
-						util.exit_prog(code=131, errmsg=f"Color string for user \"{user[1]}\" in `{path}` must be 6 hexadecimal characters.")
-					preamb.append((user[0], user[1]))
-				readfirst = True
-			else:
-				# succeeding lines are all chat messages, so we read each one, match it with a user
-				# from the preamble, grab all the other info, make a ChatMessage object, and tack it
-				# on to the list.
-				line = line.split("\0")
-				if len(line) == 0:
-					continue # nothing here to parse, try next line
-				info = int(line[2])
-				chats.append(
-					ChatMessage(
-						user=preamb[info][1], color=preamb[info][0],
-						offset=int(line[0]), enc_state=int(line[1]), enc_msg=line[3]
-					)
-				)
+	chatlog: _ChatLog = None
+	with open(path) as f:
+		chatlog = _ChatLog.from_json(f.read())
+	
+	for chat in chatlog.msgs:
+		chats.append(ChatMessage(
+			user=chatlog.users[chat.user].username, color=chatlog.users[chat.user].color,
+			offset=chat.offset, enc_state=chat.state, enc_msg=chat.message
+		))
 
 	return chats
 

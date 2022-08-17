@@ -416,7 +416,6 @@ def get_video_comments(video_id: str) -> List[ChatMessage]:
 				if frag["mention"] is not None:
 					msg += "@" + frag["mention"]["displayName"]
 				msg += frag["text"]
-				msg += " "
 			msg = msg.strip()
 
 			messages.append(
