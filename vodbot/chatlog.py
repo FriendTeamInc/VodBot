@@ -31,7 +31,7 @@ class _ChatMember:
 class _ChatMessage:
 	user: int
 	offset: int
-	state: str
+	#state: str
 	message: str
 
 @dataclass_json
@@ -41,17 +41,17 @@ class _ChatLog:
 	msgs: List[_ChatMessage]
 
 
-def chat_to_logfile(msgs: List[ChatMessage], path: str) -> None:
+def chat_to_logfile(chatmsgs: List[ChatMessage], path: str) -> None:
 	msgs = []
 	preamb = []
 	users = {}
-	for m in msgs:
+	for m in chatmsgs:
 		s = m.user
 		if s not in users:
 			preamb.append({"username": s, "color": m.color})
 			users[s] = len(preamb)-1
 		
-		msgs.append({"user": users[s], "offset": m.offset, "state": m.state, "message": m.msg})
+		msgs.append({"user": users[s], "offset": m.offset, "message": m.msg})
 	
 	with open(path, "w") as f:
 		chatlog = _ChatLog.from_dict({"users": preamb, "msgs": msgs})
@@ -68,7 +68,7 @@ def logfile_to_chat(path: str) -> List[ChatMessage]:
 	for chat in chatlog.msgs:
 		chats.append(ChatMessage(
 			user=chatlog.users[chat.user].username, color=chatlog.users[chat.user].color,
-			offset=chat.offset, enc_state=chat.state, enc_msg=chat.message
+			offset=chat.offset, msg=chat.message
 		))
 
 	return chats

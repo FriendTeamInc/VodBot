@@ -6,24 +6,6 @@ from .itd import gql
 import json
 
 
-# for escaping strings, taken from json.py
-ENCODE_DICT = {
-    '\b': '\\b',
-    '\f': '\\f',
-    '\n': '\\n',
-    '\r': '\\r',
-    '\t': '\\t',
-}
-
-DECODE_DICT = dict((v,k) for k,v in ENCODE_DICT.items())
-
-# TODO: change to enum?
-CHAT_STATE = [
-	"PUBLISHED", "UNPUBLISHED",
-	"PENDING_REVIEW", "PENDING_REVIEW_SPAM",
-	"DELETED"
-]
-
 class VodChapter:
 	def __init__(self,
 		position:int, duration:int, type:str, description:str
@@ -158,64 +140,23 @@ class Channel:
 
 class ChatMessage:
 	def __init__(self,
-		user:str, color:str, offset:int, msg:str=None, state:str=None,
-		enc_msg:str=None, enc_state:str=None
+		user:str, color:str, offset:int, msg:str=None
 	):
 		self.user = user
 		self.color = color
 		self.offset = offset
-
-		if msg is not None:
-			self.msg = msg
-			self.enc_msg = self.encode_message(self.msg)
-		elif enc_msg is not None:
-			self.enc_msg = enc_msg
-			self.msg = self.decode_message(self.enc_msg)
-		else:
-			raise Exception(f"Could not determine message from constructor for ChatMessage. (\"{msg}\") (\"{enc_msg}\")")
-
-		if state is not None:
-			self.state = state
-			self.enc_state = self.encode_state(self.state)
-		elif enc_state is not None:
-			self.enc_state = enc_state
-			self.state = self.decode_state(self.enc_state)
-		else:
-			raise Exception(f"Could not determine state from constructor for ChatMessage. (\"{state}\") (\"{enc_state}\")")
+		self.msg = msg
 		
 	def __repr__(self):
 		return f"ChatMessage(ofst={self.offset};{self.user}: {self.msg})"
 		
 	def write_dict(self):
 		return {
-			"ofst":self.offset_secs,
-			"state":self.state,
-			"clr":self.user_color,
+			"ofst":self.offset,
+			"clr":self.color,
 			"user":self.user,
-			"msg":self.message
+			"msg":self.msg
 		}
-	
-	@staticmethod
-	def encode_message(msg):
-		for k,v in ENCODE_DICT.items():
-			msg = msg.replace(k, v)
-		
-		return msg
-	
-	@staticmethod
-	def decode_message(msg):
-		for k,v in DECODE_DICT.items():
-			msg = msg.replace(k, v)
-		
-		return msg
-	
-	@staticmethod
-	def encode_state(state):
-		return CHAT_STATE.index(state)
-	
-	@staticmethod
-	def decode_state(state):
-		return CHAT_STATE[state]
 
 
 def get_channels(channel_logins: List[str]) -> List[Channel]:
@@ -278,7 +219,7 @@ def get_channel_vods(channel: Channel) -> List[Vod]:
 				continue
 
 			game_id = game_name = ""
-      
+	  
 			if g:
 				game_id, game_name = g["id"], g["name"]
 			
