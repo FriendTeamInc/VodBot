@@ -105,7 +105,7 @@ GET_VIDEO_COMMENTS_QUERY = """
 {{ video(id: "{video_id}") {{
 	comments(contentOffsetSeconds: 0, after: "{after}") {{
 		edges {{ cursor node {{
-			contentOffsetSeconds state
+			contentOffsetSeconds
 			commenter {{ displayName }}
 			message {{ userColor 
 				fragments {{ mention {{ displayName }} text }}
