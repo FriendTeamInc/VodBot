@@ -42,38 +42,20 @@ class _ChatLog:
 
 
 def chat_to_logfile(msgs: List[ChatMessage], path: str) -> None:
-	# create preamble (contains all chatter's names and their colors)
+	msgs = []
 	preamb = []
+	users = {}
 	for m in msgs:
-		s = f"{m.color};{m.user}"
-		if s not in preamb:
-			preamb.append(s)
-
-	# open chat log file
-	# TODO: change to encoding="utf8"?
-	with open(path, "wb") as f:
-		# write pramble as one line, delimited by null characters
-		for s in preamb:
-			f.write(s.encode("utf-8"))
-
-			if s != preamb[-1]:
-				f.write("\0".encode("utf-8"))
+		s = m.user
+		if s not in users:
+			preamb.append({"username": s, "color": m.color})
+			users[s] = len(preamb)-1
 		
-		# preamble done
-		f.write("\n".encode("utf-8"))
-
-		# write the messages, each line a new message
-		for m in msgs:
-			idx = preamb.index(f"{m.color};{m.user}")
-			# each line is a unique message
-			# line string split with \0 for components
-			# m[0]=offset from start of stream, m[1]=state (published, deleted, etc),
-			# m[2]=user (in preamble), m[3:]=message they sent, encoded as a string
-			f.write(f"{m.offset}\0{m.enc_state}\0{idx}\0{m.enc_msg}".encode("utf-8"))
-
-			# newlines on every line except the last
-			if m != msgs[-1]:
-				f.write("\n".encode("utf-8"))
+		msgs.append({"user": users[s], "offset": m.offset, "state": m.state, "message": m.msg})
+	
+	with open(path, "w") as f:
+		chatlog = _ChatLog.from_dict({"users": preamb, "msgs": msgs})
+		f.write(chatlog.to_json())
 
 
 def logfile_to_chat(path: str) -> List[ChatMessage]:
