@@ -1,5 +1,3 @@
-from ast import parse
-from cmath import log
 from . import util, __project__, __version__
 from .config import DEFAULT_CONFIG_PATH
 from .printer import cprint, colorize

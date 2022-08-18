@@ -20,7 +20,7 @@ _webhooks = {atrb: None for atrb in _config_attributes}
 
 def init_webhooks(conf: Config):
 	# check main toggle
-	if not conf.webhooks.enable:
+	if not conf.webhooks.enable or not conf.webhooks.url:
 		return
 
 	for atrb, title in _config_attributes.items:
@@ -63,4 +63,5 @@ def send_webhook(wh:str, description:str=""):
 	try:
 		resp = webhook.execute()
 	except:
+		# ignore failures to connect
 		pass

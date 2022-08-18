@@ -6,6 +6,7 @@ from vodbot.itd import download as itd_dl, worker as itd_work
 from vodbot.printer import cprint
 from vodbot.itd.gql import set_client_id
 from vodbot.cache import Cache, load_cache, save_cache
+from vodbot.webhook import init_webhooks, send_webhook
 
 from pathlib import Path
 from os import listdir
@@ -17,6 +18,7 @@ def run(args):
 	cprint("#r#dLoading config...#r", end=" ", flush=True)
 	conf = util.load_conf(args.config)
 	cache: Cache = load_cache(conf, args.cache_toggle)
+	init_webhooks(conf)
 	VODS_DIR = conf.directories.vods
 	CLIPS_DIR = conf.directories.clips
 	TEMP_DIR = conf.directories.temp
@@ -120,18 +122,23 @@ def run(args):
 					itd_dl.dl_video(vod, Path(TEMP_DIR), filename, 20, LOG_LEVEL)
 				except itd_dl.JoiningFailed:
 					cprint(f"#fR#lVOD `{vod.id}` joining failed! Skipping...#r")
+					send_webhook("pull_error", f"Failed to join VOD files for `{vod.id}`.")
 					continue
 				except itd_work.DownloadFailed:
 					cprint(f"#fR#lVOD `{vod.id}` download failed! Skipping...#r")
+					send_webhook("pull_error", f"Failed to download VOD files for `{vod.id}`.")
 					continue
 				except (itd_work.DownloadCancelled, KeyboardInterrupt):
 					cprint(f"\n#fR#lVOD `{vod.id}` download cancelled. Exiting...#r")
 					save_cache(conf, cache)
+					send_webhook("pull_error", f"VOD download cancelled for `{vod.id}`.")
 					raise KeyboardInterrupt()
 			# write meta file
 			vod.write_meta(metaname)
 			# write to cache
 			cache.channels[channel.login].vods[vod.id] = f"{vod.created_at}_{vod.id}.meta".replace(":", ";")
+			# send webhook
+			send_webhook("pull_vod", f"Pulled VOD `{vod.id}`.")
 		
 		clipdir = CLIPS_DIR / channel.login
 		for clip in channel.new_clips:
@@ -145,19 +152,24 @@ def run(args):
 					itd_dl.dl_clip(clip, filename)
 				except itd_work.DownloadFailed:
 					cprint(f"#fR#lClip `{clip.id}` download failed! Skipping...#r")
+					send_webhook("pull_error", f"Failed to download Clip `{clip.slug}` ({clip.id}).")
 				except (itd_work.DownloadCancelled, KeyboardInterrupt):
 					cprint(f"\n#fR#lClip `{clip.id}` download cancelled. Exiting...#r")
 					save_cache(conf, cache)
+					send_webhook("pull_error", f"Clip download cancelled for `{clip.slug}` ({clip.id}).")
 					raise KeyboardInterrupt()
 			# write meta file
 			clip.write_meta(metaname)
 			# write to cache
 			cache.channels[channel.login].clips[clip.id] = f"{clip.created_at}_{clip.id}.meta".replace(":", ";")
 			cache.channels[channel.login].slugs[clip.slug] = f"{clip.created_at}_{clip.id}.meta".replace(":", ";")
+			# send webhook
+			send_webhook("pull_clip", f"Pulled Clip `{clip.slug}` ({clip.id}).")
 	
 	#cprint("\n#fM#l* All done, goodbye! *#r\n")
 	# save the cache
 	save_cache(conf, cache)
+	send_webhook("pull_job_done", "Download job")
 
 
 def compare_existant_file(path, allvods):
