@@ -6,10 +6,13 @@ from discord_webhook import DiscordWebhook, DiscordEmbed
 _config_attributes = {
 	"pull_vod": "VodBot Pulled VOD",
 	"pull_clip": "VodBot Pulled Clip",
+	"pull_error": "VodBot Pull Error",
 	"pull_job_done": "VodBot Pull Job Done",
 	"export_video": "VodBot Exported Video",
+	"export_error": "VodBot Export Error",
 	"export_job_done": "VodBot Export Job Done",
 	"upload_video": "VodBot Uploaded Video",
+	"upload_error": "VodBot Upload Error",
 	"upload_job_done": "VodBot Upload Job Done"
 }
 _webhooks = {atrb: None for atrb in _config_attributes}
@@ -38,7 +41,7 @@ def init_webhooks(conf: Config):
 			message = confwh.message
 
 		# setup webhook and embed
-		webhook = DiscordWebhook(url=url, content=message)
+		webhook = DiscordWebhook(url=url, content=message, rate_limit_retry=True)
 		embed = DiscordEmbed(title=title)
 
 		embed.set_url("https://vodbot.friendteam.biz")
@@ -48,7 +51,8 @@ def init_webhooks(conf: Config):
 
 
 def send_webhook(wh:str, description:str=""):
-	if _webhooks.get(wh, None) == None:
+	# check if there is a webhook and it has a url, otherwise safely ignore
+	if _webhooks.get(wh, None) is None or not _webhooks[wh][0].url:
 		return
 	
 	(webhook, embed) = _webhooks[wh]
@@ -56,4 +60,7 @@ def send_webhook(wh:str, description:str=""):
 	embed.set_description(description)
 
 	# TODO: use async?
-	resp = webhook.execute()
+	try:
+		resp = webhook.execute()
+	except:
+		pass

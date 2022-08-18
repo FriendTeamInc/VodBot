@@ -151,10 +151,13 @@ class _ConfigWebhookBase:
 class _ConfigWebhooks:
 	pull_vod: _ConfigWebhookBase = field(default_factory=lambda: _ConfigWebhookBase())
 	pull_clip: _ConfigWebhookBase = field(default_factory=lambda: _ConfigWebhookBase())
+	pull_error: _ConfigWebhookBase = field(default_factory=lambda: _ConfigWebhookBase())
 	pull_job_done: _ConfigWebhookBase = field(default_factory=lambda: _ConfigWebhookBase())
 	export_video: _ConfigWebhookBase = field(default_factory=lambda: _ConfigWebhookBase())
+	export_error: _ConfigWebhookBase = field(default_factory=lambda: _ConfigWebhookBase())
 	export_job_done: _ConfigWebhookBase = field(default_factory=lambda: _ConfigWebhookBase())
 	upload_video: _ConfigWebhookBase = field(default_factory=lambda: _ConfigWebhookBase())
+	upload_error: _ConfigWebhookBase = field(default_factory=lambda: _ConfigWebhookBase())
 	upload_job_done: _ConfigWebhookBase = field(default_factory=lambda: _ConfigWebhookBase())
 
 	enable: bool = False
