@@ -4,6 +4,7 @@
 # and changing certain printouts to be more colorful.
 
 from vodbot.printer import cprint
+from vodbot.util import format_duration
 
 import os
 import requests
@@ -14,9 +15,11 @@ from concurrent.futures import ThreadPoolExecutor, as_completed, wait
 from functools import partial
 from requests.exceptions import RequestException
 
+
 CHUNK_SIZE = 1024
 CONNECT_TIMEOUT = 5
 RETRY_COUNT = 5
+
 
 class DownloadFailed(Exception):
 	pass
@@ -50,19 +53,6 @@ def download_file(url, path, retries=RETRY_COUNT):
 
 	raise DownloadFailed("sadge")
 
-def format_duration(total_seconds):
-	total_seconds = int(total_seconds)
-	hours = total_seconds // 3600
-	remainder = total_seconds % 3600
-	minutes = remainder // 60
-	seconds = total_seconds % 60
-
-	if hours:
-		return f"{hours}h{minutes}m{seconds}s"
-	elif minutes:
-		return f"{minutes}m{seconds}s"
-	else:
-		return f"{seconds}s"
 
 def format_size(bytes_, digits=1):
 	units = ["B", "kB", "MB"]

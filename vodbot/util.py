@@ -25,6 +25,22 @@ def posdur_to_timestamp(pos:int, dur:int) -> Tuple[str, str]:
 	return (int_to_timestamp(pos), int_to_timestamp(pos + dur))
 
 
+# number of seconds to a duration string
+def format_duration(total_seconds:int):
+	total_seconds = int(total_seconds)
+	hours = total_seconds // 3600
+	remainder = total_seconds % 3600
+	minutes = remainder // 60
+	seconds = total_seconds % 60
+
+	if hours:
+		return f"{hours}h{minutes}m{seconds}s"
+	elif minutes:
+		return f"{minutes}m{seconds}s"
+	else:
+		return f"{seconds}s"
+
+
 def timestring_as_seconds(time:str, default:int=0):
 	if time == "EOF":
 		return default

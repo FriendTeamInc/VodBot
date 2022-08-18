@@ -6,7 +6,7 @@ from vodbot.itd import download as itd_dl, worker as itd_work
 from vodbot.printer import cprint
 from vodbot.itd.gql import set_client_id
 from vodbot.cache import Cache, load_cache, save_cache
-from vodbot.webhook import init_webhooks, send_webhook
+from vodbot.webhook import init_webhooks, send_pull_clip, send_pull_vod, send_webhook
 
 from pathlib import Path
 from os import listdir
@@ -138,7 +138,8 @@ def run(args):
 			# write to cache
 			cache.channels[channel.login].vods[vod.id] = f"{vod.created_at}_{vod.id}.meta".replace(":", ";")
 			# send webhook
-			send_webhook("pull_vod", f"Pulled VOD `{vod.id}`.")
+			send_pull_vod(vod)
+			# send_webhook("pull_vod", f"Pulled VOD `{vod.id}`.")
 		
 		clipdir = CLIPS_DIR / channel.login
 		for clip in channel.new_clips:
@@ -164,7 +165,8 @@ def run(args):
 			cache.channels[channel.login].clips[clip.id] = f"{clip.created_at}_{clip.id}.meta".replace(":", ";")
 			cache.channels[channel.login].slugs[clip.slug] = f"{clip.created_at}_{clip.id}.meta".replace(":", ";")
 			# send webhook
-			send_webhook("pull_clip", f"Pulled Clip `{clip.slug}` ({clip.id}).")
+			send_pull_clip(clip)
+			# send_webhook("pull_clip", f"Pulled Clip `{clip.slug}` ({clip.id}).")
 	
 	#cprint("\n#fM#l* All done, goodbye! *#r\n")
 	# save the cache
