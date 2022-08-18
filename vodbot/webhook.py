@@ -46,7 +46,7 @@ def init_webhooks(conf: Config):
 		webhook = DiscordWebhook(url=url, content=message, rate_limit_retry=True)
 		embed = DiscordEmbed()
 
-		embed.set_footer(text="[VodBot](https://vodbot.friendteam.biz) Made with \U0001F49C by NotQuiteApex & [Friend Team Inc.](https://friendteam.biz)")
+		embed.set_footer(text="VodBot Made with \U0001F49C by NotQuiteApex & Friend Team Inc.")
 		embed.set_color("7353b2")
 
 		webhook.add_embed(embed)
@@ -88,9 +88,12 @@ def send_pull_clip(clip: Clip):
 	embed.set_url(clip.url)
 	embed.set_title(f'Pulled Clip "{clip.title}" ({clip.id})')
 
-	s = f'Clipped by {clip.clipper_name} of {clip.user_name} at {clip.created_at}\n'
-	s += f'From stream [{clip.video_id}](https://twitch.tv/videos/{clip.video_id}) at {format_duration(clip.offset)} for {format_duration(clip.length)}\n'
-	embed.set_description(s)
+	embed.add_embed_field(name="Created at", value=clip.created_at)
+	embed.add_embed_field(name="Clipper", value=clip.clipper_name)
+	embed.add_embed_field(name="Streamer", value=clip.user_name)
+	embed.add_embed_field(name="Stream", value=f"[{clip.video_id}](https://twitch.tv/videos/{clip.video_id})")
+	embed.add_embed_field(name="Offset", value=format_duration(clip.offset))
+	embed.add_embed_field(name="Length", value=format_duration(clip.length))
 
 	_send_webhook(webhook, embed)
 
@@ -108,10 +111,11 @@ def send_pull_error(description: str, link: str):
 
 
 def _send_webhook(webhook: DiscordWebhook, embed: DiscordEmbed):
-	webhook.embeds = [embed]
+	webhook.remove_embeds()
+	webhook.add_embed(embed)
 	# TODO: use async?
 	try:
-		resp = webhook.execute()
+		resp = webhook.execute(remove_embeds=True)
 	except:
 		# ignore failures to connect
 		pass

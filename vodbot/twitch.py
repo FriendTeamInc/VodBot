@@ -42,7 +42,7 @@ class Vod:
 		self.created_at = created_at
 		self.length = length
 		
-		self.url = f"twitch.tv/videos/{self.id}"
+		self.url = f"https://twitch.tv/videos/{self.id}"
 
 		self.has_chat = has_chat
 	
@@ -97,7 +97,7 @@ class Clip:
 		self.offset = offset # offset from the start of the stream the clip was made
 		self.video_id = video_id # id of the video stream the clip was made of
 		
-		self.url = f"twitch.tv/{self.user_name}/clip/{self.id}"
+		self.url = f"https://twitch.tv/{self.user_name}/clip/{self.slug}"
 	
 	def __repr__(self):
 		# ID by CLIPPER of STREAMER at DATETIME, LENGTH
