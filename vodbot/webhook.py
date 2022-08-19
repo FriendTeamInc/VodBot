@@ -1,6 +1,4 @@
 # Module to ship webhooks out to various places, currently only Discord is supported
-from ntpath import join
-from turtle import title
 from typing import Dict, List, Union
 
 from vodbot.commands.stage import StageData
@@ -69,6 +67,7 @@ def _send_webhook(wh:str, **kwargs: Union[str, List[Dict[str, Union[str, bool]]]
 
 	embed.url = kwargs.get("url")
 	embed.title = kwargs.get("title", "UNKNOWN TITLE PLZ FIX")
+	embed.description = kwargs.get("description")
 	embed.fields = kwargs.get("fields", [])
 	embed.color = kwargs.get("color", embed.color)
 	
@@ -113,7 +112,8 @@ def send_pull_clip(clip: Clip):
 
 def send_pull_error(description: str, link: str):
 	_send_webhook("pull_error",
-		url=link, title=description, color="bf4d30"
+		title="Error pulling videos!", description=description,
+		url=link, color="bf4d30"
 	)
 
 
@@ -129,7 +129,7 @@ def send_pull_job_done(fin_vods, fin_clips, all_vods, all_clips):
 
 def send_export_video(stage: StageData):
 	slices = "\n".join(f"{s.video_id} > {s.ss} - {s.to}" for s in stage.slices)
-	_send_webhook("export_video"
+	_send_webhook("export_video",
 		title=f'Exported stage "{stage.id}"',
 		fields=[
 			{"name": "Title", "value": stage.title},
@@ -141,15 +141,32 @@ def send_export_video(stage: StageData):
 	)
 
 
-def send_export_error():
-	pass
-def send_export_job_done():
+def send_export_error(description: str):
+	_send_webhook("export_error",
+		title="Error exporting videos!", description=description,
+		color="bf4d30"
+	)
+
+
+def send_export_job_done(fin_vids, all_vids):
+	_send_webhook("export_job_done",
+		title=f"Export job completed successfully!", color="227326",
+		fields=[
+			{"name": "Exported Videos", "value": f"{fin_vids} of {all_vids}"},
+		]
+	)
+
+
+def send_upload_video(stage: StageData, url: str):
 	pass
 
 
-def send_upload_video():
-	pass
-def send_upload_error():
-	pass
+def send_upload_error(description: str):
+	_send_webhook("export_error",
+		title="Error uploading videos!", description=description,
+		color="bf4d30"
+	)
+
+
 def send_upload_job_done():
 	pass

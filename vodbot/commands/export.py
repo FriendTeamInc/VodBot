@@ -1,6 +1,6 @@
 # Export video data to a specific location
 
-from vodbot.webhook import send_export_job_done, send_export_video
+from vodbot.webhook import send_export_error, send_export_job_done, send_export_video
 from .stage import StageData
 
 import vodbot.util as util
@@ -33,13 +33,16 @@ def handle_stage(conf: Config, stage: StageData) -> Path:
 	try:
 		tmpfile = vbvid.process_stage(conf, stage)
 	except vbvid.FailedToSlice as e:
-		cprint(f"#r#fRSkipping stage `{stage.id}`, failed to slice video with ID of `{e.vid}`.#r\n")
+		cprint(f"#r#fRSkipping stage `{stage.id}`, failed to slice video with ID of `{e.video_id}`.#r\n")
+		send_export_error(f'For stage "{stage.id}", failed to slice video with ID "{e.video_id}".')
 		return None
 	except vbvid.FailedToConcat:
 		cprint(f"#r#fRSkipping stage `{stage.id}`, failed to concatenate videos.#r\n")
+		send_export_error(f'For stage "{stage.id}", failed to concatenate videos.')
 		return None
 	except vbvid.FailedToCleanUp as e:
-		cprint(f"#r#fRSkipping stage `{stage.id}`, failed to clean up temp files.#r\n\n{e.vid}")
+		cprint(f"#r#fRSkipping stage `{stage.id}`, failed to clean up temporary files.#r\n\n{e.vid}")
+		send_export_error(f'For stage "{stage.id}", failed to clean up temporary files.')
 		return None
 	
 	return tmpfile
@@ -63,6 +66,7 @@ def run(args):
 	else:
 		stagedatas = [StageData.load_from_id(args.id)]
 	
+	fin_vids = 0
 	for stage in stagedatas:
 		tmpfile = None
 		tmpchat = None
@@ -86,9 +90,10 @@ def run(args):
 			os_remove(STAGE_DIR / f"{stage.id}.stage")
 			cache.stages.remove(stage.id)
 			save_cache(conf, cache)
-		
-		send_export_video()
+
+		fin_vids += 1
+		send_export_video(stage)
 	
 	# say "Done!"
 	# cprint("#fG#lDone!#r")
-	send_export_job_done()
+	send_export_job_done(fin_vids, len(stagedatas))
