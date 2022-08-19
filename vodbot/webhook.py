@@ -1,4 +1,6 @@
 # Module to ship webhooks out to various places, currently only Discord is supported
+from ctypes import Union
+from typing import Any, Dict, List
 from .twitch import Clip, Vod
 from .config import Config
 from .util import format_duration as formdur
@@ -53,8 +55,7 @@ def init_webhooks(conf: Config):
 		_webhooks[atrb] = (webhook, embed)
 
 
-def send_pull_vod(vod: Vod):
-	wh = "pull_vod"
+def _send_webhook(wh:str, **kwargs: Union[str, List[Dict[str, Union[str, bool]]]]):
 	# check if there is a webhook and it has a url, otherwise safely ignore
 	if _webhooks.get(wh, None) is None or not _webhooks[wh][0].url:
 		return
@@ -63,83 +64,11 @@ def send_pull_vod(vod: Vod):
 	embed: DiscordEmbed
 	(webhook, embed) = _webhooks[wh]
 
-	embed.set_url(vod.url)
-	embed.set_title(f'Pulled VOD "{vod.title}" ({vod.id})')
-
-	embed.fields = []
-	embed.add_embed_field(name="Created at", value=vod.created_at)
-	embed.add_embed_field(name="Streamer", value=vod.user_name)
-	embed.add_embed_field(name="Length", value=formdur(vod.length))
-	embed.add_embed_field(name="Game", value=vod.game_name)
-
-	s = "\n".join(f'- "{c.description}" at {formdur(c.position)} for {formdur(c.duration)}' for c in vod.chapters)
-	embed.add_embed_field(name="Chapters", value=s, inline=False)
-
-	_send_webhook(webhook, embed)
-
-
-def send_pull_clip(clip: Clip):
-	wh = "pull_clip"
-	# check if there is a webhook and it has a url, otherwise safely ignore
-	if _webhooks.get(wh, None) is None or not _webhooks[wh][0].url:
-		return
+	embed.url = kwargs.get("url")
+	embed.title = kwargs.get("title", "UNKNOWN TITLE PLZ FIX")
+	embed.fields = kwargs.get("fields", [])
+	embed.color = kwargs.get("color", embed.color)
 	
-	webhook: DiscordWebhook
-	embed: DiscordEmbed
-	(webhook, embed) = _webhooks[wh]
-
-	embed.set_url(clip.url)
-	embed.set_title(f'Pulled Clip "{clip.title}" ({clip.id})')
-
-	embed.fields = []
-	embed.add_embed_field(name="Created at", value=clip.created_at)
-	embed.add_embed_field(name="Clipper", value=clip.clipper_name)
-	embed.add_embed_field(name="Streamer", value=clip.user_name)
-	embed.add_embed_field(name="Stream", value=f"[{clip.video_id}](https://twitch.tv/videos/{clip.video_id})")
-	embed.add_embed_field(name="Offset", value=formdur(clip.offset))
-	embed.add_embed_field(name="Length", value=formdur(clip.length))
-
-	_send_webhook(webhook, embed)
-
-
-def send_pull_error(description: str, link: str):
-	wh = "pull_error"
-	# check if there is a webhook and it has a url, otherwise safely ignore
-	if _webhooks.get(wh, None) is None or not _webhooks[wh][0].url:
-		return
-	
-	webhook: DiscordWebhook
-	embed: DiscordEmbed
-	(webhook, embed) = _webhooks[wh]
-
-	embed.set_title(description)
-	embed.set_url(link)
-	embed.set_color("bf4d30")
-
-	_send_webhook(webhook, embed)
-
-
-def send_pull_job_done(fin_vods, fin_clips, all_vods, all_clips):
-	wh = "pull_job_done"
-	# check if there is a webhook and it has a url, otherwise safely ignore
-	if _webhooks.get(wh, None) is None or not _webhooks[wh][0].url:
-		return
-
-	webhook: DiscordWebhook
-	embed: DiscordEmbed
-	(webhook, embed) = _webhooks[wh]
-
-	embed.set_color("227326")
-	embed.set_title("Pull job completed successfully!")
-
-	embed.fields = []
-	embed.add_embed_field(name="VODs Pulled", value=f"{fin_vods} of {all_vods}")
-	embed.add_embed_field(name="Clips Pulled", value=f"{fin_clips} of {all_clips}")
-
-	_send_webhook(webhook, embed)
-
-
-def _send_webhook(webhook: DiscordWebhook, embed: DiscordEmbed):
 	webhook.remove_embeds()
 	webhook.add_embed(embed)
 	# TODO: use async?
@@ -148,3 +77,66 @@ def _send_webhook(webhook: DiscordWebhook, embed: DiscordEmbed):
 	except:
 		# ignore failures to connect
 		pass
+
+
+def send_pull_vod(vod: Vod):
+	s = "\n".join(f'- "{c.description}" at {formdur(c.position)} for {formdur(c.duration)}' for c in vod.chapters)
+	_send_webhook("pull_vod",
+		url=vod.url, title=f'Pulled VOD "{vod.title}" ({vod.id})',
+		fields=[
+			{"name": "Created At", "value": vod.created_at},
+			{"name": "Streamer", "value": vod.user_name},
+			{"name": "Length", "value": formdur(vod.length)},
+			{"name": "Game", "value": vod.game_name},
+			{"name": "Has Chat", "value": str(vod.has_chat)},
+			{"name": "Chapters", "value": s, "inline": False}
+		]
+	)
+
+
+def send_pull_clip(clip: Clip):
+	_send_webhook("pull_clip",
+		url=clip.url, title=f'Pulled Clip "{clip.title}" ({clip.id})',
+		fields=[
+			{"name": "Created At", "value": clip.created_at},
+			{"name": "Clipper", "value": clip.clipper_name},
+			{"name": "Streamer", "value": clip.user_name},
+			{"name": "Stream", "value": f"[{clip.video_id}](https://twitch.tv/videos/{clip.video_id})"},
+			{"name": "Offset", "value": formdur(clip.length)},
+			{"name": "Length", "value": formdur(clip.length)},
+		]
+	)
+
+
+def send_pull_error(description: str, link: str):
+	_send_webhook("pull_error",
+		url=link, title=description, color="bf4d30"
+	)
+
+
+def send_pull_job_done(fin_vods, fin_clips, all_vods, all_clips):
+	_send_webhook("pull_job_done",
+		title=f"Pull job completed successfully!", color="227326",
+		fields=[
+			{"name": "VODs Pulled", "value": f"{fin_vods} of {all_vods}"},
+			{"name": "Clips Pulled", "value": f"{fin_clips} of {all_clips}"},
+		]
+	)
+
+
+def send_export_video():
+	pass
+
+
+def send_export_error():
+	pass
+def send_export_job_done():
+	pass
+
+
+def send_upload_video():
+	pass
+def send_upload_error():
+	pass
+def send_upload_job_done():
+	pass
