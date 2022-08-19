@@ -6,7 +6,7 @@ from vodbot.itd import download as itd_dl, worker as itd_work
 from vodbot.printer import cprint
 from vodbot.itd.gql import set_client_id
 from vodbot.cache import Cache, load_cache, save_cache
-from vodbot.webhook import init_webhooks, send_pull_clip, send_pull_vod, send_webhook
+from vodbot.webhook import init_webhooks, send_pull_clip, send_pull_error, send_pull_job_done, send_pull_vod
 
 from pathlib import Path
 from os import listdir
@@ -102,10 +102,15 @@ def run(args):
 
 	# Download all the videos we need.
 	cprint("#r#dPulling videos...#r", flush=True)
+	fin_vods = fin_clips = all_vods = all_clips = 0
 	for channel in channels:
-		cprint(f"Pulling videos for #fY#l{channel.display_name}#r...")
+		if len(channel.new_vods) > 0 or len(channel.new_clips) > 0:
+			cprint(f"Pulling videos for #fY#l{channel.display_name}#r...")
+		else:
+			continue
 
 		voddir = VODS_DIR / channel.login
+		all_vods += len(channel.new_vods)
 		for vod in channel.new_vods:
 			filepath = voddir / f"{vod.created_at}_{vod.id}".replace(":", ";")
 			filename = str(filepath) + ".mkv"
@@ -122,16 +127,16 @@ def run(args):
 					itd_dl.dl_video(vod, Path(TEMP_DIR), filename, 20, LOG_LEVEL)
 				except itd_dl.JoiningFailed:
 					cprint(f"#fR#lVOD `{vod.id}` joining failed! Skipping...#r")
-					send_webhook("pull_error", f"Failed to join VOD files for `{vod.id}`.")
+					send_pull_error(f"Failed to join VOD files for `{vod.id}`. Files have been preserved and VOD has been skipped.", vod.url)
 					continue
 				except itd_work.DownloadFailed:
 					cprint(f"#fR#lVOD `{vod.id}` download failed! Skipping...#r")
-					send_webhook("pull_error", f"Failed to download VOD files for `{vod.id}`.")
+					send_pull_error(f"Failed to download VOD files for `{vod.id}`. VOD has been skipped.", vod.url)
 					continue
 				except (itd_work.DownloadCancelled, KeyboardInterrupt):
 					cprint(f"\n#fR#lVOD `{vod.id}` download cancelled. Exiting...#r")
 					save_cache(conf, cache)
-					send_webhook("pull_error", f"VOD download cancelled for `{vod.id}`.")
+					send_pull_error(f"Pull cancelled during download of VOD `{vod.id}`.", vod.url)
 					raise KeyboardInterrupt()
 			# write meta file
 			vod.write_meta(metaname)
@@ -139,9 +144,10 @@ def run(args):
 			cache.channels[channel.login].vods[vod.id] = f"{vod.created_at}_{vod.id}.meta".replace(":", ";")
 			# send webhook
 			send_pull_vod(vod)
-			# send_webhook("pull_vod", f"Pulled VOD `{vod.id}`.")
-		
+			fin_vods += 1
+
 		clipdir = CLIPS_DIR / channel.login
+		all_clips += len(channel.new_clips)
 		for clip in channel.new_clips:
 			filepath = clipdir / f"{clip.created_at}_{clip.id}".replace(":", ";")
 			filename = str(filepath) + ".mkv"
@@ -153,11 +159,11 @@ def run(args):
 					itd_dl.dl_clip(clip, filename)
 				except itd_work.DownloadFailed:
 					cprint(f"#fR#lClip `{clip.id}` download failed! Skipping...#r")
-					send_webhook("pull_error", f"Failed to download Clip `{clip.slug}` ({clip.id}).")
+					send_pull_error(f"Failed to download Clip file for `{clip.slug}` ({clip.id}). Clip has been skipped.", clip.url)
 				except (itd_work.DownloadCancelled, KeyboardInterrupt):
 					cprint(f"\n#fR#lClip `{clip.id}` download cancelled. Exiting...#r")
 					save_cache(conf, cache)
-					send_webhook("pull_error", f"Clip download cancelled for `{clip.slug}` ({clip.id}).")
+					send_pull_error(f"Pull cancelled during download of Clip `{clip.slug}` ({clip.id}).", clip.url)
 					raise KeyboardInterrupt()
 			# write meta file
 			clip.write_meta(metaname)
@@ -166,12 +172,12 @@ def run(args):
 			cache.channels[channel.login].slugs[clip.slug] = f"{clip.created_at}_{clip.id}.meta".replace(":", ";")
 			# send webhook
 			send_pull_clip(clip)
-			# send_webhook("pull_clip", f"Pulled Clip `{clip.slug}` ({clip.id}).")
-	
+			fin_clips += 1
+
 	#cprint("\n#fM#l* All done, goodbye! *#r\n")
 	# save the cache
 	save_cache(conf, cache)
-	send_webhook("pull_job_done", "Download job")
+	send_pull_job_done(fin_vods, fin_clips, all_vods, all_clips)
 
 
 def compare_existant_file(path, allvods):

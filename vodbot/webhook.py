@@ -109,7 +109,31 @@ def send_pull_error(description: str, link: str):
 	webhook: DiscordWebhook
 	embed: DiscordEmbed
 	(webhook, embed) = _webhooks[wh]
-	pass
+
+	embed.set_title(description)
+	embed.set_url(link)
+	embed.set_color("bf4d30")
+
+	_send_webhook(webhook, embed)
+
+
+def send_pull_job_done(fin_vods, fin_clips, all_vods, all_clips):
+	wh = "pull_job_done"
+	# check if there is a webhook and it has a url, otherwise safely ignore
+	if _webhooks.get(wh, None) is None or not _webhooks[wh][0].url:
+		return
+
+	webhook: DiscordWebhook
+	embed: DiscordEmbed
+	(webhook, embed) = _webhooks[wh]
+
+	embed.set_color("227326")
+	embed.set_title("Pull job completed successfully!")
+
+	embed.add_embed_field(name="VODs Pulled", value=f"{fin_vods} of {all_vods}")
+	embed.add_embed_field(name="Clips Pulled", value=f"{fin_clips} of {all_clips}")
+
+	_send_webhook(webhook, embed)
 
 
 def _send_webhook(webhook: DiscordWebhook, embed: DiscordEmbed):
@@ -121,14 +145,3 @@ def _send_webhook(webhook: DiscordWebhook, embed: DiscordEmbed):
 	except:
 		# ignore failures to connect
 		pass
-
-
-
-def send_webhook(wh:str, description:str=""):
-	# check if there is a webhook and it has a url, otherwise safely ignore
-	if _webhooks.get(wh, None) is None or not _webhooks[wh][0].url:
-		return
-	
-	(webhook, embed) = _webhooks[wh]
-
-	embed.set_description(description)

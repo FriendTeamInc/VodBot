@@ -362,7 +362,7 @@ def get_video_comments(video_id: str) -> List[ChatMessage]:
 			messages.append(
 				ChatMessage(
 					user=usr, color=clr, msg=msg,
-					offset=c["contentOffsetSeconds"], state=c["state"]
+					offset=c["contentOffsetSeconds"]
 				)
 			)
 		
