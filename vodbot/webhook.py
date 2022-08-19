@@ -66,6 +66,7 @@ def send_pull_vod(vod: Vod):
 	embed.set_url(vod.url)
 	embed.set_title(f'Pulled VOD "{vod.title}" ({vod.id})')
 
+	embed.fields = []
 	embed.add_embed_field(name="Created at", value=vod.created_at)
 	embed.add_embed_field(name="Streamer", value=vod.user_name)
 	embed.add_embed_field(name="Length", value=formdur(vod.length))
@@ -90,6 +91,7 @@ def send_pull_clip(clip: Clip):
 	embed.set_url(clip.url)
 	embed.set_title(f'Pulled Clip "{clip.title}" ({clip.id})')
 
+	embed.fields = []
 	embed.add_embed_field(name="Created at", value=clip.created_at)
 	embed.add_embed_field(name="Clipper", value=clip.clipper_name)
 	embed.add_embed_field(name="Streamer", value=clip.user_name)
@@ -130,6 +132,7 @@ def send_pull_job_done(fin_vods, fin_clips, all_vods, all_clips):
 	embed.set_color("227326")
 	embed.set_title("Pull job completed successfully!")
 
+	embed.fields = []
 	embed.add_embed_field(name="VODs Pulled", value=f"{fin_vods} of {all_vods}")
 	embed.add_embed_field(name="Clips Pulled", value=f"{fin_clips} of {all_clips}")
 

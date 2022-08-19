@@ -127,16 +127,16 @@ def run(args):
 					itd_dl.dl_video(vod, Path(TEMP_DIR), filename, 20, LOG_LEVEL)
 				except itd_dl.JoiningFailed:
 					cprint(f"#fR#lVOD `{vod.id}` joining failed! Skipping...#r")
-					send_pull_error(f"Failed to join VOD files for `{vod.id}`. Files have been preserved and VOD has been skipped.", vod.url)
+					send_pull_error(f'Failed to join VOD files for "{vod.id}". Files have been preserved and VOD has been skipped.', vod.url)
 					continue
 				except itd_work.DownloadFailed:
 					cprint(f"#fR#lVOD `{vod.id}` download failed! Skipping...#r")
-					send_pull_error(f"Failed to download VOD files for `{vod.id}`. VOD has been skipped.", vod.url)
+					send_pull_error(f'Failed to download VOD files for "{vod.id}". VOD has been skipped.', vod.url)
 					continue
 				except (itd_work.DownloadCancelled, KeyboardInterrupt):
 					cprint(f"\n#fR#lVOD `{vod.id}` download cancelled. Exiting...#r")
 					save_cache(conf, cache)
-					send_pull_error(f"Pull cancelled during download of VOD `{vod.id}`.", vod.url)
+					send_pull_error(f'Pull cancelled during download of VOD "{vod.id}".', vod.url)
 					raise KeyboardInterrupt()
 			# write meta file
 			vod.write_meta(metaname)
@@ -159,11 +159,11 @@ def run(args):
 					itd_dl.dl_clip(clip, filename)
 				except itd_work.DownloadFailed:
 					cprint(f"#fR#lClip `{clip.id}` download failed! Skipping...#r")
-					send_pull_error(f"Failed to download Clip file for `{clip.slug}` ({clip.id}). Clip has been skipped.", clip.url)
+					send_pull_error(f'Failed to download Clip file for "{clip.slug}" ({clip.id}). Clip has been skipped.', clip.url)
 				except (itd_work.DownloadCancelled, KeyboardInterrupt):
 					cprint(f"\n#fR#lClip `{clip.id}` download cancelled. Exiting...#r")
 					save_cache(conf, cache)
-					send_pull_error(f"Pull cancelled during download of Clip `{clip.slug}` ({clip.id}).", clip.url)
+					send_pull_error(f'Pull cancelled during download of Clip "{clip.slug}" ({clip.id}).', clip.url)
 					raise KeyboardInterrupt()
 			# write meta file
 			clip.write_meta(metaname)
