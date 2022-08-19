@@ -1,7 +1,7 @@
 # Module to ship webhooks out to various places, currently only Discord is supported
 from .twitch import Clip, Vod
 from .config import Config
-from .util import format_duration
+from .util import format_duration as formdur
 
 from discord_webhook import DiscordWebhook, DiscordEmbed
 
@@ -32,21 +32,20 @@ def init_webhooks(conf: Config):
 		if not confwh.enable:
 			continue
 
-		# check url
-		url = conf.webhooks.url
-		if confwh.url:
-			url = confwh.url
-
-		# check message
-		message = conf.webhooks.message
-		if confwh.message:
-			message = confwh.message
+		# check overwriting attributes
+		o = {}
+		for what in ["url", "username", "avatar_url", "message"]:
+			o[what] = getattr(conf.webhooks, what)
+			if getattr(confwh, what, None):
+				o[what] = getattr(confwh, what)
 
 		# setup webhook and embed
-		webhook = DiscordWebhook(url=url, content=message, rate_limit_retry=True)
+		webhook = DiscordWebhook(
+			url=o["url"], content=o["message"], username=o["username"],
+			avatar_url=o["avatar_url"], rate_limit_retry=True)
 		embed = DiscordEmbed()
 
-		embed.set_footer(text="VodBot Made with \U0001F49C by NotQuiteApex & Friend Team Inc.")
+		embed.set_footer(text="VodBot \U0001F49C by NotQuiteApex & Friend Team Inc.")
 		embed.set_color("7353b2")
 
 		webhook.add_embed(embed)
@@ -67,10 +66,13 @@ def send_pull_vod(vod: Vod):
 	embed.set_url(vod.url)
 	embed.set_title(f'Pulled VOD "{vod.title}" ({vod.id})')
 
-	s = f'By {vod.user_name}\nAt {vod.created_at} for {format_duration(vod.length)}\nChapters:'
-	for chapter in vod.chapters:
-		s += f'\n- "{chapter.description}" at {chapter.position}s for {format_duration(chapter.duration)}'
-	embed.set_description(s)
+	embed.add_embed_field(name="Created at", value=vod.created_at)
+	embed.add_embed_field(name="Streamer", value=vod.user_name)
+	embed.add_embed_field(name="Length", value=formdur(vod.length))
+	embed.add_embed_field(name="Game", value=vod.game_name)
+
+	s = "\n".join(f'- "{c.description}" at {formdur(c.position)} for {formdur(c.duration)}' for c in vod.chapters)
+	embed.add_embed_field(name="Chapters", value=s, inline=False)
 
 	_send_webhook(webhook, embed)
 
@@ -92,8 +94,8 @@ def send_pull_clip(clip: Clip):
 	embed.add_embed_field(name="Clipper", value=clip.clipper_name)
 	embed.add_embed_field(name="Streamer", value=clip.user_name)
 	embed.add_embed_field(name="Stream", value=f"[{clip.video_id}](https://twitch.tv/videos/{clip.video_id})")
-	embed.add_embed_field(name="Offset", value=format_duration(clip.offset))
-	embed.add_embed_field(name="Length", value=format_duration(clip.length))
+	embed.add_embed_field(name="Offset", value=formdur(clip.offset))
+	embed.add_embed_field(name="Length", value=formdur(clip.length))
 
 	_send_webhook(webhook, embed)
 

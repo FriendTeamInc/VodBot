@@ -144,6 +144,8 @@ class _ConfigThumbnail:
 class _ConfigWebhookBase:
 	enable: bool = True
 	message: str = ""
+	avatar_url: str = ""
+	username: str = ""
 	url: str = ""
 
 @dataclass_json
@@ -162,6 +164,8 @@ class _ConfigWebhooks:
 
 	enable: bool = False
 	message: str = ""
+	avatar_url: str = "https://github.com/FriendTeamInc/VodBot/raw/main/assets/logo.png"
+	username: str = "VodBot Webhook"
 	url: str = ""
 
 @dataclass_json
