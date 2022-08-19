@@ -1,5 +1,6 @@
 # Export video data to a specific location
 
+from vodbot.webhook import send_export_job_done, send_export_video
 from .stage import StageData
 
 import vodbot.util as util
@@ -60,7 +61,7 @@ def run(args):
 		stagedatas = StageData.load_all_stages(STAGE_DIR)
 		stagedatas.sort(key=sort_stagedata)
 	else:
-		stagedatas = [args.id]
+		stagedatas = [StageData.load_from_id(args.id)]
 	
 	for stage in stagedatas:
 		tmpfile = None
@@ -85,6 +86,9 @@ def run(args):
 			os_remove(STAGE_DIR / f"{stage.id}.stage")
 			cache.stages.remove(stage.id)
 			save_cache(conf, cache)
+		
+		send_export_video()
 	
 	# say "Done!"
 	# cprint("#fG#lDone!#r")
+	send_export_job_done()

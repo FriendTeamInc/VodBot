@@ -1,6 +1,9 @@
 # Module to ship webhooks out to various places, currently only Discord is supported
-from ctypes import Union
-from typing import Any, Dict, List
+from ntpath import join
+from turtle import title
+from typing import Dict, List, Union
+
+from vodbot.commands.stage import StageData
 from .twitch import Clip, Vod
 from .config import Config
 from .util import format_duration as formdur
@@ -124,8 +127,18 @@ def send_pull_job_done(fin_vods, fin_clips, all_vods, all_clips):
 	)
 
 
-def send_export_video():
-	pass
+def send_export_video(stage: StageData):
+	slices = "\n".join(f"{s.video_id} > {s.ss} - {s.to}" for s in stage.slices)
+	_send_webhook("export_video"
+		title=f'Exported stage "{stage.id}"',
+		fields=[
+			{"name": "Title", "value": stage.title},
+			{"name": "Streamers", "value": ", ".join(stage.streamers)},
+			{"name": "Date", "value": stage.datestring},
+			{"name": "Description", "value": stage.description, "inline": False},
+			{"name": "Slices", "value": slices, "inline": False},
+		]
+	)
 
 
 def send_export_error():
