@@ -5,7 +5,7 @@ from vodbot import util, twitch, cache
 from vodbot.itd import download as itd_dl, worker as itd_work
 from vodbot.printer import cprint
 from vodbot.itd.gql import set_client_id
-from vodbot.cache import Cache, load_cache, save_cache
+from vodbot.cache import Cache, _CacheChannel, load_cache, save_cache
 
 from pathlib import Path
 from os import listdir
@@ -37,7 +37,7 @@ def run(args):
 
 		# check cache
 		if channel.username not in cache.channels:
-			cache.channels[channel.username] = cache._CacheChannel.from_dict({"vods":{}, "clips":{}, "slugs":{}})
+			cache.channels[channel.username] = _CacheChannel.from_dict({"vods":{}, "clips":{}, "slugs":{}})
 	
 	cprint("#r#dChecking directories...#r", end=" ", flush=True)
 	# Setup directories for videos and temp
