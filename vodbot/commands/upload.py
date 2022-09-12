@@ -40,7 +40,7 @@ def sort_stagedata(stagedata):
 	return (date - EPOCH).total_seconds()
 
 
-def _upload_artifact(upload_string, response_upload, tmpfile, stagedata, getting_video=False):
+def _upload_artifact(media_file, upload_string, response_upload, tmpfile, stagedata, getting_video=False):
 	video_id = "" # youtube video id
 	resp = None
 	errn = 0
@@ -138,7 +138,7 @@ def upload_video(conf: Config, service, stagedata: StageData) -> str:
 	)
 
 	cprint(f"#fCUploading stage #r`#fM{stagedata.id}#r`, progress: #fC0#fY%#r #d...#r", end="\r")
-	return _upload_artifact(f"stage #r`#fM{stagedata.id}#r`", response_upload, str(tmpfile), stagedata, getting_video=True)
+	return _upload_artifact(media_file, f"stage #r`#fM{stagedata.id}#r`", response_upload, str(tmpfile), stagedata, getting_video=True)
 
 
 def upload_captions(conf: Config, service, stagedata: StageData, vid_id: str) -> bool:
@@ -165,7 +165,7 @@ def upload_captions(conf: Config, service, stagedata: StageData, vid_id: str) ->
 	)
 
 	cprint(f"#fCUploading stage chatlog #r`#fM{stagedata.id}#r`, progress: #fC0#fY%#r #d...#r", end="\r")
-	return _upload_artifact(f"stage chatlog #r`#fM{stagedata.id}#r`", response_upload, str(tmpfile), stagedata, getting_video=False)
+	return _upload_artifact(media_file, f"stage chatlog #r`#fM{stagedata.id}#r`", response_upload, str(tmpfile), stagedata, getting_video=False)
 
 
 def run(args):
