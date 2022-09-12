@@ -172,6 +172,10 @@ def find_video_by_id(vid_id, conf: Config, cache: Cache):
 				else:
 					folder = conf.directories.clips / channel
 				break
+		
+		# skip if not found
+		if metafile is None or folder is None:
+			continue
 
 		try:
 			metajson = None
