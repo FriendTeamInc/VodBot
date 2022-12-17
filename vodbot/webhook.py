@@ -188,8 +188,8 @@ def send_upload_job_done(fin_vids: int, all_vids: int):
 	)
 	
 
-def send_upload_error(description: str):
+def send_error(description: str):
 	_send_webhook("error",
-		title="Error uploading videos!", description=description,
+		title="Error with VodBot!", description=description,
 		color="bf4d30"
 	)

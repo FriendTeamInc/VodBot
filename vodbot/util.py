@@ -2,6 +2,7 @@
 
 from .printer import cprint
 from .config import Config, DEFAULT_CONFIG_SCHEMA
+from .webhook import send_error
 
 import os
 import sys
@@ -115,6 +116,7 @@ def exit_prog(code=0, errmsg=None):
 		if errmsg != None:
 			msg += " #fR#l" + errmsg + "#r"
 		cprint(msg, end=" ")
+		send_error(msg)
 
 	cprint("#r#dExiting...#r")
 	sys.exit(code)
