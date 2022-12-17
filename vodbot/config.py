@@ -119,23 +119,25 @@ class _ConfigUpload:
 class _ConfigThumbnailIcon:
 	offset_x: int
 	offset_y: int
-	scale: int
 	filepath: Path = field(metadata=_path_field_config)
+	scale: int = 1
 
 @dataclass_json
 @dataclass
 class _ConfigThumbnail:
 	enable: bool
-	thumbnail_x: int; thumbnail_y: int
-	thumbnail_width: int; thumbnail_height: int
-	thumbnail_filepath: Path
+
+	canvas_x: int; canvas_y: int
 	screenshot_x: int; screenshot_y: int
-	screenshot_width: int; screenshot_height: int
-	text_x: int; text_y: int
-	text_font: str; text_size: int; text_gravity: str
-	heads: Dict[str, _ConfigThumbnailIcon]
-	head_order: List[int]
+	cover_x: int; cover_y: int; cover_filepath: Path
+
+	text_x: int; text_y: int; text_font: str;
+	text_size: int; text_gravity: str
+
 	head_positions: List[Tuple[int, int, int]]
+	head_order: List[int]
+	heads: Dict[str, _ConfigThumbnailIcon]
+	
 	games: dict[str, _ConfigThumbnailIcon]
 	game_x: int; game_y: int; game_gravity: str
 
@@ -184,7 +186,7 @@ class _ConfigDirectories:
 	clips: Path = field(default=DEFAULT_CONFIG_DIRECTORY/"clips", metadata=_path_field_config)
 	temp: Path = field(default=DEFAULT_CONFIG_DIRECTORY/"temp", metadata=_path_field_config)
 	stage: Path = field(default=DEFAULT_CONFIG_DIRECTORY/"stage", metadata=_path_field_config)
-	#thumbnail: Path = field(default=DEFAULT_CONFIG_DIRECTORY/"thumbnail", metadata=_path_field_config)
+	thumbnail: Path = field(default=DEFAULT_CONFIG_DIRECTORY/"thumbnail", metadata=_path_field_config)
 
 @dataclass_json
 @dataclass
@@ -196,7 +198,7 @@ class Config:
 	stage: _ConfigStage = field(default_factory=lambda: _ConfigStage())
 	export: _ConfigExport = field(default_factory=lambda: _ConfigExport())
 	upload: _ConfigUpload = field(default_factory=lambda: _ConfigUpload())
-	# thumbnail: _ConfigThumbnail = field(default_factory=lambda: _ConfigThumbnail())
+	thumbnail: _ConfigThumbnail = field(default_factory=lambda: _ConfigThumbnail())
 	webhooks: _ConfigWebhooks = field(default_factory=lambda: _ConfigWebhooks())
 	directories: _ConfigDirectories = field(default_factory=lambda: _ConfigDirectories())
 
