@@ -18,7 +18,8 @@ _config_attributes = {
 	"export_job_done": "Export Job Done",
 	"upload_video": "Uploaded Video",
 	"upload_error": "Upload Error",
-	"upload_job_done": "Upload Job Done"
+	"upload_job_done": "Upload Job Done",
+	"error": "VodBot Error",
 }
 _webhooks = {atrb: None for atrb in _config_attributes}
 
@@ -143,12 +144,11 @@ def send_export_video(stage: StageData):
 
 def send_export_error(description: str):
 	_send_webhook("export_error",
-		title="Error exporting videos!", description=description,
-		color="bf4d30"
+		title="Error exporting videos!", description=description, color="bf4d30"
 	)
 
 
-def send_export_job_done(fin_vids, all_vids):
+def send_export_job_done(fin_vids: int, all_vids: int):
 	_send_webhook("export_job_done",
 		title=f"Export job completed successfully!", color="227326",
 		fields=[
@@ -158,7 +158,18 @@ def send_export_job_done(fin_vids, all_vids):
 
 
 def send_upload_video(stage: StageData, url: str):
-	pass
+	slices = "\n".join(f"{s.video_id} > {s.ss} - {s.to}" for s in stage.slices)
+	_send_webhook("upload_video",
+		url=url, title=f'Uploaded stage "{stage.id}"',
+		fields=[
+			{"name": "Title", "value": stage.title},
+			{"name": "Streamers", "value": ", ".join(stage.streamers)},
+			{"name": "Date", "value": stage.datestring},
+			{"name": "URL", "value": url},
+			{"name": "Description", "value": stage.description, "inline": False},
+			{"name": "Slices", "value": slices, "inline": False},
+		]
+	)
 
 
 def send_upload_error(description: str):
@@ -168,5 +179,17 @@ def send_upload_error(description: str):
 	)
 
 
-def send_upload_job_done():
-	pass
+def send_upload_job_done(fin_vids: int, all_vids: int):
+	_send_webhook("upload_job_done",
+		title=f"Upload job completed successfully!", color="227326",
+		fields=[
+			{"name": "Uploaded Videos", "value": f"{fin_vids} of {all_vids}"},
+		]
+	)
+	
+
+def send_upload_error(description: str):
+	_send_webhook("error",
+		title="Error uploading videos!", description=description,
+		color="bf4d30"
+	)

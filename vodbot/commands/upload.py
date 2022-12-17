@@ -4,14 +4,16 @@
 # https://developers.google.com/youtube/v3/guides/uploading_a_video
 # https://learndataanalysis.org/how-to-upload-a-video-to-youtube-using-youtube-data-api-in-python/
 
-from ..cache import load_cache, save_cache
 from .stage import StageData
 
 import vodbot.util as util
 import vodbot.video as vbvid
 import vodbot.chatlog as vbchat
+from vodbot.cache import load_cache, save_cache
 from vodbot.printer import cprint
 from vodbot.config import Config
+from vodbot.webhook import init_webhooks, send_upload_error, send_upload_video, send_upload_job_done
+
 
 import json
 from datetime import datetime
@@ -80,10 +82,10 @@ def _upload_artifact(upload_string, response_upload, tmpfile, stagedata, getting
 		if errn >= 10:
 			if getting_video:
 				print("Skipping video upload, errored too many times.")
-				return ""
+				return None
 			else:
 				print("Skipping chatlog upload, errored too many times.")
-				return False
+				return None
 	
 	# we're done, lets clean up
 	else:
@@ -172,6 +174,8 @@ def run(args):
 	# load config
 	conf = util.load_conf(args.config)
 	cache = load_cache(conf, args.cache_toggle)
+	init_webhooks(conf)
+
 
 	# configure variables
 	STAGE_DIR = conf.directories.stage
@@ -242,12 +246,14 @@ def run(args):
 	cprint("Authenticated.", end=" ")
 	
 	# begin to upload
-	cprint(f"About to upload {len(stagedatas)} stages.#r")
+	finished_jobs = 0
+	cprint(f"About to upload {len(stagedatas)} stage(s).#r")
 	for stage in stagedatas:
 		video_id = upload_video(conf, service, stage)
 		if video_id is not None:
 			if conf.upload.chat_enable:
-				upload_captions(conf, service, stage, video_id)
+				if not upload_captions(conf, service, stage, video_id):
+					send_upload_error(f"Failed to upload chat captions for stage `{stage.id}`, video ID `{video_id}`.")
 			
 			if conf.stage.delete_on_upload:
 				try:
@@ -255,5 +261,16 @@ def run(args):
 					cache.stages.remove(stage.id)
 					save_cache(conf, cache)
 				except:
-					util.exit_prog(90, f"Failed to remove stage `{stage.id}` after upload.")
+					send_upload_error(f"Failed to remove stage `{stage.id}` after upload.")
+					if len(stagedatas) < 1:
+						util.exit_prog(90, f"Failed to remove stage `{stage.id}` after upload.")
+					else:
+						cprint(f"#fR#lFailed to remove stage `{stage.id}` after upload.#r")
+			finished_jobs += 1
+			send_upload_video(stage, f"https://youtu.be/{video_id}")
+		else:
+			send_upload_error(f"Failed to upload stage `{stage.id}`.")
 		print()
+	
+	if len(stagedatas) > 1:
+		send_upload_job_done(finished_jobs, len(stagedatas))
