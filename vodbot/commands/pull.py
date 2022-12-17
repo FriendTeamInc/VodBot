@@ -39,7 +39,7 @@ def run(args):
 
 		# check cache
 		if channel.username not in cache.channels:
-			cache.channels[channel.username] = cache._CacheChannel.from_dict({"vods":{}, "clips":{}, "slugs":{}})
+			cache.channels[channel.username] = _CacheChannel.from_dict({"vods":{}, "clips":{}, "slugs":{}})
 	
 	cprint("#r#dChecking directories...#r", end=" ", flush=True)
 	# Setup directories for videos and temp

@@ -42,7 +42,7 @@ def sort_stagedata(stagedata):
 	return (date - EPOCH).total_seconds()
 
 
-def _upload_artifact(upload_string, response_upload, tmpfile, stagedata, getting_video=False):
+def _upload_artifact(media_file, upload_string, response_upload, tmpfile, stagedata, getting_video=False):
 	video_id = "" # youtube video id
 	resp = None
 	errn = 0
@@ -87,17 +87,6 @@ def _upload_artifact(upload_string, response_upload, tmpfile, stagedata, getting
 				print("Skipping chatlog upload, errored too many times.")
 				return None
 	
-	# we're done, lets clean up
-	else:
-		try:
-			# delete vars to release the files
-			del media_file
-			del response_upload
-			sleep(1)
-			os_remove(str(tmpfile))
-		except Exception as e:
-			util.exit_prog(90, f"Failed to remove temp slice file of stage `{stagedata.id}` after upload. {e}")
-	
 	if getting_video:
 		return video_id
 	else:
@@ -140,7 +129,18 @@ def upload_video(conf: Config, service, stagedata: StageData) -> str:
 	)
 
 	cprint(f"#fCUploading stage #r`#fM{stagedata.id}#r`, progress: #fC0#fY%#r #d...#r", end="\r")
-	return _upload_artifact(f"stage #r`#fM{stagedata.id}#r`", response_upload, str(tmpfile), stagedata, getting_video=True)
+	uploaded = _upload_artifact(media_file, f"stage #r`#fM{stagedata.id}#r`", response_upload, str(tmpfile), stagedata, getting_video=True)
+
+	try:
+		# delete vars to release the files
+		del media_file
+		del response_upload
+		sleep(1)
+		os_remove(str(tmpfile))
+	except Exception as e:
+		util.exit_prog(90, f"Failed to remove temp slice file of stage `{stagedata.id}` after upload. {e}")
+	
+	return uploaded
 
 
 def upload_captions(conf: Config, service, stagedata: StageData, vid_id: str) -> bool:
@@ -167,7 +167,18 @@ def upload_captions(conf: Config, service, stagedata: StageData, vid_id: str) ->
 	)
 
 	cprint(f"#fCUploading stage chatlog #r`#fM{stagedata.id}#r`, progress: #fC0#fY%#r #d...#r", end="\r")
-	return _upload_artifact(f"stage chatlog #r`#fM{stagedata.id}#r`", response_upload, str(tmpfile), stagedata, getting_video=False)
+	uploaded = _upload_artifact(media_file, f"stage chatlog #r`#fM{stagedata.id}#r`", response_upload, str(tmpfile), stagedata, getting_video=False)
+	
+	try:
+		# delete vars to release the files
+		del media_file
+		del response_upload
+		sleep(1)
+		os_remove(str(tmpfile))
+	except Exception as e:
+		util.exit_prog(90, f"Failed to remove temp slice file of stage `{stagedata.id}` after upload. {e}")
+
+	return uploaded
 
 
 def run(args):

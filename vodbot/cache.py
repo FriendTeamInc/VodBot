@@ -29,8 +29,8 @@ class _CacheChannel:
 @dataclass_json
 @dataclass
 class Cache:
-	channels: Dict[str, _CacheChannel] = field(default_factory={})
-	stages: List[str] = field(default_factory=[])
+	channels: Dict[str, _CacheChannel] = field(default_factory=lambda: {})
+	stages: List[str] = field(default_factory=lambda: [])
 
 
 _cached_cache = None
