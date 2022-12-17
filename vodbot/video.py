@@ -11,8 +11,8 @@ from typing import List
 
 
 class VideoFailure(Exception):
-	def __init__(self, vid="?") -> None:
-		self.vid = vid
+	def __init__(self, video_id:str="unknown") -> None:
+		self.video_id = video_id
 		super().__init__(self.vid)
 
 class FailedToSlice(VideoFailure):
