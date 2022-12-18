@@ -9,6 +9,7 @@ import sys
 from json.decoder import JSONDecodeError
 from marshmallow import ValidationError
 from typing import Tuple
+from shutil import which
 
 
 # time in seconds to a timestamp string
@@ -54,6 +55,16 @@ def timestring_as_seconds(time:str, default:int=0):
 
 	# Hours, minutes, seconds
 	return hours * 60 * 60 + minutes * 60 + seconds
+
+
+_has_ffmpeg = which("ffmpeg") is not None
+def has_ffmpeg() -> bool:
+	return _has_ffmpeg
+
+
+_has_magick = which("magick") is not None
+def has_magick() -> bool:
+	return _has_magick
 
 
 def make_dir(directory):

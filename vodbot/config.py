@@ -138,8 +138,8 @@ class _ConfigThumbnail:
 	head_order: List[int]
 	heads: Dict[str, _ConfigThumbnailIcon]
 	
-	games: dict[str, _ConfigThumbnailIcon]
 	game_x: int; game_y: int; game_gravity: str
+	games: dict[str, _ConfigThumbnailIcon]
 
 @dataclass_json
 @dataclass

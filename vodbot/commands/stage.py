@@ -19,6 +19,7 @@ from typing import List
 from random import choice
 
 
+# Python's input function allows for inputs that should not be allowed in filenames such as control characters
 DISALLOWED_CHARACTERS = [chr(x) for x in range(10)] + [chr(x) for x in range(11,32)] # just in case...
 RESERVED_NAMES = [
 	"\0", "CON", "PRN", "AUX", "NUL",
@@ -35,11 +36,23 @@ class VideoSlice():
 		self.filepath = filepath
 	
 	def get_as_dict(self):
-		return {"id":self.video_id, "ss":self.ss, "to":self.to, "path":str(self.filepath)}
+		return {
+			"id": self.video_id,
+			"ss": self.ss,
+			"to": self.to,
+			"path": str(self.filepath)
+		}
+
+
+class ThumbnailData():
+	def __init__(self, heads: List[str], game: str, timestamp: str):
+		self.heads = heads
+		self.game = game
+		self.timestamp = timestamp
 
 
 class StageData():
-	def __init__(self, streamers: List[str], title: str, desc: str, slices: List[VideoSlice], datestring: str, cid=None):
+	def __init__(self, streamers: List[str], title: str, desc: str, slices: List[VideoSlice], datestring: str, thumbnail_data: ThumbnailData=None, cid=None):
 		for x in DISALLOWED_CHARACTERS:
 			title = title.replace(x, "_")
 		self.title = title
@@ -52,6 +65,9 @@ class StageData():
 			self.gen_new_id()
 		else:
 			self.id = cid
+		
+		# TODO: add to write and read functions
+		self.thumnail_data = thumbnail_data
 	
 	def __repr__(self):
 		return f"StageData(\"{self.title}\", {self.id})"
