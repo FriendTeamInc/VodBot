@@ -79,7 +79,7 @@ def deffered_main():
 
 
 def main():
-	titletext = colorize(f'#fM* {__project__} {__version__} (c) 2020-22 Logan "NotQuiteApex" Hickok-Dickson *#r')
+	titletext = colorize(f'#fM* {__project__} {__version__} (c) 2020-23 Logan "NotQuiteApex" Hickok-Dickson *#r')
 
 	# Process arguments
 	parser = argparse.ArgumentParser(description="Downloads and processes VODs and clips from Twitch.tv channels.")

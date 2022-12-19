@@ -161,6 +161,7 @@ class _ConfigWebhooks:
 	upload_video: _ConfigWebhookBase = field(default_factory=lambda: _ConfigWebhookBase())
 	upload_error: _ConfigWebhookBase = field(default_factory=lambda: _ConfigWebhookBase())
 	upload_job_done: _ConfigWebhookBase = field(default_factory=lambda: _ConfigWebhookBase())
+	vodbot_error: _ConfigWebhookBase = field(default_factory=lambda: _ConfigWebhookBase())
 
 	enable: bool = False
 	message: str = ""
