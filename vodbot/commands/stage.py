@@ -1,7 +1,5 @@
 # Staging, where videos get staged and set up with metadata to upload
 
-from calendar import c
-from cmath import inf
 from vodbot.cache import Cache, load_cache, save_cache
 import vodbot.util as util
 from vodbot.config import DEFAULT_CONFIG_DIRECTORY, Config
@@ -9,7 +7,6 @@ from vodbot.printer import cprint, colorize
 
 import re
 import json
-import string
 import datetime
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
@@ -17,6 +14,9 @@ from os import remove as os_remove, listdir as os_listdir
 from os.path import isfile, isdir
 from typing import List
 from random import choice
+from dataclasses import dataclass, field
+from dataclasses_json import dataclass_json
+from string import ascii_lowercase, digits as ascii_digits
 
 
 # Python's input function allows for inputs that should not be allowed in filenames such as control characters
@@ -27,74 +27,40 @@ RESERVED_NAMES = [
 	"LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
 ]
 
-
+@dataclass_json
+@dataclass
 class VideoSlice():
-	def __init__(self, video_id: str, ss: str, to: str, filepath: str):
-		self.video_id = video_id
-		self.ss = ss
-		self.to = to
-		self.filepath = filepath
-	
-	def get_as_dict(self):
-		return {
-			"id": self.video_id,
-			"ss": self.ss,
-			"to": self.to,
-			"path": str(self.filepath)
-		}
+	video_id: str
+	ss: str
+	to: str
+	filepath: str
 
 
+@dataclass_json
+@dataclass
 class ThumbnailData():
-	def __init__(self, heads: List[str], game: str, timestamp: str):
-		self.heads = heads
-		self.game = game
-		self.timestamp = timestamp
+	heads: List[str]
+	game: str
+	timestamp: str
 
 
+@dataclass_json
+@dataclass
 class StageData():
-	def __init__(self, streamers: List[str], title: str, desc: str, slices: List[VideoSlice], datestring: str, thumbnail_data: ThumbnailData=None, cid=None):
-		for x in DISALLOWED_CHARACTERS:
-			title = title.replace(x, "_")
-		self.title = title
-		self.desc = desc
-		self.streamers = streamers
-		self.datestring = datestring
-		self.slices = slices
+	title: str
+	desc: str
+	streamers: List[str]
+	datestring: str
 
-		if cid is None:
-			self.gen_new_id()
-		else:
-			self.id = cid
-		
-		# TODO: add to write and read functions
-		self.thumnail_data = thumbnail_data
-	
-	def __repr__(self):
-		return f"StageData(\"{self.title}\", {self.id})"
+	slices: List[VideoSlice]
+	thumbnail: ThumbnailData = None
+
+	id: str = field(default_factory=lambda: 
+		"".join([choice(ascii_lowercase + ascii_digits) for _ in range(4)]))
 	
 	def write_stage(self, filename):
 		with open(filename, "w") as f:
-			jsondump = {
-				"streamers": self.streamers,
-				"title": self.title, "desc": self.desc,
-				"datestring": self.datestring,
-				"id": self.id, "slices": [vid.get_as_dict() for vid in self.slices]
-			}
-
-			json.dump(jsondump, f)
-	
-	def gen_new_id(self):
-		self.id = "".join([choice(string.ascii_lowercase + string.digits) for _ in range(4)])
-	
-	@staticmethod
-	def load_from_json(d: dict) -> 'StageData':
-		slices = [VideoSlice(v["id"], v["ss"], v["to"], v["path"]) for v in d["slices"]]
-		new_data = StageData(
-			streamers=d["streamers"], title=d["title"], desc=d["desc"], 
-			datestring=d["datestring"], slices=slices)
-		new_data.id = d["id"]
-
-		return new_data
+			f.write(self.to_json())
 	
 	@staticmethod
 	def load_from_id(stagedir: Path, sid: str) -> 'StageData':
@@ -107,7 +73,7 @@ class StageData():
 		except KeyError:
 			util.exit_prog(46, f'Could not parse stage "{sid}" as JSON. Is this file corrupted?')
 		
-		return StageData.load_from_json(jsonread)
+		return StageData.from_dict(jsonread)
 	
 	@staticmethod
 	def load_all_stages(stagedir: Path) -> List['StageData']:
@@ -361,6 +327,10 @@ def check_title(default=None):
 				cprint("#fRTitle cannot use control characters.#r")
 				title = ""
 				continue
+
+	# probably redundant lol
+	for x in DISALLOWED_CHARACTERS:
+		title = title.replace(x, "_")
 	
 	return title
 
@@ -463,7 +433,7 @@ def _new(args, conf: Config, cache: Cache):
 	stage = StageData(streamers=args.streamers, title=args.title, desc=args.desc, datestring=datestring, slices=slices)
 	# Check that new "id" does not collide
 	while check_stage_id(stage.id, STAGE_DIR):
-		stage.gen_new_id()
+		stage = StageData(streamers=args.streamers, title=args.title, desc=args.desc, datestring=datestring, slices=slices)
 
 	# shorter file name
 	#shortfile = stage.filename.replace(VODS_DIR, "$vods").replace(CLIPS_DIR, "$clips")
