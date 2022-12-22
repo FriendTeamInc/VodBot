@@ -41,6 +41,8 @@ class VideoSlice():
 class ThumbnailData():
 	heads: List[str]
 	game: str
+	text: str
+	video_slice_id: int
 	timestamp: str
 
 
@@ -428,6 +430,10 @@ def _new(args, conf: Config, cache: Cache):
 		vid = videos[x]
 		vidslice = VideoSlice(video_id=vid["id"], ss=args.ss[x], to=args.to[x], filepath=vid["file"])
 		slices += [vidslice]
+
+	# make thumbnail data
+	if conf.thumbnail.enable:
+		pass
 
 	# make stage object
 	stage = StageData(streamers=args.streamers, title=args.title, desc=args.desc, datestring=datestring, slices=slices)

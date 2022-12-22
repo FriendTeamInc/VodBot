@@ -104,6 +104,8 @@ class _ConfigExport:
 	# A simple toggle for managing whether video is exported with a stage. Useful for if you
 	# just need the chat logs.
 	video_enable: bool = True
+	# A simple toggle for managing whether a thumbnail is generated with a stage.
+	thumbnail_enable: bool = True
 	# Hardware acceleration options
 	# TODO?
 
@@ -111,6 +113,7 @@ class _ConfigExport:
 @dataclass
 class _ConfigUpload:
 	chat_enable: bool = True
+	thumbnail_enable: bool = True
 	client_path: Path = field(default=DEFAULT_CONFIG_DIRECTORY/"yt-client.json", metadata=_path_field_config)
 	session_path: Path = field(default=DEFAULT_CONFIG_DIRECTORY/"yt-session.json", metadata=_path_field_config)
 
@@ -124,22 +127,36 @@ class _ConfigThumbnailIcon:
 
 @dataclass_json
 @dataclass
+class _ConfigThumbnailPosition:
+	x: int
+	y: int
+	scale: int = 1
+
+@dataclass_json
+@dataclass
 class _ConfigThumbnail:
 	enable: bool
 
-	canvas_x: int; canvas_y: int
-	screenshot_x: int; screenshot_y: int
-	cover_x: int; cover_y: int; cover_filepath: Path
+	canvas_width: int
+	canvas_height: int
 
-	text_x: int; text_y: int; text_font: str;
-	text_size: int; text_gravity: str
+	screenshot_x: int
+	screenshot_y: int
+	cover_x: int
+	cover_y: int
+	cover_filepath: Path
 
-	head_positions: List[Tuple[int, int, int]]
+	text_x: int
+	text_y: int
+	text_font: str
+	text_size: int
+
+	head_positions: List[_ConfigThumbnailPosition]
 	head_order: List[int]
 	heads: Dict[str, _ConfigThumbnailIcon]
 	
-	game_x: int; game_y: int; game_gravity: str
-	games: dict[str, _ConfigThumbnailIcon]
+	game_x: int; game_y: int
+	games: Dict[str, _ConfigThumbnailIcon]
 
 @dataclass_json
 @dataclass
