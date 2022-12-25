@@ -1,7 +1,7 @@
 # Module for the cache dataclass
 # dedicated type for easier processing of info
 
-from .util import exit_prog
+from .util import exit_prog, make_dir
 from .config import Config
 
 import json
@@ -122,6 +122,8 @@ def save_cache(conf: Config, cache: Cache) -> None:
 	global _cached_cache
 
 	_cached_cache = cache
+
+	make_dir(conf.directories.temp)
 
 	with open(conf.directories.temp / "cache.json", "w") as f:
 		f.write(cache.to_json())
