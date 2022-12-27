@@ -432,14 +432,51 @@ def _new(args, conf: Config, cache: Cache):
 		slices += [vidslice]
 
 	# make thumbnail data
-	if conf.thumbnail.enable:
-		pass
+	thumbnail_obj = None
+	if conf.thumbnail.enable and util.has_magick:
+		cprint("Enter in details to generate the thumbnail...")
+		# get heads
+		heads = conf.thumbnail.heads
+		cprint("HEADS:", end="")
+		for i, name in enumerate(heads.keys()):
+			cprint(f" {i}. {name}", end="")
+		cprint("Enter the head digits (csv): ")
+		inputed_heads = input("") # TODO: check this
+		# translate the numbers to head name strings
+
+		# get game
+		games = conf.thumbnail.games
+		cprint("GAMES:", end="")
+		for i, name in enumerate(games.keys()):
+			cprint(f" {i}. {name}", end="")
+		cprint("Enter the game number: ")
+		inputed_game = input("") # TODO: check this
+
+		# get text
+		cprint("Enter the text for the thumbnail: ")
+		inputed_game = input("") # TODO: check this (?)
+
+		# get video slice id
+		games = conf.thumbnail.games
+		cprint("VIDEOS:", end="")
+		for i, name in enumerate(slices):
+			cprint(f" {i}. {name.video_id}", end="")
+		cprint("Enter the video number for the screenshot: ")
+		inputed_video = input("") # TODO: check this
+
+		# get timestamp
+		cprint("Enter the timestamp for the screenshot from the video selected: ")
+		inputed_timestamp = input("") # TODO: check this
+		
+		thumbnail_obj = ThumbnailData()
+	elif conf.thumbnail.enable and not util.has_magick:
+		cprint("#dImageMagick does not appear to be installed, skipping thumbnail generation.#r")
 
 	# make stage object
-	stage = StageData(streamers=args.streamers, title=args.title, desc=args.desc, datestring=datestring, slices=slices)
+	stage = StageData(streamers=args.streamers, title=args.title, desc=args.desc, datestring=datestring, slices=slices, thumbnail=thumbnail_obj)
 	# Check that new "id" does not collide
 	while check_stage_id(stage.id, STAGE_DIR):
-		stage = StageData(streamers=args.streamers, title=args.title, desc=args.desc, datestring=datestring, slices=slices)
+		stage = StageData(streamers=args.streamers, title=args.title, desc=args.desc, datestring=datestring, slices=slices, thumbnail=thumbnail_obj)
 
 	# shorter file name
 	#shortfile = stage.filename.replace(VODS_DIR, "$vods").replace(CLIPS_DIR, "$clips")

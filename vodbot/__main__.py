@@ -150,6 +150,7 @@ def main():
 	argcomplete.autocomplete(parser)
 	args = parser.parse_args()
 
+	# TODO: this needs to be made optional.
 	# Check for ffmpeg and imagemagick
 	ffmpeg_check = which("ffmpeg")
 	magick_check = which("magick")
