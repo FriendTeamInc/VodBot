@@ -213,6 +213,59 @@ def check_stage_id(stage_id, STAGE_DIR):
 	return stage_id in stages
 
 
+def _check_time_str(prefix: str, timestamp: str) -> str:
+	intime = timestamp.split(":")
+	timelist = []
+	seconds = None
+	minutes = None
+	hours = None
+
+	if len(intime) > 3:
+		cprint(f"#fR{prefix} time: Time cannot have more than 3 units.#r")
+		return None
+	
+	if len(intime) >= 1:
+		seconds = intime[-1]
+		try:
+			seconds = int(seconds)
+		except ValueError:
+			cprint(f"#fR{prefix} time: Seconds does not appear to be a number.#r")
+			return None
+		if seconds > 59 or seconds < 0:
+			cprint(f"#fR{prefix} time: Seconds must be in the range of 0 to 59.#r")
+			return None
+		timelist.insert(0, str(seconds))
+	
+	if len(intime) >= 2:
+		minutes = intime[-2]
+		try:
+			minutes = int(minutes)
+		except ValueError:
+			cprint(f"#fR{prefix} time: Minutes does not appear to be a number.#r")
+			return None
+		if minutes > 59 or minutes < 0:
+			cprint(f"#fR{prefix} time: Minutes must be in the range of 0 to 59.#r")
+			return None
+		timelist.insert(0, str(minutes))
+	else:
+		timelist.insert(0, "0")
+	
+	if len(intime) == 3:
+		hours = intime[-3]
+		try:
+			hours = int(hours)
+		except ValueError:
+			cprint(f"#fR{prefix} time: Hours does not appear to be a number.#r")
+			return None
+		timelist.insert(0, str(hours))
+	else:
+		timelist.insert(0, "0")
+	
+	output = ":".join(timelist)
+
+	return output
+
+
 def check_time(prefix, resp, default=None):
 	output = resp
 	checkedonce = False
@@ -231,55 +284,11 @@ def check_time(prefix, resp, default=None):
 			elif prefix == "End":
 				return default if default != None else "EOF"
 
-		intime = output.split(":")
-		timelist = []
-		seconds = None
-		minutes = None
-		hours = None
-
-		if len(intime) > 3:
-			cprint(f"#fR{prefix} time: Time cannot have more than 3 units.#r")
+		output = _check_time_str(prefix, output)
+		if output == None:
 			continue
-		
-		if len(intime) >= 1:
-			seconds = intime[-1]
-			try:
-				seconds = int(seconds)
-			except ValueError:
-				cprint(f"#fR{prefix} time: Seconds does not appear to be a number.#r")
-				continue
-			if seconds > 59 or seconds < 0:
-				cprint(f"#fR{prefix} time: Seconds must be in the range of 0 to 59.#r")
-				continue
-			timelist.insert(0, str(seconds))
-		
-		if len(intime) >= 2:
-			minutes = intime[-2]
-			try:
-				minutes = int(minutes)
-			except ValueError:
-				cprint(f"#fR{prefix} time: Minutes does not appear to be a number.#r")
-				continue
-			if minutes > 59 or minutes < 0:
-				cprint(f"#fR{prefix} time: Minutes must be in the range of 0 to 59.#r")
-				continue
-			timelist.insert(0, str(minutes))
 		else:
-			timelist.insert(0, "0")
-		
-		if len(intime) == 3:
-			hours = intime[-3]
-			try:
-				hours = int(hours)
-			except ValueError:
-				cprint(f"#fR{prefix} time: Hours does not appear to be a number.#r")
-				continue
-			timelist.insert(0, str(hours))
-		else:
-			timelist.insert(0, "0")
-		
-		output = ":".join(timelist)
-		break
+			break
 
 	return output
 
@@ -375,6 +384,93 @@ def check_description(formatdict, inputdefault=None):
 	return desc
 
 
+def check_thumbnail_heads(possible_heads: List[str]) -> List[str]:
+	heads = ""
+	finalheads = []
+
+	cprint("HEADS:", end="")
+	for i, name in enumerate(possible_heads.keys()):
+		cprint(f" {i}. {name}", end="")
+	
+	while not heads:
+		finalheads = []
+		heads = input(colorize(f"#fW#lEnter the indices of the heads you want in the thumbnail#r #d(csv)#r: "))
+		
+		heads = heads.replace(" ,", ",").split(",")
+		for head in heads:
+			try:
+				head = int(head)
+				finalheads.append(possible_heads[head])
+			except (ValueError, IndexError) as _:
+				cprint(f"#l#fRHead index must be a number between 0 and {len(possible_heads)-1} (inclusive)!#r")
+				heads = ""
+				break
+	
+	return finalheads
+
+
+def check_thumbnail_game(possible_games: List[str]) -> str:
+	game = ""
+
+	cprint("GAMES:", end="")
+	for i, name in enumerate(possible_games.keys()):
+		cprint(f" {i}. {name}", end="")
+	
+	while not game:
+		game = input(colorize(f"#fW#lEnter the index of the game you want in the thumbnail#r: "))
+		
+		try:
+			game = int(game)
+			game = possible_games[game]
+		except (ValueError, IndexError) as _:
+			cprint(f"#l#fRGame identifier must be a number between 0 and {len(possible_games)-1} (inclusive)!#r")
+			game = ""
+			continue
+	
+	return game
+
+
+def check_thumbnail_text() -> str:
+	text = ""
+
+	while not text:
+		text = input(colorize(f"#fW#lEnter the text you want in the thumbnail#r: "))
+		# TODO: check text?
+	
+	return text
+
+
+def check_thumbnail_vid_id(possible_slices: List[VideoSlice]) -> int:
+	vid = ""
+
+	cprint("VIDEOS:", end="")
+	for i, name in enumerate(possible_slices.keys()):
+		cprint(f" {i}. {name.video_id}", end="")
+	
+	while not vid:
+		vid = input(colorize(f"#fW#lEnter the index of the video you want to grab a screenshot from for the thumbnail#r: "))
+		
+		try:
+			vid = int(vid)
+			_ = possible_slices[vid]
+		except (ValueError, IndexError) as _:
+			cprint(f"#l#fRVideo index must be a number between 0 and {len(possible_slices)-1} (inclusive)!#r")
+			vid = ""
+			continue
+	
+	return vid
+
+
+def check_thumbnail_timestamp() -> str:
+	ts = ""
+
+	while not ts:
+		ts = input(colorize(f"#fW#lEnter the timestamp for the screenshot for the thumbnail#r: "))
+		ts = _check_time_str("Stamp", ts)
+	
+	return ts
+
+
 def _new(args, conf: Config, cache: Cache):
 	STAGE_DIR = conf.directories.stage
 
@@ -436,39 +532,17 @@ def _new(args, conf: Config, cache: Cache):
 	if conf.thumbnail.enable and util.has_magick:
 		cprint("Enter in details to generate the thumbnail...")
 		# get heads
-		heads = conf.thumbnail.heads
-		cprint("HEADS:", end="")
-		for i, name in enumerate(heads.keys()):
-			cprint(f" {i}. {name}", end="")
-		cprint("Enter the head digits (csv): ")
-		inputed_heads = input("") # TODO: check this
-		# translate the numbers to head name strings
-
+		heads = check_thumbnail_heads(possible_heads=conf.thumbnail.heads)
 		# get game
-		games = conf.thumbnail.games
-		cprint("GAMES:", end="")
-		for i, name in enumerate(games.keys()):
-			cprint(f" {i}. {name}", end="")
-		cprint("Enter the game number: ")
-		inputed_game = input("") # TODO: check this
-
+		game = check_thumbnail_game(possible_games=conf.thumbnail.games)
 		# get text
-		cprint("Enter the text for the thumbnail: ")
-		inputed_game = input("") # TODO: check this (?)
-
+		text = check_thumbnail_text()
 		# get video slice id
-		games = conf.thumbnail.games
-		cprint("VIDEOS:", end="")
-		for i, name in enumerate(slices):
-			cprint(f" {i}. {name.video_id}", end="")
-		cprint("Enter the video number for the screenshot: ")
-		inputed_video = input("") # TODO: check this
-
+		vid_id = check_thumbnail_vid_id(possible_slices=slices)
 		# get timestamp
-		cprint("Enter the timestamp for the screenshot from the video selected: ")
-		inputed_timestamp = input("") # TODO: check this
+		timestamp = check_thumbnail_timestamp()
 		
-		thumbnail_obj = ThumbnailData()
+		thumbnail_obj = ThumbnailData(heads=heads, game=game, text=text, video_slice_id=vid_id, timestamp=timestamp)
 	elif conf.thumbnail.enable and not util.has_magick:
 		cprint("#dImageMagick does not appear to be installed, skipping thumbnail generation.#r")
 
