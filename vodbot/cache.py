@@ -7,7 +7,6 @@ from .config import Config
 import json
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json
-from pathlib import Path
 from typing import Dict, List
 from os import listdir as os_listdir
 from os.path import isfile as os_isfile, exists as os_exists

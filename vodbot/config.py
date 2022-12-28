@@ -144,7 +144,7 @@ class _ConfigThumbnail:
 	screenshot_y: int
 	cover_x: int
 	cover_y: int
-	cover_filepath: Path
+	cover_filepath: Path = field(metadata=_path_field_config)
 
 	text_x: int
 	text_y: int

@@ -2,7 +2,6 @@
 
 from .printer import cprint
 from .config import Config, DEFAULT_CONFIG_SCHEMA
-from .webhook import send_error
 
 import os
 import sys
@@ -119,6 +118,8 @@ def exit_prog(code=0, errmsg=None):
 	:param code: The error code to exit with. Should be unique per exit case.
 	:param errmsg: The corresponding error message to print when exiting.
 	"""
+	
+	from .webhook import send_error
 
 	# exit
 	print()

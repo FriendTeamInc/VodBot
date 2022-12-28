@@ -544,7 +544,7 @@ def _new(args, conf: Config, cache: Cache):
 		
 		thumbnail_obj = ThumbnailData(heads=heads, game=game, text=text, video_slice_id=vid_id, timestamp=timestamp)
 	elif conf.thumbnail.enable and not util.has_magick:
-		cprint("#dImageMagick does not appear to be installed, skipping thumbnail generation.#r")
+		cprint("#dImageMagick does not appear to be installed despite thumbnails being enabled, skipping thumbnail generation.#r")
 
 	# make stage object
 	stage = StageData(streamers=args.streamers, title=args.title, desc=args.desc, datestring=datestring, slices=slices, thumbnail=thumbnail_obj)
