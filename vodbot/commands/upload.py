@@ -185,13 +185,13 @@ def upload_captions(conf: Config, service, stagedata: StageData, vid_id: str) ->
 def upload_thumbnail(conf: Config, service, stagedata: StageData, vid_id: str) -> bool:
 	tmpfile = vbthumbnail.generate_thumbnail(conf, stagedata)
 
-	# copied from above, what does it mean?
 	if not tmpfile:
 		return False
 
 	media_file = MediaFileUpload(str(tmpfile), chunksize=-1, resumable=True)
 
 	# this may need to be a straight upload, not resumable
+	# see: https://developers.google.com/youtube/v3/docs/thumbnails/set
 	response_upload = service.thumbnails().set(
 		videoId=vid_id,
 		media_body=media_file

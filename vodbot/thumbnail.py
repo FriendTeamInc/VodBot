@@ -1,6 +1,8 @@
 # based off picauto
 # https://gist.github.com/NotQuiteApex/77cdc6c670ec63aff84dd87d672861e5
 
+from .printer import cprint
+from .util import has_magick
 from .config import Config
 from .commands.stage import StageData
 
@@ -10,6 +12,10 @@ from pathlib import Path
 
 # take in a StageData, process the data given the config, spit out the path to the image
 def generate_thumbnail(conf: Config, stage: StageData) -> Path:
+	if not has_magick():
+		cprint("#fRERROR: Cannot generate thumbnail, ImageMagick not installed.#r")
+		return None
+	
 	# to get single frame from a video
 	# "ffmpeg" "-ss" "<timestamp>" "-i" "<inputvod.mkv>" "-frames:v" "1" "<tmp/screenshot_output.png>"
 	thumbnail_filename = conf.directories.temp / f"thumbnail_ss_{stage.id}.png"
