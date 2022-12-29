@@ -13,10 +13,10 @@ VodBot is command line VOD and Clip manager for Twitch. Vodbot can:
 ...with more features to come!
 
 # Installation
-VodBot can be installed with `pip install vodbot`. You can also install by cloning the repo and running `pip install .` for the latest commits and changes, although this isn't recommended. This will not install FFmpeg, that must be done separately.
+VodBot can be installed with `pip install vodbot`. You can also install by cloning the repo and running `pip install .` for the latest commits and changes, although this isn't recommended. This will not install FFmpeg or any of the optional dependencies, that must be done separately.
 
 Dependencies/Requirements:
-* [FFmpeg](https://www.ffmpeg.org/) (Must be in your PATH environment variable)
+* [FFmpeg](https://ffmpeg.org/) (Must be in your PATH environment variable) ([recommended quick install](https://github.com/BtbN/FFmpeg-Builds))
 * [Python 3.7+](https://www.python.org/)
     * [argcomplete](https://pypi.org/project/argcomplete/)
     * [dataclasses-json](https://pypi.org/project/dataclasses-json/)
@@ -25,6 +25,8 @@ Dependencies/Requirements:
     * [Google API Client](https://pypi.org/project/google-api-python-client/)
     * [Google Auth OAuthLib](https://pypi.org/project/google-auth-oauthlib/)
     * [Google Auth httplib2](https://pypi.org/project/google-auth-httplib2/)
+* Optionals:
+    * For thumbnail generation: [ImageMagick](https://imagemagick.org/) (Must be in your PATH environment variable) ([recommended quick install](https://github.com/SoftCreatR/imei))
 
 # Wiki
 All documentation of VodBot and its usage is managed on the repo wiki, which can be found [here](https://github.com/NotQuiteApex/VodBot/wiki)! Please consult the wiki before contributing or opening issues.

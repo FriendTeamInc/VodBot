@@ -18,13 +18,15 @@ def video_completer(prefix, parsed_args, **kwargs):
 	try:
 		conf = util.load_conf_wrapper(parsed_args.config)
 	except Exception as e:
-		argcomplete.warn(f"Failed to open/read/parse config, `{e}`.")
+		argcomplete.warn(f"Failed to open/read/parse VodBot config, `{e}`.")
+		return
 	
 	cache = None
 	try:
 		cache = load_cache(conf, False, True)
 	except Exception as e:
 		argcomplete.warn(f"Failed to open/read/parse cache, `{e}`.")
+		return
 
 	allvids = []
 
@@ -44,14 +46,16 @@ def stage_completer(prefix, parsed_args, **kwargs):
 	try:
 		conf = util.load_conf_wrapper(parsed_args.config)
 	except Exception as e:
-		argcomplete.warn(f"Failed to open/read/parse config, `{e}`.")
+		argcomplete.warn(f"Failed to open/read/parse VodBot config, `{e}`.")
+		return
 
 	cache = None
 	try:
 		cache = load_cache(conf, False, True)
 	except Exception as e:
 		argcomplete.warn(f"Failed to open/read/parse cache, `{e}`.")
-	
+		return
+
 	stages = [d for d in cache.stages if d.startswith(prefix)]
 
 	cmd = parsed_args.cmd
@@ -64,8 +68,12 @@ def stage_completer(prefix, parsed_args, **kwargs):
 	addlogout = []
 	if pushload and "logout".startswith(prefix):
 		addlogout = ["logout"]
+
+	addlogin = []
+	if pushload and "login".startswith(prefix):
+		addlogin = ["login"]
 	
-	return stages + addall + addlogout
+	return stages + addall + addlogout + addlogin
 
 
 def deffered_main():
@@ -160,14 +168,10 @@ def main():
 	argcomplete.autocomplete(parser)
 	args = parser.parse_args()
 
-	# TODO: this needs to be made optional.
-	# Check for ffmpeg and imagemagick
+	# Check for ffmpeg
 	ffmpeg_check = which("ffmpeg")
-	# magick_check = which("magick")
 	if ffmpeg_check is None:
-		util.exit_prog(-11, "FFMPEG could not be found in your PATH environment variable. You can download it at http://ffmpeg.org/ or https://github.com/BtbN/FFmpeg-Builds")
-	# if magick_check is None:
-	# 	util.exit_prog(-11, "ImageMagick could not be found in your PATH environment variable. You can download it at https://imagemagick.org/ or https://github.com/SoftCreatR/imei")
+		util.exit_prog(-11, "FFMPEG could not be found in your PATH environment variable.")
 
 	# Handle commands
 	if args.cmd == "init":
