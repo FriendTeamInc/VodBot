@@ -1,6 +1,6 @@
 from . import util, __project__, __version__
 from .config import DEFAULT_CONFIG_PATH
-from .printer import cprint, colorize
+from .printer import colorize
 from .cache import load_cache
 
 import argparse

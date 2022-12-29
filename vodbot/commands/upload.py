@@ -9,6 +9,7 @@ from .stage import StageData
 import vodbot.util as util
 import vodbot.video as vbvid
 import vodbot.chatlog as vbchat
+import vodbot.thumbnail as vbthumbnail
 from vodbot.cache import load_cache, save_cache
 from vodbot.printer import cprint
 from vodbot.config import Config
@@ -118,7 +119,7 @@ def upload_video(conf: Config, service, stagedata: StageData) -> str:
 	}
 
 	# create media file, 100 MiB chunks
-	media_file = MediaFileUpload(str(tmpfile), chunksize=1024*1024*100, resumable=True)
+	media_file = MediaFileUpload(str(tmpfile), chunksize=1024*1024*512, resumable=True)
 
 	# create upload request and execute
 	response_upload = service.videos().insert(
@@ -135,10 +136,10 @@ def upload_video(conf: Config, service, stagedata: StageData) -> str:
 		# delete vars to release the files
 		del media_file
 		del response_upload
-		sleep(1)
+		# sleep(1)
 		os_remove(str(tmpfile))
 	except Exception as e:
-		util.exit_prog(90, f"Failed to remove temp slice file of stage `{stagedata.id}` after upload. {e}")
+		util.exit_prog(90, f"Failed to remove temp video slice file of stage `{stagedata.id}` after upload. {e}")
 	
 	return uploaded
 
@@ -146,8 +147,8 @@ def upload_video(conf: Config, service, stagedata: StageData) -> str:
 def upload_captions(conf: Config, service, stagedata: StageData, vid_id: str) -> bool:
 	tmpfile = vbchat.process_stage(conf, stagedata, "upload")
 
-	if tmpfile == False:
-		return True
+	if not tmpfile:
+		return False
 
 	request_body = {
 		"snippet": {
@@ -157,7 +158,7 @@ def upload_captions(conf: Config, service, stagedata: StageData, vid_id: str) ->
 		}
 	}
 
-	media_file = MediaFileUpload(str(tmpfile), chunksize=1024*1024*100, resumable=True)
+	media_file = MediaFileUpload(str(tmpfile), chunksize=1024*1024*512, resumable=True)
 
 	response_upload = service.captions().insert(
 		part="snippet",
@@ -173,10 +174,40 @@ def upload_captions(conf: Config, service, stagedata: StageData, vid_id: str) ->
 		# delete vars to release the files
 		del media_file
 		del response_upload
-		sleep(1)
+		# sleep(1)
 		os_remove(str(tmpfile))
 	except Exception as e:
-		util.exit_prog(90, f"Failed to remove temp slice file of stage `{stagedata.id}` after upload. {e}")
+		util.exit_prog(90, f"Failed to remove temp chatlog file of stage `{stagedata.id}` after upload. {e}")
+
+	return uploaded
+
+
+def upload_thumbnail(conf: Config, service, stagedata: StageData, vid_id: str) -> bool:
+	tmpfile = vbthumbnail.generate_thumbnail(conf, stagedata)
+
+	# copied from above, what does it mean?
+	if not tmpfile:
+		return False
+
+	media_file = MediaFileUpload(str(tmpfile), chunksize=-1, resumable=True)
+
+	# this may need to be a straight upload, not resumable
+	response_upload = service.thumbnails().set(
+		videoId=vid_id,
+		media_body=media_file
+	)
+
+	cprint(f"#fCUploading stage thumbnail #r`#fM{stagedata.id}#r`, progress: #fC0#fY%#r #d...#r", end="\r")
+	uploaded = _upload_artifact(media_file, f"stage thumbnail #r`#fM{stagedata.id}#r`", response_upload, str(tmpfile), stagedata, getting_video=False)
+
+	try:
+		# delete vars to release the files
+		del media_file
+		del response_upload
+		# sleep(1)
+		os_remove(str(tmpfile))
+	except Exception as e:
+		util.exit_prog(90, f"Failed to remove temp thumbnail file of stage `{stagedata.id}` after upload. {e}")
 
 	return uploaded
 
@@ -262,9 +293,17 @@ def run(args):
 	for stage in stagedatas:
 		video_id = upload_video(conf, service, stage)
 		if video_id is not None:
+			if conf.upload.thumbnail_enable:
+				if not upload_thumbnail(conf, service, stage, video_id):
+					t = f"Failed to upload video thumbnail for stage `{stage.id}`, video ID `{video_id}`."
+					cprint(f"#d#fRWARN: {t} Skipping...#r")
+					send_upload_error(t)
+
 			if conf.upload.chat_enable:
 				if not upload_captions(conf, service, stage, video_id):
-					send_upload_error(f"Failed to upload chat captions for stage `{stage.id}`, video ID `{video_id}`.")
+					t = f"Failed to upload chat captions for stage `{stage.id}`, video ID `{video_id}`."
+					cprint(f"#d#fRWARN: {t} Skipping...#r")
+					send_upload_error(t)
 			
 			if conf.stage.delete_on_upload:
 				try:

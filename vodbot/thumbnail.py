@@ -10,7 +10,6 @@ from pathlib import Path
 
 # take in a StageData, process the data given the config, spit out the path to the image
 def generate_thumbnail(conf: Config, stage: StageData) -> Path:
-
 	# to get single frame from a video
 	# "ffmpeg" "-ss" "<timestamp>" "-i" "<inputvod.mkv>" "-frames:v" "1" "<tmp/screenshot_output.png>"
 	thumbnail_filename = conf.directories.temp / f"thumbnail_ss_{stage.id}.png"
@@ -72,7 +71,5 @@ def generate_thumbnail(conf: Config, stage: StageData) -> Path:
 	cmds += [output_file]
 
 	subprocess.run(cmds, check=True)
-
-	# TODO: remove temp screenshot HERE
 	
 	return output_file
