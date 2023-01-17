@@ -12,7 +12,7 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from os import remove as os_remove, listdir as os_listdir
 from os.path import isfile, isdir
-from typing import List
+from typing import List, Optional
 from random import choice
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json
@@ -55,7 +55,7 @@ class StageData():
 	datestring: str
 
 	slices: List[VideoSlice]
-	thumbnail: ThumbnailData = None
+	thumbnail: Optional[ThumbnailData] = None
 
 	id: str = field(default_factory=lambda: 
 		"".join([choice(ascii_lowercase + ascii_digits) for _ in range(4)]))

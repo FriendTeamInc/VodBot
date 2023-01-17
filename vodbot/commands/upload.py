@@ -299,13 +299,13 @@ def run(args):
 			if conf.upload.thumbnail_enable:
 				if not upload_thumbnail(conf, service, stage, video_id):
 					t = f"Failed to upload video thumbnail for stage `{stage.id}`, video ID `{video_id}`."
-					cprint(f"#d#fRWARN: {t} Skipping...#r")
+					cprint(f"#fY#dWARN: {t} Skipping...#r")
 					send_upload_error(t)
 
 			if conf.upload.chat_enable:
 				if not upload_captions(conf, service, stage, video_id):
 					t = f"Failed to upload chat captions for stage `{stage.id}`, video ID `{video_id}`."
-					cprint(f"#d#fRWARN: {t} Skipping...#r")
+					cprint(f"#fY#dWARN: {t} Skipping...#r")
 					send_upload_error(t)
 			
 			if conf.stage.delete_on_upload:
