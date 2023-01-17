@@ -163,10 +163,10 @@ class _ConfigThumbnail:
 	canvas_width: int
 	canvas_height: int
 
-	# Position settings of the screenshot on the canvas.
-	screenshot: _ConfigThumbnailPosition
-	# Position settings of the "cover art" on the canvas.
-	cover: _ConfigThumbnailPosition
+	# Position settings of the screenshot on the canvas. Screenshots are scaled to canvas resolution.
+	screenshot_pos: _ConfigThumbnailPosition
+	# Position settings of the "cover art" on the canvas. Cover art is scaled to canvas resolution.
+	cover_pos: _ConfigThumbnailPosition
 	# Path of the "cover art" image. This path is always relative to the thumbnail directory.
 	cover_filepath: Path = field(metadata=_path_field_config)
 

@@ -18,7 +18,7 @@ def generate_thumbnail(conf: Config, stage: StageData) -> Path:
 	
 	# to get single frame from a video
 	# "ffmpeg" "-ss" "<timestamp>" "-i" "<inputvod.mkv>" "-frames:v" "1" "<tmp/screenshot_output.png>"
-	thumbnail_filename = conf.directories.temp / f"thumbnail_ss_{stage.id}.png"
+	ss_path = conf.directories.temp / f"thumbnail_ss_{stage.id}.png"
 	if not stage.thumbnail:
 		cprint(f"#fY#dWARN: Cannot generate thumbnail, missing thumbnail data for stage `{stage.id}`.#r")
 		return None
@@ -26,46 +26,44 @@ def generate_thumbnail(conf: Config, stage: StageData) -> Path:
 	video_slice = stage.slices[selected_video_slice]
 	subprocess.run([
 		"ffmpeg", "-ss", stage.thumbnail.timestamp, "-i", video_slice.filepath,
-		"-frames:v", "1", str(thumbnail_filename)
+		"-frames:v", "1", "-update", "1", str(ss_path), "-y"
 	], check=True)
 
-	# to generate a thumbnail with imagemagick
-	# notes: tx and ty are generated with pos-(offset*scale), s is scale
-	# initial: "magick" "-size" "<canvas_width>x<canvas_height>" "canvas:none" "-font" "<text_font>" "-pointsize" "<text_size>"
-	# screenshot: "-draw" "image src-over <screenshot_x>,<screenshot_y> <canvas_width>,<canvas_height> \\'<tmp/screenshot_output.png>\\'"
-	# cover image: "-draw" "image src-over <cover_x>,<cover_y> <canvas_width>,<canvas_height> \\'<thumbnail/cover.png>\\'"
-	# loop over positions and heads: "-draw" "translate <tx>,<ty> scale <s>,<s> image src-over 0,0 0,0 \\'<thumbnail/heads/head.png>\\'"
-	# game image: "-draw" "translate <tx>,<ty> scale <s>,<s> image src-over 0,0 0,0 \\'<thumbnail/games/game.png>\\'"
-	# text: "-fill" "white" "-stroke" "black" "-strokewidth" "32" "-draw" "gravity NorthWest text <text_x>,<text_y> \\'<textTEXT>\\'"
-	# text: "-fill" "white" "-stroke" "white" "-strokewidth" "08" "-draw" "gravity NorthWest text <text_x>,<text_y> \\'<textTEXT>\\'"
-	# output: "<tmp/out.png>"
-
-	# TODO: account for everything having a position setting with position, offset, and scaling.
+	# The reference for commands for magick is here:
+	# https://imagemagick.org/script/magick.php
 
 	output_file = conf.directories.temp / f"thumbnail_{stage.id}.png"
 
-	cv_x = conf.thumbnail.canvas_width
-	cv_y = conf.thumbnail.canvas_height
-	ss_x = conf.thumbnail.screenshot_x
-	ss_y = conf.thumbnail.screenshot_y
+	cw = conf.thumbnail.canvas_width
+	ch = conf.thumbnail.canvas_height
+	ssp = conf.thumbnail.screenshot_pos
+	cvp = conf.thumbnail.cover_pos
 	cover_path = conf.directories.thumbnail / conf.thumbnail.cover_filepath
-	fg_x = conf.thumbnail.cover_x
-	fg_y = conf.thumbnail.cover_y
 
 	game = conf.thumbnail.games[stage.thumbnail.game]
 	game_path = conf.directories.thumbnail / game.filepath
-	gs = game.scale
-	gx = int(conf.thumbnail.game_x - (game.offset_x * gs))
-	gy = int(conf.thumbnail.game_y - (game.offset_y * gs))
+	gp = conf.thumbnail.game_pos
+	gs = game.s * gp.s
+	gx, gy = int(gp.x - ((gp.ox + game.ox) * gs)), int(gp.y - ((gp.oy + game.oy) * gs))
 
 	text = stage.thumbnail.text
-	tx = conf.thumbnail.text_x
-	ty = conf.thumbnail.text_y
+	tp = conf.thumbnail.text_pos
+	ts = tp.s
+	tx, ty = int(tp.x - (tp.ox * ts)), int(tp.y - (tp.oy * ts))
 
-	cmds = ["magick", "-size", f"{cv_x}x{cv_y}", "canvas:none"] # initial
-	cmds += ["-font", conf.thumbnail.text_font, "-pointsize", conf.thumbnail.text_size] # font
-	cmds += ["-draw", f"image src-over {ss_x},{ss_y} {cv_x},{cv_y} {thumbnail_filename}"] # screenshot
-	cmds += ["-draw", f"image src-over {fg_x},{fg_y} {cv_x},{cv_y} {cover_path}"] # cover
+	# initial
+	cmds = ["magick", "-size", f"{cw}x{ch}", "canvas:none"]
+	# font setup
+	cmds += ["-font", conf.thumbnail.text_font, "-pointsize", conf.thumbnail.text_size]
+
+	# screenshot
+	sss = ssp.s
+	ssx, ssy = int(ssp.x - (ssp.ox * sss)), int(ssp.x - (ssp.ox * sss))
+	cmds += ["-draw", f"translate {ssx},{ssy} scale {sss},{sss} image src-over 0,0 0,0 {ss_path}"]
+	# cover art
+	cvs = cvp.s
+	cvx, cvy = int(cvp.x - (cvp.ox * cvs)), int(cvp.x - (cvp.ox * cvs))
+	cmds += ["-draw", f"translate {cvx},{cvy} scale {cvs},{cvs} image src-over 0,0 0,0 {cover_path}"]
 	# heads
 	for i in conf.thumbnail.head_order:
 		if i >= len(stage.thumbnail.heads):
@@ -73,13 +71,15 @@ def generate_thumbnail(conf: Config, stage: StageData) -> Path:
 		head = conf.thumbnail.heads[stage.thumbnail.heads[i]]
 		head_pos = conf.thumbnail.head_positions[i]
 		head_path = conf.directories.thumbnail / head.filepath
-		hs = head.scale * head_pos.scale
-		hx = int(head_pos.x - (head.offset_x * gs))
-		hy = int(head_pos.y - (head.offset_y * gs))
+		hs = head.s * head_pos.s
+		hx = int(head_pos.x - ((head_pos.ox + head.ox) * gs))
+		hy = int(head_pos.y - ((head_pos.ox + head.oy) * gs))
 		cmds += ["-draw", f"translate {hx},{hy} scale {hs},{hs} image src-over 0,0 0,0 {head_path}"] # head
 	cmds += ["-draw", f"translate {gx},{gy} scale {gs},{gs} image src-over 0,0 0,0 {game_path}"] # cover
-	cmds += ["-fill", "white", "-stroke", "black", "-strokewidth", "32", "-draw", f"gravity NorthWest text {tx},{ty} \\'{text}\\'"]
-	cmds += ["-fill", "white", "-stroke", "width", "-strokewidth", "08", "-draw", f"gravity NorthWest text {tx},{ty} \\'{text}\\'"]
+	cmds += ["-fill", "white", "-stroke", "black", "-strokewidth", "32", "-draw",
+		f"gravity NorthWest translate {tx},{ty} scale {ts},{ts} text 0,0 \\'{text}\\'"]
+	cmds += ["-fill", "white", "-stroke", "width", "-strokewidth", "08", "-draw",
+		f"gravity NorthWest translate {tx},{ty} scale {ts},{ts} text 0,0 \\'{text}\\'"]
 	cmds += [output_file]
 
 	subprocess.run(cmds, check=True)
