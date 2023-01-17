@@ -136,7 +136,7 @@ def send_export_video(stage: StageData):
 			{"name": "Title", "value": stage.title},
 			{"name": "Streamers", "value": ", ".join(stage.streamers)},
 			{"name": "Date", "value": stage.datestring},
-			{"name": "Description", "value": stage.description, "inline": False},
+			{"name": "Description", "value": stage.desc, "inline": False},
 			{"name": "Slices", "value": slices, "inline": False},
 		]
 	)
@@ -166,7 +166,7 @@ def send_upload_video(stage: StageData, url: str):
 			{"name": "Streamers", "value": ", ".join(stage.streamers)},
 			{"name": "Date", "value": stage.datestring},
 			{"name": "URL", "value": url},
-			{"name": "Description", "value": stage.description, "inline": False},
+			{"name": "Description", "value": stage.desc, "inline": False},
 			{"name": "Slices", "value": slices, "inline": False},
 		]
 	)

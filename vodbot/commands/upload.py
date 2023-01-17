@@ -52,7 +52,10 @@ def _upload_artifact(media_file, upload_string, response_upload, tmpfile, staged
 		try:
 			status, resp = response_upload.next_chunk()
 			if status:
-				cprint(f"#fCUploading {upload_string}, progress: #fC{int(status.progress()*100)}#fY%#r #d...#r", end="\r")
+				# status.resumable_progress == number of bytes uploaded so far (including what was just uploaded)
+				# status.total_size == number of total bytes to upload
+				# TODO: print a nice message about progress
+				cprint(f"#fCUploading {upload_string}, progress: #fC{int(status.progress()*100)}#fY%#r #d...#r", end="\n")
 			if resp is not None:
 				cprint(f"#fCUploading {upload_string}, progress: #fC100#fY%#r!")
 				if getting_video:
@@ -118,8 +121,8 @@ def upload_video(conf: Config, service, stagedata: StageData) -> str:
 		}
 	}
 
-	# create media file, 100 MiB chunks
-	media_file = MediaFileUpload(str(tmpfile), chunksize=1024*1024*512, resumable=True)
+	# create media file, upload in chunks
+	media_file = MediaFileUpload(str(tmpfile), chunksize=conf.upload.chunk_size, resumable=True)
 
 	# create upload request and execute
 	response_upload = service.videos().insert(
@@ -158,7 +161,7 @@ def upload_captions(conf: Config, service, stagedata: StageData, vid_id: str) ->
 		}
 	}
 
-	media_file = MediaFileUpload(str(tmpfile), chunksize=1024*1024*512, resumable=True)
+	media_file = MediaFileUpload(str(tmpfile), chunksize=conf.upload.chunk_size, resumable=True)
 
 	response_upload = service.captions().insert(
 		part="snippet",
@@ -188,7 +191,7 @@ def upload_thumbnail(conf: Config, service, stagedata: StageData, vid_id: str) -
 	if not tmpfile:
 		return False
 
-	media_file = MediaFileUpload(str(tmpfile), chunksize=-1, resumable=True)
+	media_file = MediaFileUpload(str(tmpfile), chunksize=conf.upload.chunk_size, resumable=True)
 
 	# this may need to be a straight upload, not resumable
 	# see: https://developers.google.com/youtube/v3/docs/thumbnails/set
@@ -227,8 +230,8 @@ def run(args):
 	API_NAME = 'youtube'
 	API_VERSION = 'v3'
 	SCOPES = [ # Only force-ssl is required, but both makes it explicit.
-		"https://www.googleapis.com/auth/youtube.upload",   # Videos.insert
-		"https://www.googleapis.com/auth/youtube.force-ssl" # Captions.insert
+		"https://www.googleapis.com/auth/youtube.upload",
+		"https://www.googleapis.com/auth/youtube.force-ssl"
 	]
 
 	# handle logout

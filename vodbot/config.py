@@ -116,6 +116,7 @@ class _ConfigUpload:
 	thumbnail_enable: bool = True
 	client_path: Path = field(default=DEFAULT_CONFIG_DIRECTORY/"yt-client.json", metadata=_path_field_config)
 	session_path: Path = field(default=DEFAULT_CONFIG_DIRECTORY/"yt-session.json", metadata=_path_field_config)
+	chunk_size: int = 262144
 
 @dataclass_json
 @dataclass

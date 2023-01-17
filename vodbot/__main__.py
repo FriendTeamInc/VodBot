@@ -176,11 +176,11 @@ def main():
 	# Handle commands
 	if args.cmd == "init":
 		import_module(".commands.init", "vodbot").run(args)
-	elif args.cmd == "pull" and args.cmd == "download":
+	elif args.cmd == "pull" or args.cmd == "download":
 		import_module(".commands.pull", "vodbot").run(args)
 	elif args.cmd == "stage":
 		import_module(".commands.stage", "vodbot").run(args)
-	elif args.cmd == "push" and args.cmd == "upload":
+	elif args.cmd == "push" or args.cmd == "upload":
 		import_module(".commands.upload", "vodbot").run(args)
 	elif args.cmd == "export":
 		import_module(".commands.export", "vodbot").run(args)

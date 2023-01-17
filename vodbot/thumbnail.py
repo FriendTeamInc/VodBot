@@ -13,12 +13,15 @@ from pathlib import Path
 # take in a StageData, process the data given the config, spit out the path to the image
 def generate_thumbnail(conf: Config, stage: StageData) -> Path:
 	if not has_magick():
-		cprint("#fRERROR: Cannot generate thumbnail, ImageMagick not installed.#r")
+		cprint("#fR#dWARN: Cannot generate thumbnail, ImageMagick not installed.#r")
 		return None
 	
 	# to get single frame from a video
 	# "ffmpeg" "-ss" "<timestamp>" "-i" "<inputvod.mkv>" "-frames:v" "1" "<tmp/screenshot_output.png>"
 	thumbnail_filename = conf.directories.temp / f"thumbnail_ss_{stage.id}.png"
+	if not stage.thumbnail:
+		cprint("#fR#dWARN: Cannot generate thumbnail, missing thumbnail data in stage.#r")
+		return None
 	selected_video_slice = stage.thumbnail.video_slice_id
 	video_slice = stage.slices[selected_video_slice]
 	subprocess.run([

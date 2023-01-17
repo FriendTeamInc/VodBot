@@ -192,7 +192,7 @@ def chat_to_ytt(conf: Config, msgs: List[ChatMessage], path: str, vid_duration:i
 def process_stage(conf: Config, stage: StageData, mode:str) -> Path:
 	tempdir = Path(conf.directories.temp)
 
-	cprint(f"#rLoading all chat messages for `#fM{stage.id}#r`.", end="")
+	#cprint(f"#rLoading all chat messages for `#fM{stage.id}#r`.", end="")
 	total_offset = 0
 	chat_list = []
 	for slc in stage.slices:
@@ -228,10 +228,10 @@ def process_stage(conf: Config, stage: StageData, mode:str) -> Path:
 	export_type = conf.chat.export_format if mode != "upload" else "YTT"
 
 	if len(chat_list) == 0:
-		cprint(f" No chat found in `#fM{stage.id}#r` stage. Skipping...")
+		#cprint(f" No chat found in `#fM{stage.id}#r` stage. Skipping...")
 		return None
 
-	cprint(f" Exporting as format `#fY{export_type}#r`.")
+	#cprint(f" Exporting as format `#fY{export_type}#r`.")
 
 	returnpath = None
 	if export_type == "raw":

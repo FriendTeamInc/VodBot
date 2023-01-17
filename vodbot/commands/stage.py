@@ -524,7 +524,7 @@ def _new(args, conf: Config, cache: Cache):
 	slices = []
 	for x in range(len(videos)):
 		vid = videos[x]
-		vidslice = VideoSlice(video_id=vid["id"], ss=args.ss[x], to=args.to[x], filepath=vid["file"])
+		vidslice = VideoSlice(video_id=vid["id"], ss=args.ss[x], to=args.to[x], filepath=str(vid["file"]))
 		slices += [vidslice]
 
 	# make thumbnail data
