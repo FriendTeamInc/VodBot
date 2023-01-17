@@ -55,7 +55,7 @@ def _upload_artifact(media_file, upload_string, response_upload, tmpfile, staged
 				# status.resumable_progress == number of bytes uploaded so far (including what was just uploaded)
 				# status.total_size == number of total bytes to upload
 				# TODO: print a nice message about progress
-				cprint(f"#fCUploading {upload_string}, progress: #fC{int(status.progress()*100)}#fY%#r #d...#r", end="\n")
+				cprint(f"#fCUploading {upload_string}, progress: #fC{int(status.progress()*100)}#fY%#r #d...#r", end="\r")
 			if resp is not None:
 				cprint(f"#fCUploading {upload_string}, progress: #fC100#fY%#r!")
 				if getting_video:
