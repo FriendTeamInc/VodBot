@@ -31,14 +31,14 @@ setup(
     
 	python_requires='>=3.7',
 	install_requires=[
-		"google-api-python-client>=2.0",
+		"google-api-python-client>=2.70.0",
 		"google-auth-httplib2>=0.1.0",
-		"google-auth-oauthlib>=0.4.4",
-		"requests>=2.20",
-		"m3u8>=0.8",
+		"google-auth-oauthlib>=0.8.0",
+		"requests>=2.28.1",
+		"m3u8>=3.3.0",
 		"dataclasses-json>=0.5.7",
 		"argcomplete>=2.0.0",
-		"discord-webhook>=0.16.3",
+		"discord-webhook>=1.0.0",
 		"Pillow>=9.4.0"
 	],
 	entry_points={
