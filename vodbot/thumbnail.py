@@ -113,7 +113,7 @@ def generate_thumbnail(conf: Config, stage: StageData) -> Path:
 	# screenshot
 	ssp = conf.thumbnail.screenshot_position
 	sss = ssp.s
-	ssx, ssy = int(ssp.x - (ssp.ox * sss)), int(ssp.x - (ssp.ox * sss))
+	ssx, ssy = int(ssp.x - (ssp.ox * sss)), int(ssp.y - (ssp.oy * sss))
 	ssi = Image.open(ss_path)
 	ssi = ssi.convert("RGBA")
 	ssi = ssi.resize((cw, ch), Image.BICUBIC)
@@ -125,7 +125,7 @@ def generate_thumbnail(conf: Config, stage: StageData) -> Path:
 	cvp = conf.thumbnail.cover_position
 	cover_path = conf.directories.thumbnail / conf.thumbnail.cover_filepath
 	cvs = cvp.s
-	cvx, cvy = int(cvp.x - (cvp.ox * cvs)), int(cvp.x - (cvp.ox * cvs))
+	cvx, cvy = int(cvp.x - (cvp.ox * cvs)), int(cvp.y - (cvp.oy * cvs))
 	cvi = Image.open(cover_path)
 	cvi = cvi.convert("RGBA")
 	cvi = cvi.resize((cw, ch), Image.BICUBIC)
@@ -138,14 +138,15 @@ def generate_thumbnail(conf: Config, stage: StageData) -> Path:
 		if i >= len(stage.thumbnail.heads):
 			continue
 		head = conf.thumbnail.heads[stage.thumbnail.heads[i]]
+		print(head)
 		head_pos = conf.thumbnail.head_positions[i]
 		head_path = conf.directories.thumbnail / head.filepath
 		hs = head.s * head_pos.s
-		hx = int(head_pos.x - ((head_pos.ox + head.ox) * gs))
-		hy = int(head_pos.y - ((head_pos.ox + head.oy) * gs))
+		hx = int(head_pos.x - ((head_pos.ox + head.ox) * hs))
+		hy = int(head_pos.y - ((head_pos.oy + head.oy) * hs))
 		hi = Image.open(head_path)
 		hi = hi.convert("RGBA")
-		hi = cvi.resize((int(hi.size[0]*hs), int(hi.size[1]*hs)), Image.BICUBIC)
+		hi = hi.resize((int(hi.size[0]*hs), int(hi.size[1]*hs)), Image.BICUBIC)
 		tn.alpha_composite(hi, (hx, hy))
 		hi.close()
 
