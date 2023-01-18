@@ -122,5 +122,10 @@ def save_cache(conf: Config, cache: Cache) -> None:
 
 	_cached_cache = cache
 
-	with open(conf.directories.temp / "cache.json", "w") as f:
-		f.write(cache.to_json())
+	try:
+		with open(conf.directories.temp / "cache.json", "w") as f:
+			f.write(cache.to_json())
+	except FileNotFoundError as e:
+		# Failed to write the cache, parent directory structure does not exist.
+		pass
+		#cprint(f"#fY#dWARN: Failed to write cache.")

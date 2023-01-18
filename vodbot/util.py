@@ -102,6 +102,10 @@ def load_conf(filename) -> Config:
 		exit_prog(97, f'Failed to parse config. "{e}"')
 	except ValidationError as e:
 		exit_prog(98, f'Failed to validate config. "{e.messages}"')
+	except TypeError as e:
+		exit_prog(96, f'Failed to validate config. "{e}"')
+	except KeyError as e:
+		exit_prog(95, f'Failed to find required key in config. "{e}"')
 
 	return conf
 

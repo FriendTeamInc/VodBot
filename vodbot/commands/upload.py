@@ -53,7 +53,7 @@ def _upload_artifact(upload_string, response_upload, getting_video=False):
 
 	def print_error(f:List, secs:int = 5):
 		nonlocal errn, errn_max
-		cprint(f"#fY#dWARN: An HTTP error has occurred ({errn}/{errn_max}), retyring in {secs} seconds... ({', '.join(f)})#r", end='\r')
+		cprint(f"#fY#dWARN: An HTTP error has occurred ({errn}/{errn_max}), retyring in {secs} seconds... ({', '.join(f)})#r")
 		errn += 1
 		sleep(secs)
 
@@ -67,8 +67,7 @@ def _upload_artifact(upload_string, response_upload, getting_video=False):
 			if not status:
 				uploaded = totalbit
 			
-			cprint("\033[K")
-			cprint(f"#fCUploading {upload_string}, progress: #fC{progress:.1f}#fY%#r #d({uploaded}/{totalbit})...#r", end='\r')
+			cprint(f"#c#fCUploading {upload_string}, progress: #fC{progress:.1f}#fY%#r #d({uploaded}/{totalbit})...#r", end='\r')
 
 			if resp is not None and getting_video:
 				video_id = resp["id"]

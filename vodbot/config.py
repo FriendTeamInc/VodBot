@@ -144,8 +144,8 @@ class _ConfigThumbnailIcon:
 @dataclass
 class _ConfigThumbnailPosition:
 	# Position for an image to be placed.
-	x: int
-	y: int
+	x: int = 0
+	y: int = 0
 	# Offset/origin position of the image.
 	ox: int = 0
 	oy: int = 0
@@ -157,6 +157,7 @@ class _ConfigThumbnailPosition:
 @dataclass
 class _ConfigThumbnail:
 	# Toggle for creating thumbnails in stages.
+	# TODO: make this section optional entirely
 	enable: bool
 
 	# Size of the thumbnail canvas.
@@ -173,7 +174,8 @@ class _ConfigThumbnail:
 	# Position settings of the text.
 	text_position: _ConfigThumbnailPosition
 	# The specific font to use when printing text on the thumbnail.
-	# TODO: Document how to find and set fonts? (ie, how to list and what string to use)
+	# This can be a relative or absolute path. If the path is relative, then locations are checked in this order:
+	# 1. Thumbnail directory, 2. System locations, 3. Path relative to execution (not recommended for use)
 	text_font: str
 	# The font pointsize to use when printing text on the thumbnail.
 	text_size: int

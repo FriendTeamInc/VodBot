@@ -389,6 +389,9 @@ def check_thumbnail_heads(possible_heads: Dict[str, _ConfigThumbnailIcon]) -> Li
 	indexed_heads = list(possible_heads.keys())
 	finalheads = []
 
+	if not possible_heads:
+		return finalheads
+
 	cprint("HEADS:", end="")
 	for i, name in enumerate(indexed_heads):
 		cprint(f" {i}.{name} |", end="")
@@ -414,6 +417,9 @@ def check_thumbnail_heads(possible_heads: Dict[str, _ConfigThumbnailIcon]) -> Li
 def check_thumbnail_game(possible_games: Dict[str, _ConfigThumbnailIcon]) -> str:
 	game = ""
 	indexed_games = list(possible_games.keys())
+
+	if not possible_games:
+		return game
 
 	cprint("GAMES:", end="")
 	for i, name in enumerate(indexed_games):
@@ -538,7 +544,6 @@ def _new(args, conf: Config, cache: Cache):
 
 	# make thumbnail data
 	thumbnail_obj = None
-	print(dir(args))
 	if conf.thumbnail.enable:
 		cprint("#dEnter in details to generate the thumbnail...#r")
 		# get heads
