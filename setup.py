@@ -19,9 +19,10 @@ setup(
     long_description=long_description,
 	long_description_content_type="text/markdown",
     
-	url="https://github.com/NotQuiteApex/VodBot",
+	url="https://github.com/FriendTeamInc/VodBot",
     project_urls={
-        "Bug Tracker": "https://github.com/NotQuiteApex/VodBot/issues",
+		"Homepage": "https://github.com/FriendTeamInc/VodBot",
+        "Bug Tracker": "https://github.com/FriendTeamInc/VodBot/issues",
     },
     
 	keywords="twitch youtube vod video clip download",
