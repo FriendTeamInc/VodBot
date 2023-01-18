@@ -4,7 +4,7 @@
 # and changing certain printouts to be more colorful.
 
 from vodbot.printer import cprint
-from vodbot.util import format_duration
+from vodbot.util import format_duration, format_size
 
 import os
 import requests
@@ -54,21 +54,6 @@ def download_file(url, path, retries=RETRY_COUNT):
 	raise DownloadFailed("sadge")
 
 
-def format_size(bytes_, digits=1):
-	units = ["B", "kB", "MB"]
-	for x in range(3):
-		if bytes_ < 1024:
-			if digits > 0:
-				return "{{:.{}f}}{}".format(digits, units[x]).format(bytes_)
-			else:
-				return "{{:d}}{}".format(units[x]).format(bytes_)
-		bytes_ /= 1024
-
-	if digits > 0:
-		return "{{:.{}f}}{}".format(digits, "GB").format(bytes_)
-	else:
-		return "{{:d}}{}".format("GB").format(bytes_)
-
 def _print_progress(video_id, futures):
 	downloaded_count = 0
 	downloaded_size = 0
@@ -99,7 +84,7 @@ def _print_progress(video_id, futures):
 			])
 
 			max_msg_size = max(len(msg), max_msg_size)
-			cprint("\r" + msg.ljust(max_msg_size), end="")
+			cprint("#c\r" + msg.ljust(max_msg_size), end="")
 	except KeyboardInterrupt:
 		done, not_done = wait(futures, timeout=0)
 		for future in not_done:

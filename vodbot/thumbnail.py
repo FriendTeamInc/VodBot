@@ -51,7 +51,6 @@ def generate_thumbnail(conf: Config, stage: StageData) -> Path:
 		if conf.thumbnail.cover_filepath != nofile:
 			cvp = conf.thumbnail.cover_position
 			cover_path = conf.directories.thumbnail / conf.thumbnail.cover_filepath
-			print(cover_path)
 			cvs = cvp.s
 			cvx, cvy = int(cvp.x - (cvp.ox * cvs)), int(cvp.y - (cvp.oy * cvs))
 			cvi = Image.open(cover_path)
@@ -72,7 +71,6 @@ def generate_thumbnail(conf: Config, stage: StageData) -> Path:
 			if i >= len(stage.thumbnail.heads):
 				continue
 			head = conf.thumbnail.heads[stage.thumbnail.heads[i]]
-			print(head)
 			head_pos = conf.thumbnail.head_positions[i]
 			head_path = conf.directories.thumbnail / head.filepath
 			hs = head.s * head_pos.s
@@ -109,7 +107,8 @@ def generate_thumbnail(conf: Config, stage: StageData) -> Path:
 			ts = tp.s
 			tx, ty = int(tp.x - (tp.ox * ts)), int(tp.y - (tp.oy * ts))
 			d = ImageDraw.Draw(tn)
-			d.text((tx,ty), text, font=fnt, fill=(255,255,255,255), stroke_width=6, stroke_fill=(0,0,0,255))
+			d.text((tx,ty), text, font=fnt, fill=(255,255,255,255), stroke_width=32, stroke_fill=(0,0,0,255))
+			d.text((tx,ty), text, font=fnt, fill=(255,255,255,255), stroke_width=8, stroke_fill=(255,255,255,255))
 			del fnt # close font
 		except OSError:
 			cprint(f"#fY#dWARN: Cannot find font `{conf.thumbnail.text_font}`, skipping text.#r")

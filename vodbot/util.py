@@ -56,6 +56,27 @@ def timestring_as_seconds(time:str, default:int=0):
 	return hours * 60 * 60 + minutes * 60 + seconds
 
 
+def format_size(bytes_:int, digits:int=1, include_units:bool=True) -> str:
+	units = ["B", "KB", "MB", "GB", "PB", "EB"]
+	for u in units:
+		if bytes_ < 1000:
+			t = ""
+			if digits > 0:
+				t = f"{bytes_:.{digits}f}"
+			else:
+				t = f"{bytes_:d}"
+			return (t + " " + u) if include_units else t
+		bytes_ /= 1000
+
+	t = ""
+	if digits > 0:
+		t = f"{bytes_:.{digits}f}"
+	else:
+		t = f"{bytes_:d}"
+	
+	return (t + " ZB") if include_units else t
+
+
 _has_ffmpeg = which("ffmpeg") is not None
 def has_ffmpeg() -> bool:
 	return _has_ffmpeg
