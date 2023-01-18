@@ -53,7 +53,7 @@ def _upload_artifact(upload_string, response_upload, getting_video=False):
 
 	def print_error(f:List, secs:int = 5):
 		nonlocal errn, errn_max
-		cprint(f"#fY#dWARN: An HTTP error has occurred ({errn}/{errn_max}), retyring in {secs} seconds... ({', '.join(f)})#r")
+		cprint(f"#fY#dWARN: An HTTP error has occurred ({errn}/{errn_max} bytes), retyring in {secs} seconds... ({', '.join(f)})#r")
 		errn += 1
 		sleep(secs)
 
@@ -61,8 +61,8 @@ def _upload_artifact(upload_string, response_upload, getting_video=False):
 		try:
 			status, resp = response_upload.next_chunk()
 
-			progress = status.progress() if status else 100
-			uploaded = status.resumeable_progress if status else uploaded
+			progress = status.progress()*100 if status else 100
+			uploaded = status.resumable_progress if status else uploaded
 			totalbit = status.total_size if status else totalbit
 			if not status:
 				uploaded = totalbit
@@ -278,7 +278,8 @@ def run(args):
 				creds.refresh(Request())
 			else:
 				flow = InstalledAppFlow.from_client_secrets_file(CLIENT_FILE, SCOPES)
-				creds = flow.run_console()
+				creds = flow.run_local_server()
+				# creds = flow.run_console()
 		except RefreshError:
 			flow = InstalledAppFlow.from_client_secrets_file(CLIENT_FILE, SCOPES)
 			creds = flow.run_console()

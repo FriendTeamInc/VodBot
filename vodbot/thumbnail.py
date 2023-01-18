@@ -32,6 +32,7 @@ def generate_thumbnail(conf: Config, stage: StageData) -> Path:
 	cw = conf.thumbnail.canvas_width
 	ch = conf.thumbnail.canvas_height
 	tn = Image.new("RGBA", (cw, ch), (0,0,0,0))
+	nofile = Path("")
 
 	# screenshot
 	ssp = conf.thumbnail.screenshot_position
@@ -46,17 +47,23 @@ def generate_thumbnail(conf: Config, stage: StageData) -> Path:
 
 	# cover art
 	# only produce cover art if its linked
-	if conf.thumbnail.cover_filepath:
-		cvp = conf.thumbnail.cover_position
-		cover_path = conf.directories.thumbnail / conf.thumbnail.cover_filepath
-		cvs = cvp.s
-		cvx, cvy = int(cvp.x - (cvp.ox * cvs)), int(cvp.y - (cvp.oy * cvs))
-		cvi = Image.open(cover_path)
-		cvi = cvi.convert("RGBA")
-		cvi = cvi.resize((cw, ch), Image.BICUBIC)
-		cvi = cvi.resize((int(cvi.size[0]*cvs), int(cvi.size[1]*cvs)), Image.BICUBIC)
-		tn.alpha_composite(cvi, (cvx, cvy))
-		cvi.close()
+	try:
+		if conf.thumbnail.cover_filepath != nofile:
+			cvp = conf.thumbnail.cover_position
+			cover_path = conf.directories.thumbnail / conf.thumbnail.cover_filepath
+			print(cover_path)
+			cvs = cvp.s
+			cvx, cvy = int(cvp.x - (cvp.ox * cvs)), int(cvp.y - (cvp.oy * cvs))
+			cvi = Image.open(cover_path)
+			cvi = cvi.convert("RGBA")
+			cvi = cvi.resize((cw, ch), Image.BICUBIC)
+			cvi = cvi.resize((int(cvi.size[0]*cvs), int(cvi.size[1]*cvs)), Image.BICUBIC)
+			tn.alpha_composite(cvi, (cvx, cvy))
+			cvi.close()
+	except FileNotFoundError as e:
+		cprint(f"#fY#dWARN: Cannot find cover image, `{e.filename}`.#r")
+	except IsADirectoryError as e:
+		cprint(f"#fY#dWARN: Cannot find cover image, `{e.filename}`.#r")
 
 	# heads
 	# only produce heads if heads are configured correctly and data for it exists in the stage
@@ -79,7 +86,7 @@ def generate_thumbnail(conf: Config, stage: StageData) -> Path:
 
 	# game
 	# only produce game if games are configured and data for it exists in the stage
-	if conf.thumbnail.games and stage.thumbnail.game:
+	if conf.thumbnail.games and stage.thumbnail.game != nofile:
 		game = conf.thumbnail.games[stage.thumbnail.game]
 		game_path = conf.directories.thumbnail / game.filepath
 		gp = conf.thumbnail.game_position
@@ -93,7 +100,7 @@ def generate_thumbnail(conf: Config, stage: StageData) -> Path:
 
 	# text
 	# only produce text if font is configured correctly (and if there is actually text to print)
-	if conf.thumbnail.text_font and stage.thumbnail.text:
+	if conf.thumbnail.text_font and stage.thumbnail.text != nofile:
 		fnt = None
 		try:
 			fnt = ImageFont.truetype(font=conf.thumbnail.text_font, size=conf.thumbnail.text_size)
