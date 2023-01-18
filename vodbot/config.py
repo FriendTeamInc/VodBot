@@ -4,7 +4,7 @@
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json, config
 from marshmallow import fields, validate, ValidationError
-from typing import Dict, List, Tuple, Any, Mapping
+from typing import Dict, List, Any, Mapping
 from pathlib import Path
 
 
@@ -36,7 +36,6 @@ class _ConfigChannel:
 	save_clips: bool = True
 	# Toggle for saving chat logs from VOD videos.
 	save_chat: bool = True
-	#thumbnail_icon: _ConfigThumbnailIcon
 
 @dataclass_json
 @dataclass
@@ -164,14 +163,14 @@ class _ConfigThumbnail:
 	canvas_height: int
 
 	# Position settings of the screenshot on the canvas. Screenshots are scaled to canvas resolution.
-	screenshot_pos: _ConfigThumbnailPosition
+	screenshot_position: _ConfigThumbnailPosition
 	# Position settings of the "cover art" on the canvas. Cover art is scaled to canvas resolution.
-	cover_pos: _ConfigThumbnailPosition
+	cover_position: _ConfigThumbnailPosition
 	# Path of the "cover art" image. This path is always relative to the thumbnail directory.
 	cover_filepath: Path = field(metadata=_path_field_config)
 
 	# Position settings of the text.
-	text_pos: _ConfigThumbnailPosition
+	text_position: _ConfigThumbnailPosition
 	# The specific font to use when printing text on the thumbnail. You can see what fonts are
 	# available with the command `magick -list font`, optionally grep'ing the result with "Font: ".
 	text_font: str
@@ -190,7 +189,7 @@ class _ConfigThumbnail:
 	heads: Dict[str, _ConfigThumbnailIcon]
 	
 	# Position settings of the game icon on the canvas.
-	game_pos: _ConfigThumbnailPosition
+	game_position: _ConfigThumbnailPosition
 	# A dictionary of games. The keys of each entry will be used for prompting what heads are wanted
 	# during the staging process.
 	games: Dict[str, _ConfigThumbnailIcon]

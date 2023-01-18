@@ -38,7 +38,8 @@ setup(
 		"m3u8>=0.8",
 		"dataclasses-json>=0.5.7",
 		"argcomplete>=2.0.0",
-		"discord-webhook>=0.16.3"
+		"discord-webhook>=0.16.3",
+		"Pillow>=9.4.0"
 	],
 	entry_points={
 		'console_scripts': ['vodbot=vodbot.__main__:deffered_main'],

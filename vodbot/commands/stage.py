@@ -2,7 +2,7 @@
 
 from vodbot.cache import Cache, load_cache, save_cache
 import vodbot.util as util
-from vodbot.config import DEFAULT_CONFIG_DIRECTORY, Config
+from vodbot.config import DEFAULT_CONFIG_DIRECTORY, _ConfigThumbnailIcon, Config
 from vodbot.printer import cprint, colorize
 
 import re
@@ -12,7 +12,7 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from os import remove as os_remove, listdir as os_listdir
 from os.path import isfile, isdir
-from typing import List, Optional
+from typing import Dict, List, Optional
 from random import choice
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json
@@ -384,14 +384,16 @@ def check_description(formatdict, inputdefault=None):
 	return desc
 
 
-def check_thumbnail_heads(possible_heads: List[str]) -> List[str]:
+def check_thumbnail_heads(possible_heads: Dict[str, _ConfigThumbnailIcon]) -> List[str]:
 	heads = ""
+	indexed_heads = list(possible_heads.keys())
 	finalheads = []
 
 	cprint("HEADS:", end="")
-	for i, name in enumerate(possible_heads.keys()):
-		cprint(f" {i}. {name}", end="")
-	
+	for i, name in enumerate(indexed_heads):
+		cprint(f" {i}.{name} |", end="")
+	cprint()
+
 	while not heads:
 		finalheads = []
 		heads = input(colorize(f"#fW#lEnter the indices of the heads you want in the thumbnail#r #d(csv)#r: "))
@@ -400,30 +402,32 @@ def check_thumbnail_heads(possible_heads: List[str]) -> List[str]:
 		for head in heads:
 			try:
 				head = int(head)
-				finalheads.append(possible_heads[head])
+				finalheads.append(indexed_heads[head])
 			except (ValueError, IndexError) as _:
-				cprint(f"#l#fRHead index must be a number between 0 and {len(possible_heads)-1} (inclusive)!#r")
+				cprint(f"#l#fRHead index must be a number between 0 and {len(possible_heads)-1}!#r")
 				heads = ""
 				break
 	
 	return finalheads
 
 
-def check_thumbnail_game(possible_games: List[str]) -> str:
+def check_thumbnail_game(possible_games: Dict[str, _ConfigThumbnailIcon]) -> str:
 	game = ""
+	indexed_games = list(possible_games.keys())
 
 	cprint("GAMES:", end="")
-	for i, name in enumerate(possible_games.keys()):
-		cprint(f" {i}. {name}", end="")
-	
+	for i, name in enumerate(indexed_games):
+		cprint(f" {i}. {name} |", end="")
+	cprint()
+
 	while not game:
 		game = input(colorize(f"#fW#lEnter the index of the game you want in the thumbnail#r: "))
 		
 		try:
 			game = int(game)
-			game = possible_games[game]
+			game = indexed_games[game]
 		except (ValueError, IndexError) as _:
-			cprint(f"#l#fRGame identifier must be a number between 0 and {len(possible_games)-1} (inclusive)!#r")
+			cprint(f"#l#fRGame identifier must be a number between 0 and {len(possible_games)-1}!#r")
 			game = ""
 			continue
 	
@@ -443,10 +447,15 @@ def check_thumbnail_text() -> str:
 def check_thumbnail_vid_id(possible_slices: List[VideoSlice]) -> int:
 	vid = ""
 
+	# shortcut for single slice streams
+	if len(possible_slices) == 1:
+		return 0
+
 	cprint("VIDEOS:", end="")
 	for i, name in enumerate(possible_slices.keys()):
 		cprint(f" {i}. {name.video_id}", end="")
-	
+	cprint()
+
 	while not vid:
 		vid = input(colorize(f"#fW#lEnter the index of the video you want to grab a screenshot from for the thumbnail#r: "))
 		
@@ -529,22 +538,21 @@ def _new(args, conf: Config, cache: Cache):
 
 	# make thumbnail data
 	thumbnail_obj = None
-	if conf.thumbnail.enable and util.has_magick:
-		cprint("Enter in details to generate the thumbnail...")
-		# get heads
-		heads = check_thumbnail_heads(possible_heads=conf.thumbnail.heads)
-		# get game
-		game = check_thumbnail_game(possible_games=conf.thumbnail.games)
-		# get text
-		text = check_thumbnail_text()
-		# get video slice id
-		vid_id = check_thumbnail_vid_id(possible_slices=slices)
-		# get timestamp
-		timestamp = check_thumbnail_timestamp()
-		
-		thumbnail_obj = ThumbnailData(heads=heads, game=game, text=text, video_slice_id=vid_id, timestamp=timestamp)
-	elif conf.thumbnail.enable and not util.has_magick:
-		cprint("#dImageMagick does not appear to be installed despite thumbnails being enabled, skipping thumbnail generation.#r")
+	cprint("#dEnter in details to generate the thumbnail...#r")
+	# get heads
+	heads = check_thumbnail_heads(possible_heads=conf.thumbnail.heads)
+	# get game
+	game = check_thumbnail_game(possible_games=conf.thumbnail.games)
+	# get text
+	text = check_thumbnail_text()
+	# get video slice id
+	vid_id = check_thumbnail_vid_id(possible_slices=slices)
+	# get timestamp
+	timestamp = check_thumbnail_timestamp()
+	thumbnail_obj = ThumbnailData(heads=heads, game=game, text=text, video_slice_id=vid_id, timestamp=timestamp)
+	# if conf.thumbnail.enable and util.has_magick:
+	# elif conf.thumbnail.enable and not util.has_magick:
+		# cprint("#dImageMagick does not appear to be installed despite thumbnails being enabled, skipping thumbnail generation.#r")
 
 	# make stage object
 	stage = StageData(streamers=args.streamers, title=args.title, desc=args.desc, datestring=datestring, slices=slices, thumbnail=thumbnail_obj)

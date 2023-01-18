@@ -1,4 +1,4 @@
-from sys import argv as sys_argv
+from sys import argv as sys_argv, stdout
 
 # Taken from https://github.com/tartley/colorama#recognised-ansi-sequences
 COLOR_CODES = {
@@ -28,7 +28,7 @@ COLOR_CODES = {
 	"bW": "\033[47m"
 }
 
-USE_COLOR = ("--no-color" not in sys_argv) and ("-n" not in sys_argv)
+USE_COLOR = ("--no-color" not in sys_argv) and ("-n" not in sys_argv) and (stdout.isatty())
 
 def colorize(text: str):
 	if not USE_COLOR:
