@@ -15,13 +15,12 @@ from vodbot.printer import cprint
 from vodbot.config import Config
 from vodbot.webhook import init_webhooks, send_upload_error, send_upload_video, send_upload_job_done
 
-
 import json
 from datetime import datetime
-from pathlib import Path
 from os import remove as os_remove
 from os.path import exists as os_exists
 from time import sleep
+from typing import List
 
 from httplib2.error import HttpLib2Error, HttpLib2ErrorWithResponse
 
@@ -43,24 +42,36 @@ def sort_stagedata(stagedata):
 	return (date - EPOCH).total_seconds()
 
 
-def _upload_artifact(media_file, upload_string, response_upload, tmpfile, stagedata, getting_video=False):
+def _upload_artifact(upload_string, response_upload, getting_video=False):
 	video_id = "" # youtube video id
 	resp = None
 	errn = 0
+	errn_max = 10
+
+	uploaded = 0
+	totalbit = 0
+
+	def print_error(f:List, secs:int = 5):
+		nonlocal errn, errn_max
+		cprint(f"#fY#dWARN: An HTTP error has occurred ({errn}/{errn_max}), retyring in {secs} seconds... ({', '.join(f)})#r", end='\r')
+		errn += 1
+		sleep(secs)
 
 	while resp is None:
 		try:
 			status, resp = response_upload.next_chunk()
-			if status:
-				# status.resumable_progress == number of bytes uploaded so far (including what was just uploaded)
-				# status.total_size == number of total bytes to upload
-				# TODO: print a nice message about progress
-				cprint(f"#fCUploading {upload_string}, progress: #fC{int(status.progress()*100)}#fY%#r #d...#r", end="\r")
-			if resp is not None:
-				cprint(f"#fCUploading {upload_string}, progress: #fC100#fY%#r!")
-				if getting_video:
-					cprint(f"#l#fGVideo was successfully uploaded!#r #dhttps://youtu.be/{resp['id']}#r")
-					video_id = resp["id"]
+
+			progress = status.progress() if status else 100
+			uploaded = status.resumeable_progress if status else uploaded
+			totalbit = status.total_size if status else totalbit
+			if not status:
+				uploaded = totalbit
+			
+			cprint("\033[K")
+			cprint(f"#fCUploading {upload_string}, progress: #fC{progress:.1f}#fY%#r #d({uploaded}/{totalbit})...#r", end='\r')
+
+			if resp is not None and getting_video:
+				video_id = resp["id"]
 		except ResumableUploadError as err:
 			if err.resp.status in [400, 401, 402, 403]:
 				try:
@@ -68,28 +79,21 @@ def _upload_artifact(media_file, upload_string, response_upload, tmpfile, staged
 					util.exit_prog(40, f"API Error: `{jsondata['reason']}`. Message: `{jsondata['message']}`")
 				except (json.JSONDecodeError, KeyError):
 					util.exit_prog(40, f"Unknown API Error has occured, ({err.resp.status}, {err.content})")
-			print(f"A Resumeable error has occured, retrying in 5 sec... ({err.resp.status}, {err.content})")
-			errn += 1
-			sleep(5)
+			print_error([err.resp.status, err.content])
 		except HttpError as err:
 			if err.resp.status in [500, 502, 503, 504]:
-				print(f"An HTTP error has occured, retrying in 5 sec... ({err.resp.status}, {err.content})")
-				errn += 1
-				sleep(5)
+				print_error([err.resp.status, err.content])
 			else:
-				raise
+				util.exit_prog(40, f"Unknown API Error has occured, ({err.resp.status}, {err.content})")
 		except RETRIABLE_EXCEPTS as err:
-			print(f"An HTTP error has occured, retrying in 5 sec... ({err})")
-			errn += 1
-			sleep(5)
-		
-		if errn >= 10:
-			if getting_video:
-				print("Skipping video upload, errored too many times.")
-				return None
-			else:
-				print("Skipping chatlog upload, errored too many times.")
-				return None
+			print_error([err])
+
+		if errn >= errn_max:
+			cprint("#fY#dWARN: Skipping upload, errored too many times.#r")
+			return None
+	
+	# extra newline when done
+	cprint()
 	
 	if getting_video:
 		return video_id
@@ -133,7 +137,7 @@ def upload_video(conf: Config, service, stagedata: StageData) -> str:
 	)
 
 	cprint(f"#fCUploading stage #r`#fM{stagedata.id}#r`, progress: #fC0#fY%#r #d...#r", end="\r")
-	uploaded = _upload_artifact(media_file, f"stage #r`#fM{stagedata.id}#r`", response_upload, str(tmpfile), stagedata, getting_video=True)
+	uploaded = _upload_artifact(f"stage #r`#fM{stagedata.id}#r`", response_upload, getting_video=True)
 
 	try:
 		# delete vars to release the files
@@ -171,7 +175,7 @@ def upload_captions(conf: Config, service, stagedata: StageData, vid_id: str) ->
 	)
 
 	cprint(f"#fCUploading stage chatlog #r`#fM{stagedata.id}#r`, progress: #fC0#fY%#r #d...#r", end="\r")
-	uploaded = _upload_artifact(media_file, f"stage chatlog #r`#fM{stagedata.id}#r`", response_upload, str(tmpfile), stagedata, getting_video=False)
+	uploaded = _upload_artifact(f"stage chatlog #r`#fM{stagedata.id}#r`", response_upload)
 	
 	try:
 		# delete vars to release the files
@@ -201,7 +205,7 @@ def upload_thumbnail(conf: Config, service, stagedata: StageData, vid_id: str) -
 	)
 
 	cprint(f"#fCUploading stage thumbnail #r`#fM{stagedata.id}#r`, progress: #fC0#fY%#r #d...#r", end="\r")
-	uploaded = _upload_artifact(media_file, f"stage thumbnail #r`#fM{stagedata.id}#r`", response_upload, str(tmpfile), stagedata, getting_video=False)
+	uploaded = _upload_artifact(f"stage thumbnail #r`#fM{stagedata.id}#r`", response_upload)
 
 	try:
 		# delete vars to release the files
@@ -296,6 +300,8 @@ def run(args):
 	for stage in stagedatas:
 		video_id = upload_video(conf, service, stage)
 		if video_id is not None:
+			cprint(f"#l#fGVideo was successfully uploaded!#r #dhttps://youtu.be/{video_id}#r")
+
 			if conf.upload.thumbnail_enable:
 				if not upload_thumbnail(conf, service, stage, video_id):
 					t = f"Failed to upload video thumbnail for stage `{stage.id}`, video ID `{video_id}`."
