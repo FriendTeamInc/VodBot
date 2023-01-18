@@ -61,11 +61,6 @@ def has_ffmpeg() -> bool:
 	return _has_ffmpeg
 
 
-_has_magick = which("magick") is not None
-def has_magick() -> bool:
-	return _has_magick
-
-
 def make_dir(directory):
 	"""
 	Creates the directory structure to house the configuration data and VODs.

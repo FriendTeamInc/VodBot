@@ -129,16 +129,16 @@ def main():
 	# `[--thumbnail-video-id 1] [--thumbnail-timestamp "3:50:05"]`
 	stager_add = stager_subparser.add_parser("new", description="creates a new stage for videos and clips to be mixed")
 	stager_add.add_argument("id", help="id of the VOD or Clip to stage", type=str, nargs="+").completer = video_completer
-	#stager_add.add_argument("--streamer", help="streamers of the video", type=str, default=[], nargs="?", action="append")
+	stager_add.add_argument("--streamer", help="a streamer of the video (listable)", type=str, default=[], nargs="?", action="append")
 	stager_add.add_argument("--title", help="title of finished video", type=str, default="")
 	stager_add.add_argument("--desc", help="description of finished video", type=str, default="")
 	stager_add.add_argument("--ss", help="start time of video", type=str, default=[], nargs="?", action="append")
 	stager_add.add_argument("--to", help="end time of video", type=str, default=[], nargs="?", action="append")
-	#stager_add.add_argument("--thumbnail-head", help="", type=str, default=[], nargs="?", action="append")
-	#stager_add.add_argument("--thumbnail-game", help="", type=str, default="")
-	#stager_add.add_argument("--thumbnail-text", help="", type=str, default="")
-	#stager_add.add_argument("--thumbnail-video-id", help="", type=str, default="")
-	#stager_add.add_argument("--thumbnail-timestamp", help="", type=str, default="")
+	stager_add.add_argument("--tn-head", help="head for the thumbnail (listable)", type=str, default=[], nargs="?", action="append")
+	stager_add.add_argument("--tn-game", help="game for the thumbnail", type=str, default="")
+	stager_add.add_argument("--tn-text", help="text for the thumbnail", type=str, default="")
+	stager_add.add_argument("--tn-video-id", help="video id (index) for the thumbnail screenshot", type=str, default="")
+	stager_add.add_argument("--tn-timestamp", help="timestamp for the thumbnail screenshot", type=str, default="")
 
 	# `vodbot stage rm <id>`
 	stager_rm = stager_subparser.add_parser("rm", description="removes a VOD or Clip from the staging area")

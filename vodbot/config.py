@@ -29,7 +29,8 @@ _path_field_config = config(encoder=lambda x: str(x), decoder=lambda x: Path(x),
 @dataclass
 class _ConfigChannel:
 	# Twitch username of the channel to pull (publicly available) data from.
-	username: str
+	username: str = field(metadata=config(mm_field=fields.Str(
+		validate=validate.Length(4, 25))))
 	# Toggle for saving VOD videos.
 	save_vods: bool = True
 	# Toggle for saving Clip videos.
@@ -171,8 +172,8 @@ class _ConfigThumbnail:
 
 	# Position settings of the text.
 	text_position: _ConfigThumbnailPosition
-	# The specific font to use when printing text on the thumbnail. You can see what fonts are
-	# available with the command `magick -list font`, optionally grep'ing the result with "Font: ".
+	# The specific font to use when printing text on the thumbnail.
+	# TODO: Document how to find and set fonts? (ie, how to list and what string to use)
 	text_font: str
 	# The font pointsize to use when printing text on the thumbnail.
 	text_size: int

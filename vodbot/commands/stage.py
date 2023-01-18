@@ -538,21 +538,25 @@ def _new(args, conf: Config, cache: Cache):
 
 	# make thumbnail data
 	thumbnail_obj = None
-	cprint("#dEnter in details to generate the thumbnail...#r")
-	# get heads
-	heads = check_thumbnail_heads(possible_heads=conf.thumbnail.heads)
-	# get game
-	game = check_thumbnail_game(possible_games=conf.thumbnail.games)
-	# get text
-	text = check_thumbnail_text()
-	# get video slice id
-	vid_id = check_thumbnail_vid_id(possible_slices=slices)
-	# get timestamp
-	timestamp = check_thumbnail_timestamp()
-	thumbnail_obj = ThumbnailData(heads=heads, game=game, text=text, video_slice_id=vid_id, timestamp=timestamp)
-	# if conf.thumbnail.enable and util.has_magick:
-	# elif conf.thumbnail.enable and not util.has_magick:
-		# cprint("#dImageMagick does not appear to be installed despite thumbnails being enabled, skipping thumbnail generation.#r")
+	print(dir(args))
+	if conf.thumbnail.enable:
+		cprint("#dEnter in details to generate the thumbnail...#r")
+		# get heads
+		# TODO: cross check with args.tn_head
+		heads = check_thumbnail_heads(possible_heads=conf.thumbnail.heads)
+		# get game
+		# TODO: cross check with args.tn_game
+		game = check_thumbnail_game(possible_games=conf.thumbnail.games)
+		# get text
+		# TODO: cross check with args.tn_text
+		text = check_thumbnail_text()
+		# get video slice id
+		# TODO: cross check with args.tn_video_id
+		vid_id = check_thumbnail_vid_id(possible_slices=slices)
+		# get timestamp
+		# TODO: cross check with args.tn_timestamp
+		timestamp = check_thumbnail_timestamp()
+		thumbnail_obj = ThumbnailData(heads=heads, game=game, text=text, video_slice_id=vid_id, timestamp=timestamp)
 
 	# make stage object
 	stage = StageData(streamers=args.streamers, title=args.title, desc=args.desc, datestring=datestring, slices=slices, thumbnail=thumbnail_obj)
