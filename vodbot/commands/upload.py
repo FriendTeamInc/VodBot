@@ -282,10 +282,9 @@ def run(args):
 			else:
 				flow = InstalledAppFlow.from_client_secrets_file(CLIENT_FILE, SCOPES)
 				creds = flow.run_local_server()
-				# creds = flow.run_console()
 		except RefreshError:
 			flow = InstalledAppFlow.from_client_secrets_file(CLIENT_FILE, SCOPES)
-			creds = flow.run_console()
+			creds = flow.run_local_server()
 		
 		with open(SESSION_FILE, "w") as f:
 			f.write(creds.to_json())

@@ -56,13 +56,19 @@ def run(args):
 	atclips = args.type == "clips"
 
 	for channel in channels:
-		if not channel.save_vods and not channel.save_chat and not channel.save_clips:
+		getvods = conf.pull.save_vods and channel.save_vods
+		getchat = conf.pull.save_chat and channel.save_chat
+		getclips = conf.pull.save_clips and channel.save_clips
+		# getany = getvods or getchat or getclips
+		# getall = getvods and getchat and getclips
+
+		if not (getvods or getchat or getclips):
 			continue
 
 		cprint(f"#fY#l{channel.display_name}#r:", end=" ", flush=True)
 
 		newvods = []
-		if (atboth or atvods) and (channel.save_vods or channel.save_chat):
+		if (atboth or atvods) and (getvods or getchat):
 			voddir = VODS_DIR / channel.login
 			util.make_dir(voddir)
 
@@ -72,11 +78,11 @@ def run(args):
 			totalvods += len(newvods)
 			cprint(f"#fC#l{len(newvods)} #fM#lVODs#r", end="", flush=True)
 		
-		if atboth and (channel.save_vods and channel.save_clips):
+		if atboth and ((getvods or getchat) and getclips):
 			cprint(" & ", end="", flush=True)
 		
 		newclips = []
-		if (atboth or atclips) and channel.save_clips:
+		if (atboth or atclips) and getclips:
 			clipdir = CLIPS_DIR / channel.login
 			util.make_dir(clipdir)
 
@@ -118,11 +124,11 @@ def run(args):
 			chatname = str(filepath) + ".chat"
 
 			# download chat
-			if channel.save_chat:
+			if conf.pull.save_chat and channel.save_chat:
 				itd_dl.dl_video_chat(vod, chatname)
 				vod.has_chat = True
 			# download video
-			if channel.save_vods:
+			if conf.pull.save_vods and channel.save_vods:
 				try:
 					itd_dl.dl_video(vod, Path(TEMP_DIR), filename, 20, LOG_LEVEL)
 				except itd_dl.JoiningFailed:
@@ -154,7 +160,7 @@ def run(args):
 			metaname = str(filepath) + ".meta"
 
 			# download clip
-			if channel.save_clips:
+			if conf.pull.save_clips and channel.save_clips:
 				try:
 					itd_dl.dl_clip(clip, filename)
 				except itd_work.DownloadFailed:

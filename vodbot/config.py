@@ -41,6 +41,12 @@ class _ConfigChannel:
 @dataclass_json
 @dataclass
 class _ConfigPull:
+	# Determines if VODs get pulled. Metadata will be saved if chatlogs are saved. This is a master
+	# switch for every channel, if false then no VODs get saved.
+	save_vods: bool = True
+	# Determines if Clips get pulled. This is a master switch for every channel, if false then no
+	# Clips get saved.
+	save_clips: bool = True
 	# Determines if chat logs get pulled with VODs and saved alongside metadata. This is a master
 	# switch for every channel, if false then no chat gets saved.
 	save_chat: bool = True
