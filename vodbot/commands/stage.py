@@ -299,10 +299,8 @@ def check_time(prefix, resp, default=None):
 	return output
 
 
-def check_streamers(default=None, check:bool=True) -> List[str]:
+def check_streamers(default=None) -> List[str]:
 	streamers = ""
-	if not check:
-		return default
 
 	while not streamers:
 		streamers = input(colorize(f"#fW#lWho was in the VOD#r #d(default `{', '.join(default)}`, csv)#r: "))
@@ -507,12 +505,13 @@ def _new(args, conf: Config, cache: Cache):
 		except CouldntFindVideo:
 			util.exit_prog(13, f'Could not find video with ID "{args.id}"')
 	
-	# Get what streamers were involved (usernames), always asked
-	default_streamers = args.streamer
-	for f in videos:
-		if f["meta"]["user_login"] not in default_streamers:
-			default_streamers.append(f["meta"]["user_login"])
-	args.streamers = check_streamers(default=default_streamers, check=bool(not args.streamer))
+	# Get what streamers were involved (usernames), only asked if args is not full
+	if not args.streamer:
+		default_streamers = args.streamer
+		for f in videos:
+			if f["meta"]["user_login"] not in default_streamers:
+				default_streamers.append(f["meta"]["user_login"])
+		args.streamers = check_streamers(default=default_streamers)
 
 	# get title
 	if not args.title:
