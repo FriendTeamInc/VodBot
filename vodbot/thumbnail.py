@@ -107,8 +107,8 @@ def generate_thumbnail(conf: Config, stage: StageData) -> Path:
 			ts = tp.s
 			tx, ty = int(tp.x - (tp.ox * ts)), int(tp.y - (tp.oy * ts))
 			d = ImageDraw.Draw(tn)
-			d.text((tx,ty), text, font=fnt, fill=(255,255,255,255), stroke_width=32, stroke_fill=(0,0,0,255))
-			d.text((tx,ty), text, font=fnt, fill=(255,255,255,255), stroke_width=8, stroke_fill=(255,255,255,255))
+			d.text((tx,ty), text, font=fnt, fill=(255,255,255,255), stroke_width=16, stroke_fill=(0,0,0,255))
+			d.text((tx,ty), text, font=fnt, fill=(255,255,255,255), stroke_width=4, stroke_fill=(255,255,255,255))
 			del fnt # close font
 		except OSError:
 			cprint(f"#fY#dWARN: Cannot find font `{conf.thumbnail.text_font}`, skipping text.#r")

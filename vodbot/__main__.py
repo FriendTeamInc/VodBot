@@ -129,16 +129,16 @@ def main():
 	# `[--thumbnail-video-id 1] [--thumbnail-timestamp "3:50:05"]`
 	stager_add = stager_subparser.add_parser("new", description="creates a new stage for videos and clips to be mixed")
 	stager_add.add_argument("id", help="id of the VOD or Clip to stage", type=str, nargs="+").completer = video_completer
-	stager_add.add_argument("--streamer", help="a streamer of the video (listable)", type=str, default=[], nargs="?", action="append")
+	stager_add.add_argument("--streamer", help="a streamer of the video (listable)", type=str, default=[], nargs="?", action="append", metavar="USER")
 	stager_add.add_argument("--title", help="title of finished video", type=str, default="")
 	stager_add.add_argument("--desc", help="description of finished video", type=str, default="")
-	stager_add.add_argument("--ss", help="start time of video", type=str, default=[], nargs="?", action="append")
-	stager_add.add_argument("--to", help="end time of video", type=str, default=[], nargs="?", action="append")
-	stager_add.add_argument("--tn-head", help="head for the thumbnail (listable)", type=str, default=[], nargs="?", action="append")
-	stager_add.add_argument("--tn-game", help="game for the thumbnail", type=str, default="")
-	stager_add.add_argument("--tn-text", help="text for the thumbnail", type=str, default="")
-	stager_add.add_argument("--tn-video-id", help="video id (index) for the thumbnail screenshot", type=str, default="")
-	stager_add.add_argument("--tn-timestamp", help="timestamp for the thumbnail screenshot", type=str, default="")
+	stager_add.add_argument("--ss", help="start time of video (listable)", type=str, default=[], nargs="?", action="append")
+	stager_add.add_argument("--to", help="end time of video (listable)", type=str, default=[], nargs="?", action="append")
+	stager_add.add_argument("--tn-head", help="head for the thumbnail (listable)", type=str, default=[], nargs="?", action="append", metavar="HEAD")
+	stager_add.add_argument("--tn-game", help="game for the thumbnail", type=str, default="", metavar="GAME")
+	stager_add.add_argument("--tn-text", help="text for the thumbnail", type=str, default="", metavar="TEXT")
+	stager_add.add_argument("--tn-video-id", help="video id (index) for the thumbnail screenshot", type=str, default="", metavar="IDX")
+	stager_add.add_argument("--tn-timestamp", help="timestamp for the thumbnail screenshot", type=str, default="", metavar="TIMESTAMP")
 
 	# `vodbot stage rm <id>`
 	stager_rm = stager_subparser.add_parser("rm", description="removes a VOD or Clip from the staging area")

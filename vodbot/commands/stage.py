@@ -213,7 +213,7 @@ def check_stage_id(stage_id, STAGE_DIR):
 	return stage_id in stages
 
 
-def _check_time_str(prefix: str, timestamp: str) -> str:
+def _check_time_str(prefix:str, timestamp:str, print_:bool=True) -> str:
 	intime = timestamp.split(":")
 	timelist = []
 	seconds = None
@@ -221,7 +221,8 @@ def _check_time_str(prefix: str, timestamp: str) -> str:
 	hours = None
 
 	if len(intime) > 3:
-		cprint(f"#fR{prefix} time: Time cannot have more than 3 units.#r")
+		if print_:
+			cprint(f"#fR{prefix} time: Time cannot have more than 3 units.#r")
 		return None
 	
 	if len(intime) >= 1:
@@ -229,10 +230,12 @@ def _check_time_str(prefix: str, timestamp: str) -> str:
 		try:
 			seconds = int(seconds)
 		except ValueError:
-			cprint(f"#fR{prefix} time: Seconds does not appear to be a number.#r")
+			if print_:
+				cprint(f"#fR{prefix} time: Seconds does not appear to be a number.#r")
 			return None
 		if seconds > 59 or seconds < 0:
-			cprint(f"#fR{prefix} time: Seconds must be in the range of 0 to 59.#r")
+			if print_:
+				cprint(f"#fR{prefix} time: Seconds must be in the range of 0 to 59.#r")
 			return None
 		timelist.insert(0, str(seconds))
 	
@@ -241,10 +244,12 @@ def _check_time_str(prefix: str, timestamp: str) -> str:
 		try:
 			minutes = int(minutes)
 		except ValueError:
-			cprint(f"#fR{prefix} time: Minutes does not appear to be a number.#r")
+			if print_:
+				cprint(f"#fR{prefix} time: Minutes does not appear to be a number.#r")
 			return None
 		if minutes > 59 or minutes < 0:
-			cprint(f"#fR{prefix} time: Minutes must be in the range of 0 to 59.#r")
+			if print_:
+				cprint(f"#fR{prefix} time: Minutes must be in the range of 0 to 59.#r")
 			return None
 		timelist.insert(0, str(minutes))
 	else:
@@ -255,7 +260,8 @@ def _check_time_str(prefix: str, timestamp: str) -> str:
 		try:
 			hours = int(hours)
 		except ValueError:
-			cprint(f"#fR{prefix} time: Hours does not appear to be a number.#r")
+			if print_:
+				cprint(f"#fR{prefix} time: Hours does not appear to be a number.#r")
 			return None
 		timelist.insert(0, str(hours))
 	else:
@@ -293,8 +299,11 @@ def check_time(prefix, resp, default=None):
 	return output
 
 
-def check_streamers(default=None) -> List[str]:
+def check_streamers(default=None, check:bool=True) -> List[str]:
 	streamers = ""
+	if not check:
+		return default
+
 	while not streamers:
 		streamers = input(colorize(f"#fW#lWho was in the VOD#r #d(default `{', '.join(default)}`, csv)#r: "))
 
@@ -499,11 +508,11 @@ def _new(args, conf: Config, cache: Cache):
 			util.exit_prog(13, f'Could not find video with ID "{args.id}"')
 	
 	# Get what streamers were involved (usernames), always asked
-	default_streamers = []
+	default_streamers = args.streamer
 	for f in videos:
 		if f["meta"]["user_login"] not in default_streamers:
 			default_streamers.append(f["meta"]["user_login"])
-	args.streamers = check_streamers(default=default_streamers)
+	args.streamers = check_streamers(default=default_streamers, check=bool(not args.streamer))
 
 	# get title
 	if not args.title:
@@ -517,6 +526,16 @@ def _new(args, conf: Config, cache: Cache):
 	for x in range(len(videos)):
 		# skip times we dont need because we already have them
 		if x < len(args.ss):
+			# lied we need to check and convert the times
+			test_ss = _check_time_str("Start", args.ss[x])
+			if not test_ss:
+				util.exit_prog(30, f"`{test_ss}` is not a valid timestamp!")
+			args.ss[x] = test_ss
+			if args.to[x] != "EOF":
+				test_to = _check_time_str("End", args.to[x])
+				if not test_to:
+					util.exit_prog(30, f"`{test_to}` is not a valid timestamp!")
+				args.to[x] = test_to if test_to else args.to[x]
 			continue
 		
 		vid = videos[x]["meta"]
@@ -543,40 +562,84 @@ def _new(args, conf: Config, cache: Cache):
 		slices += [vidslice]
 
 	# make thumbnail data
-	thumbnail_obj = None
+	tn = None
 	if conf.thumbnail.enable:
-		cprint("#dEnter in details to generate the thumbnail...#r")
+		if not (args.tn_head and args.tn_game and args.tn_text and args.tn_video_id and args.tn_timestamp): 
+			cprint("#dEnter in details to generate the thumbnail...#r")
+		# print(args.tn_head)
+		# print(args.tn_game)
+		# print(args.tn_text)
+		# print(args.tn_video_id)
+		# print(args.tn_timestamp)
 		# get heads
-		# TODO: cross check with args.tn_head
-		heads = check_thumbnail_heads(possible_heads=conf.thumbnail.heads)
+		heads = None
+		if args.tn_head:
+			heads = args.tn_head
+			# allow blanks and check heads
+			for head in heads:
+				if head != "" and head not in conf.thumbnail.heads:
+					util.exit_prog(31, f"Head `{head}` is not recognized, check your thumbnail config.")
+		else:
+			heads = check_thumbnail_heads(possible_heads=conf.thumbnail.heads)
+		
 		# get game
-		# TODO: cross check with args.tn_game
-		game = check_thumbnail_game(possible_games=conf.thumbnail.games)
+		game = None
+		if args.tn_game:
+			game = args.tn_game
+			# we allow blanks here
+			if game != "" and game not in conf.thumbnail.games:
+				util.exit_prog(32, f"Game `{game}` is not recognized, check your thumbnail config.")
+		else:
+			game = check_thumbnail_game(possible_games=conf.thumbnail.games)
+		
 		# get text
-		# TODO: cross check with args.tn_text
-		text = check_thumbnail_text()
+		text = None
+		if args.tn_text:
+			# we do not check raw text input
+			text = args.tn_text
+		else:
+			text = check_thumbnail_text()
+		
 		# get video slice id
-		# TODO: cross check with args.tn_video_id
-		vid_id = check_thumbnail_vid_id(possible_slices=slices)
+		vid_id = None
+		if args.tn_video_id:
+			vid_id = args.tn_video_id
+			if not vid_id.isnumeric():
+				util.exit_prog(33, f"`{vid_id}` is not a number.")
+			vid_id = int(vid_id)
+			if vid_id < 0 or vid_id >= len(slices):
+				util.exit_prog(34, f"`{vid_id}` must be between 0 and {len(slices)-1}")
+		else:
+			vid_id = check_thumbnail_vid_id(possible_slices=slices)
+		
 		# get timestamp
-		# TODO: cross check with args.tn_timestamp
-		timestamp = check_thumbnail_timestamp()
-		thumbnail_obj = ThumbnailData(heads=heads, game=game, text=text, video_slice_id=vid_id, timestamp=timestamp)
+		timestamp = None
+		if args.tn_timestamp:
+			testtimestamp = _check_time_str("Thumbnail", args.tn_timestamp)
+			if not testtimestamp:
+				util.exit_prog(35, f"`{args.tn_timestamp}` is not a valid timestamp!")
+			timestamp = testtimestamp
+		else:
+			timestamp = check_thumbnail_timestamp()
+
+		tn = ThumbnailData(heads=heads, game=game, text=text, video_slice_id=vid_id, timestamp=timestamp)
 
 	# make stage object
-	stage = StageData(streamers=args.streamers, title=args.title, desc=args.desc, datestring=datestring, slices=slices, thumbnail=thumbnail_obj)
+	stage = StageData(streamers=args.streamers, title=args.title, desc=args.desc, datestring=datestring, slices=slices, thumbnail=tn)
 	# Check that new "id" does not collide
 	while check_stage_id(stage.id, STAGE_DIR):
-		stage = StageData(streamers=args.streamers, title=args.title, desc=args.desc, datestring=datestring, slices=slices, thumbnail=thumbnail_obj)
+		stage = StageData(streamers=args.streamers, title=args.title, desc=args.desc, datestring=datestring, slices=slices, thumbnail=tn)
 
 	# shorter file name
 	#shortfile = stage.filename.replace(VODS_DIR, "$vods").replace(CLIPS_DIR, "$clips")
 
-	print()
 	cprint(f"#r`#fC{stage.title}#r` #fM{' '.join(stage.streamers)}#r #d({stage.id})#r")
-	cprint(f"#d'''\n#fG{stage.desc}#r\n#d'''#r")
+	cprint(f"#d#fG{stage.desc}#r")
 	for vid in stage.slices:
 		cprint(f"#fM{vid.video_id}#r > #fY{vid.ss}#r - #fY{vid.to}#r")
+	if conf.thumbnail.enable:
+		cprint(f"#fBThumbnail: #fG{tn.game} #r`#fC{tn.text}#r` #d(vid{tn.video_slice_id} @ {tn.timestamp})#r")
+		cprint(f"#dwith...#r {', '.join([f'#fM{head}#r' for head in tn.heads])}")
 	
 	# write stage
 	stagename = str(STAGE_DIR / f"{stage.id}.stage")
