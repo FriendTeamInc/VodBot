@@ -1,7 +1,7 @@
 # Module for the cache dataclass
 # dedicated type for easier processing of info
 
-from .util import exit_prog
+from .util import exit_prog, make_dir
 from .config import Config
 
 import json
@@ -123,9 +123,10 @@ def save_cache(conf: Config, cache: Cache) -> None:
 	_cached_cache = cache
 
 	try:
+    make_dir(conf.directories.temp)
 		with open(conf.directories.temp / "cache.json", "w") as f:
 			f.write(cache.to_json())
 	except FileNotFoundError as e:
-		# Failed to write the cache, parent directory structure does not exist.
+		# Failed to write the cache, parent directory structure cannot exist.
 		pass
 		#cprint(f"#fY#dWARN: Failed to write cache.")

@@ -19,7 +19,7 @@ _config_attributes = {
 	"upload_video": "Uploaded Video",
 	"upload_error": "Upload Error",
 	"upload_job_done": "Upload Job Done",
-	"error": "VodBot Error",
+	"vodbot_error": "VodBot Error",
 }
 _webhooks = {atrb: None for atrb in _config_attributes}
 
@@ -189,7 +189,7 @@ def send_upload_job_done(fin_vids: int, all_vids: int):
 	
 
 def send_error(description: str):
-	_send_webhook("error",
+	_send_webhook("vodbot_error",
 		title="Error with VodBot!", description=description,
 		color="bf4d30"
 	)
