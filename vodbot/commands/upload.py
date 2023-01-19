@@ -6,21 +6,21 @@
 
 from .stage import StageData
 
-import vodbot.util as util
 import vodbot.video as vbvid
 import vodbot.chatlog as vbchat
+import vodbot.thumbnail as vbthumbnail
+from vodbot.util import exit_prog, load_conf, format_size
 from vodbot.cache import load_cache, save_cache
 from vodbot.printer import cprint
 from vodbot.config import Config
 from vodbot.webhook import init_webhooks, send_upload_error, send_upload_video, send_upload_job_done
 
-
 import json
 from datetime import datetime
-from pathlib import Path
 from os import remove as os_remove
 from os.path import exists as os_exists
 from time import sleep
+from typing import List
 
 from httplib2.error import HttpLib2Error, HttpLib2ErrorWithResponse
 
@@ -42,50 +42,60 @@ def sort_stagedata(stagedata):
 	return (date - EPOCH).total_seconds()
 
 
-def _upload_artifact(media_file, upload_string, response_upload, tmpfile, stagedata, getting_video=False):
+def _upload_artifact(upload_string, response_upload, getting_video=False):
 	video_id = "" # youtube video id
 	resp = None
 	errn = 0
+	errn_max = 10
+
+	uploaded = 0
+	totalbit = 0
+
+	def print_error(f:List, secs:int = 5):
+		nonlocal errn, errn_max
+		cprint(f"#fY#dWARN: An HTTP error has occurred ({errn}/{errn_max}), retyring in {secs} seconds... ({', '.join(f)})#r")
+		errn += 1
+		sleep(secs)
 
 	while resp is None:
 		try:
 			status, resp = response_upload.next_chunk()
-			if status:
-				cprint(f"#fCUploading {upload_string}, progress: #fC{int(status.progress()*100)}#fY%#r #d...#r", end="\r")
-			if resp is not None:
-				cprint(f"#fCUploading {upload_string}, progress: #fC100#fY%#r!")
-				if getting_video:
-					cprint(f"#l#fGVideo was successfully uploaded!#r #dhttps://youtu.be/{resp['id']}#r")
-					video_id = resp["id"]
+
+			progress = status.progress()*100 if status else 100
+			uploaded = status.resumable_progress if status else uploaded
+			totalbit = status.total_size if status else totalbit
+			if not status:
+				uploaded = totalbit
+			
+			su = format_size(uploaded, include_units=False)
+			st = format_size(totalbit)
+			sp = f"#d({su}/{st})...#r"
+			cprint(f"#c#fCUploading {upload_string}: #fC{progress:.1f}#fY%#r {sp}", end='\r')
+
+			if resp is not None and getting_video:
+				video_id = resp["id"]
 		except ResumableUploadError as err:
 			if err.resp.status in [400, 401, 402, 403]:
 				try:
 					jsondata = json.loads(err.content)['error']['errors'][0]
-					util.exit_prog(40, f"API Error: `{jsondata['reason']}`. Message: `{jsondata['message']}`")
+					exit_prog(40, f"API Error: `{jsondata['reason']}`. Message: `{jsondata['message']}`")
 				except (json.JSONDecodeError, KeyError):
-					util.exit_prog(40, f"Unknown API Error has occured, ({err.resp.status}, {err.content})")
-			print(f"A Resumeable error has occured, retrying in 5 sec... ({err.resp.status}, {err.content})")
-			errn += 1
-			sleep(5)
+					exit_prog(40, f"Unknown API Error has occured, ({err.resp.status}, {err.content})")
+			print_error([err.resp.status, err.content])
 		except HttpError as err:
 			if err.resp.status in [500, 502, 503, 504]:
-				print(f"An HTTP error has occured, retrying in 5 sec... ({err.resp.status}, {err.content})")
-				errn += 1
-				sleep(5)
+				print_error([err.resp.status, err.content])
 			else:
-				raise
+				exit_prog(40, f"Unknown API Error has occured, ({err.resp.status}, {err.content})")
 		except RETRIABLE_EXCEPTS as err:
-			print(f"An HTTP error has occured, retrying in 5 sec... ({err})")
-			errn += 1
-			sleep(5)
-		
-		if errn >= 10:
-			if getting_video:
-				print("Skipping video upload, errored too many times.")
-				return None
-			else:
-				print("Skipping chatlog upload, errored too many times.")
-				return None
+			print_error([err])
+
+		if errn >= errn_max:
+			cprint("#fY#dWARN: Skipping upload, errored too many times.#r")
+			return None
+	
+	# extra newline when done
+	cprint()
 	
 	if getting_video:
 		return video_id
@@ -117,8 +127,8 @@ def upload_video(conf: Config, service, stagedata: StageData) -> str:
 		}
 	}
 
-	# create media file, 100 MiB chunks
-	media_file = MediaFileUpload(str(tmpfile), chunksize=1024*1024*100, resumable=True)
+	# create media file, upload in chunks
+	media_file = MediaFileUpload(str(tmpfile), chunksize=conf.upload.chunk_size, resumable=True)
 
 	# create upload request and execute
 	response_upload = service.videos().insert(
@@ -128,17 +138,17 @@ def upload_video(conf: Config, service, stagedata: StageData) -> str:
 		media_body=media_file
 	)
 
-	cprint(f"#fCUploading stage #r`#fM{stagedata.id}#r`, progress: #fC0#fY%#r #d...#r", end="\r")
-	uploaded = _upload_artifact(media_file, f"stage #r`#fM{stagedata.id}#r`", response_upload, str(tmpfile), stagedata, getting_video=True)
+	cprint(f"#c#fCUploading stage video #r`#fM{stagedata.id}#r`: #fC0#fY%#r #d(0/{format_size(media_file.size())})...#r", end="\r")
+	uploaded = _upload_artifact(f"stage video #r`#fM{stagedata.id}#r`", response_upload, getting_video=True)
 
 	try:
 		# delete vars to release the files
 		del media_file
 		del response_upload
-		sleep(1)
+		# sleep(1)
 		os_remove(str(tmpfile))
 	except Exception as e:
-		util.exit_prog(90, f"Failed to remove temp slice file of stage `{stagedata.id}` after upload. {e}")
+		exit_prog(90, f"Failed to remove temp video slice file of stage `{stagedata.id}` after upload. {e}")
 	
 	return uploaded
 
@@ -146,8 +156,8 @@ def upload_video(conf: Config, service, stagedata: StageData) -> str:
 def upload_captions(conf: Config, service, stagedata: StageData, vid_id: str) -> bool:
 	tmpfile = vbchat.process_stage(conf, stagedata, "upload")
 
-	if tmpfile == False:
-		return True
+	if not tmpfile:
+		return False
 
 	request_body = {
 		"snippet": {
@@ -157,7 +167,7 @@ def upload_captions(conf: Config, service, stagedata: StageData, vid_id: str) ->
 		}
 	}
 
-	media_file = MediaFileUpload(str(tmpfile), chunksize=1024*1024*100, resumable=True)
+	media_file = MediaFileUpload(str(tmpfile), chunksize=conf.upload.chunk_size, resumable=True)
 
 	response_upload = service.captions().insert(
 		part="snippet",
@@ -166,24 +176,54 @@ def upload_captions(conf: Config, service, stagedata: StageData, vid_id: str) ->
 		media_body=media_file
 	)
 
-	cprint(f"#fCUploading stage chatlog #r`#fM{stagedata.id}#r`, progress: #fC0#fY%#r #d...#r", end="\r")
-	uploaded = _upload_artifact(media_file, f"stage chatlog #r`#fM{stagedata.id}#r`", response_upload, str(tmpfile), stagedata, getting_video=False)
+	cprint(f"#c#fCUploading stage chatlog #r`#fM{stagedata.id}#r`: #fC0#fY%#r #d(0/{format_size(media_file.size())})...#r", end="\r")
+	uploaded = _upload_artifact(f"stage chatlog #r`#fM{stagedata.id}#r`", response_upload)
 	
 	try:
 		# delete vars to release the files
 		del media_file
 		del response_upload
-		sleep(1)
+		# sleep(1)
 		os_remove(str(tmpfile))
 	except Exception as e:
-		util.exit_prog(90, f"Failed to remove temp slice file of stage `{stagedata.id}` after upload. {e}")
+		exit_prog(90, f"Failed to remove temp chatlog file of stage `{stagedata.id}` after upload. {e}")
+
+	return uploaded
+
+
+def upload_thumbnail(conf: Config, service, stagedata: StageData, vid_id: str) -> bool:
+	tmpfile = vbthumbnail.generate_thumbnail(conf, stagedata)
+
+	if not tmpfile:
+		return False
+
+	media_file = MediaFileUpload(str(tmpfile), chunksize=conf.upload.chunk_size, resumable=True)
+
+	# this may need to be a straight upload, not resumable
+	# see: https://developers.google.com/youtube/v3/docs/thumbnails/set
+	response_upload = service.thumbnails().set(
+		videoId=vid_id,
+		media_body=media_file
+	)
+
+	cprint(f"#c#fCUploading stage thumbnail #r`#fM{stagedata.id}#r`: #fC0#fY%#r #d(0/{format_size(media_file.size())})...#r", end="\r")
+	uploaded = _upload_artifact(f"stage thumbnail #r`#fM{stagedata.id}#r`", response_upload)
+
+	try:
+		# delete vars to release the files
+		del media_file
+		del response_upload
+		# sleep(1)
+		os_remove(str(tmpfile))
+	except Exception as e:
+		exit_prog(90, f"Failed to remove temp thumbnail file of stage `{stagedata.id}` after upload. {e}")
 
 	return uploaded
 
 
 def run(args):
 	# load config
-	conf = util.load_conf(args.config)
+	conf = load_conf(args.config)
 	cache = load_cache(conf, args.cache_toggle)
 	init_webhooks(conf)
 
@@ -196,8 +236,8 @@ def run(args):
 	API_NAME = 'youtube'
 	API_VERSION = 'v3'
 	SCOPES = [ # Only force-ssl is required, but both makes it explicit.
-		"https://www.googleapis.com/auth/youtube.upload",   # Videos.insert
-		"https://www.googleapis.com/auth/youtube.force-ssl" # Captions.insert
+		"https://www.googleapis.com/auth/youtube.upload",
+		"https://www.googleapis.com/auth/youtube.force-ssl"
 	]
 
 	# handle logout
@@ -206,7 +246,7 @@ def run(args):
 			os_remove(SESSION_FILE)
 			cprint("#dLogged out of Google API session#r")
 		except:
-			util.exit_prog(11, "Failed to remove credentials for YouTube account.")
+			exit_prog(11, "Failed to remove credentials for YouTube account.")
 		
 		return
 	
@@ -225,7 +265,7 @@ def run(args):
 
 	# authenticate youtube service
 	if not os_exists(CLIENT_FILE):
-		util.exit_prog(19, "Missing YouTube Client ID/Secret file.")
+		exit_prog(19, "Missing YouTube Client ID/Secret file.")
 
 	cprint("Authenticating with Google...", end=" ")
 
@@ -241,10 +281,10 @@ def run(args):
 				creds.refresh(Request())
 			else:
 				flow = InstalledAppFlow.from_client_secrets_file(CLIENT_FILE, SCOPES)
-				creds = flow.run_console()
+				creds = flow.run_local_server()
 		except RefreshError:
 			flow = InstalledAppFlow.from_client_secrets_file(CLIENT_FILE, SCOPES)
-			creds = flow.run_console()
+			creds = flow.run_local_server()
 		
 		with open(SESSION_FILE, "w") as f:
 			f.write(creds.to_json())
@@ -252,7 +292,7 @@ def run(args):
 	try:
 		service = build(API_NAME, API_VERSION, credentials=creds)
 	except Exception as err:
-		util.exit_prog(50, f"Failed to connect to YouTube API, \"{err}\".")
+		exit_prog(50, f"Failed to connect to YouTube API, \"{err}\".")
 	
 	cprint("Authenticated.", end=" ")
 	
@@ -262,9 +302,19 @@ def run(args):
 	for stage in stagedatas:
 		video_id = upload_video(conf, service, stage)
 		if video_id is not None:
+			if conf.upload.thumbnail_enable:
+				if not upload_thumbnail(conf, service, stage, video_id):
+					t = f"Failed to upload video thumbnail for stage `{stage.id}`, video ID `{video_id}`."
+					cprint(f"#fY#dWARN: {t} Skipping...#r")
+					send_upload_error(t)
+
 			if conf.upload.chat_enable:
 				if not upload_captions(conf, service, stage, video_id):
-					send_upload_error(f"Failed to upload chat captions for stage `{stage.id}`, video ID `{video_id}`.")
+					t = f"Failed to upload chat captions for stage `{stage.id}`, video ID `{video_id}`."
+					cprint(f"#fY#dWARN: {t} Skipping...#r")
+					send_upload_error(t)
+			
+			cprint(f"#l#fGVideo was successfully uploaded!#r #dhttps://youtu.be/{video_id}#r")
 			
 			if conf.stage.delete_on_upload:
 				try:
@@ -274,14 +324,13 @@ def run(args):
 				except:
 					send_upload_error(f"Failed to remove stage `{stage.id}` after upload.")
 					if len(stagedatas) < 1:
-						util.exit_prog(90, f"Failed to remove stage `{stage.id}` after upload.")
+						exit_prog(90, f"Failed to remove stage `{stage.id}` after upload.")
 					else:
 						cprint(f"#fR#lFailed to remove stage `{stage.id}` after upload.#r")
 			finished_jobs += 1
 			send_upload_video(stage, f"https://youtu.be/{video_id}")
 		else:
 			send_upload_error(f"Failed to upload stage `{stage.id}`.")
-		print()
 	
 	if len(stagedatas) > 1:
 		send_upload_job_done(finished_jobs, len(stagedatas))

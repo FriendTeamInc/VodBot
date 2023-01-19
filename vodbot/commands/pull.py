@@ -1,11 +1,11 @@
 # Pull, downloads VODs and Clips from Twitch.tv
 
 from typing import List
-from vodbot import util, twitch, cache
+from vodbot import util, twitch
 from vodbot.itd import download as itd_dl, worker as itd_work
 from vodbot.printer import cprint
 from vodbot.itd.gql import set_client_id
-from vodbot.cache import Cache, load_cache, save_cache
+from vodbot.cache import Cache, load_cache, save_cache, _CacheChannel
 from vodbot.webhook import init_webhooks, send_pull_clip, send_pull_error, send_pull_job_done, send_pull_vod
 
 from pathlib import Path
@@ -56,13 +56,19 @@ def run(args):
 	atclips = args.type == "clips"
 
 	for channel in channels:
-		if not channel.save_vods and not channel.save_chat and not channel.save_clips:
+		getvods = conf.pull.save_vods and channel.save_vods
+		getchat = conf.pull.save_chat and channel.save_chat
+		getclips = conf.pull.save_clips and channel.save_clips
+		# getany = getvods or getchat or getclips
+		# getall = getvods and getchat and getclips
+
+		if not (getvods or getchat or getclips):
 			continue
 
 		cprint(f"#fY#l{channel.display_name}#r:", end=" ", flush=True)
 
 		newvods = []
-		if (atboth or atvods) and (channel.save_vods or channel.save_chat):
+		if (atboth or atvods) and (getvods or getchat):
 			voddir = VODS_DIR / channel.login
 			util.make_dir(voddir)
 
@@ -72,11 +78,11 @@ def run(args):
 			totalvods += len(newvods)
 			cprint(f"#fC#l{len(newvods)} #fM#lVODs#r", end="", flush=True)
 		
-		if atboth:
+		if atboth and ((getvods or getchat) and getclips):
 			cprint(" & ", end="", flush=True)
 		
 		newclips = []
-		if (atboth or atclips) and (channel.save_clips):
+		if (atboth or atclips) and getclips:
 			clipdir = CLIPS_DIR / channel.login
 			util.make_dir(clipdir)
 
@@ -118,11 +124,11 @@ def run(args):
 			chatname = str(filepath) + ".chat"
 
 			# download chat
-			if channel.save_chat:
+			if conf.pull.save_chat and channel.save_chat:
 				itd_dl.dl_video_chat(vod, chatname)
 				vod.has_chat = True
 			# download video
-			if channel.save_vods:
+			if conf.pull.save_vods and channel.save_vods:
 				try:
 					itd_dl.dl_video(vod, Path(TEMP_DIR), filename, 20, LOG_LEVEL)
 				except itd_dl.JoiningFailed:
@@ -154,14 +160,14 @@ def run(args):
 			metaname = str(filepath) + ".meta"
 
 			# download clip
-			if channel.save_clips:
+			if conf.pull.save_clips and channel.save_clips:
 				try:
 					itd_dl.dl_clip(clip, filename)
 				except itd_work.DownloadFailed:
-					cprint(f"#fR#lClip `{clip.id}` download failed! Skipping...#r")
-					send_pull_error(f'Failed to download Clip file for "{clip.slug}" ({clip.id}). Clip has been skipped.', clip.url)
+					cprint(f"#fR#lClip `{clip.slug}` ({clip.id}) download failed! Skipping...#r")
+					send_pull_error(f'Failed to download Clip file for `{clip.slug}` ({clip.id}). Clip has been skipped.', clip.url)
 				except (itd_work.DownloadCancelled, KeyboardInterrupt):
-					cprint(f"\n#fR#lClip `{clip.id}` download cancelled. Exiting...#r")
+					cprint(f"\n#fR#lClip `{clip.slug}` ({clip.id}) download cancelled. Exiting...#r")
 					save_cache(conf, cache)
 					send_pull_error(f'Pull cancelled during download of Clip "{clip.slug}" ({clip.id}).', clip.url)
 					raise KeyboardInterrupt()

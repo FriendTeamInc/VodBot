@@ -6,6 +6,7 @@ from .stage import StageData
 import vodbot.util as util
 import vodbot.video as vbvid
 import vodbot.chatlog as vbchat
+import vodbot.thumbnail as vbthumbnail
 from vodbot.config import Config
 from vodbot.printer import cprint
 from vodbot.cache import load_cache, save_cache
@@ -70,10 +71,16 @@ def run(args):
 	for stage in stagedatas:
 		tmpfile = None
 		tmpchat = None
+		tmpnail = None
 		# Export with ffmpeg
-		tmpfile = handle_stage(conf, stage)
+		if conf.export.video_enable:
+			tmpfile = handle_stage(conf, stage)
 		# Export chat
-		tmpchat = vbchat.process_stage(conf, stage, "export")
+		if conf.export.chat_enable:
+			tmpchat = vbchat.process_stage(conf, stage, "export")
+		# Export thumbnail
+		if conf.export.thumbnail_enable:
+			tmpnail = vbthumbnail.generate_thumbnail(conf, stage)
 
 		title = stage.title.strip()
 		for x in DISALLOWED_CHARACTERS:
@@ -84,6 +91,8 @@ def run(args):
 			shutil_move(str(tmpfile), str(args.path / (title+tmpfile.suffix)))
 		if tmpchat is not None:
 			shutil_move(str(tmpchat), str(args.path / (title+tmpchat.suffix)))
+		if tmpnail is not None:
+			shutil_move(str(tmpnail), str(args.path / (title+tmpnail.suffix)))
 		
 		# deal with old stage
 		if conf.stage.delete_on_export:

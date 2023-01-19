@@ -13,11 +13,11 @@ VodBot is command line VOD and Clip manager for Twitch. Vodbot can:
 ...with more features to come!
 
 # Installation
-VodBot can be installed with `pip install vodbot`. You can also install by cloning the repo and running `pip install .` for the latest commits and changes, although this isn't recommended. This will not install FFmpeg, that must be done separately.
+VodBot can be installed with `pip install vodbot`. You can also install by cloning the repo and running `pip install .` for the latest commits and changes, although this isn't recommended. This will not install FFmpeg or any of the optional dependencies, that must be done separately.
 
 Dependencies/Requirements:
-* [FFmpeg](https://www.ffmpeg.org/) (Must be in your PATH environment variable)
-* [Python 3.7+](https://www.python.org/)
+* [FFmpeg](https://ffmpeg.org/) (Must be in your PATH environment variable) ([recommended quick install](https://github.com/BtbN/FFmpeg-Builds))
+* [Python 3.7+](https://python.org/)
     * [argcomplete](https://pypi.org/project/argcomplete/)
     * [dataclasses-json](https://pypi.org/project/dataclasses-json/)
     * [Requests](https://pypi.org/project/requests/)
@@ -25,6 +25,7 @@ Dependencies/Requirements:
     * [Google API Client](https://pypi.org/project/google-api-python-client/)
     * [Google Auth OAuthLib](https://pypi.org/project/google-auth-oauthlib/)
     * [Google Auth httplib2](https://pypi.org/project/google-auth-httplib2/)
+    * [Pillow](https://pypi.org/project/Pillow/)
 
 # Wiki
 All documentation of VodBot and its usage is managed on the repo wiki, which can be found [here](https://github.com/NotQuiteApex/VodBot/wiki)! Please consult the wiki before contributing or opening issues.
@@ -33,6 +34,6 @@ All documentation of VodBot and its usage is managed on the repo wiki, which can
 VodBot is considered complete-enough. However, features will continue to be added and the project itself rewritten many times down the road for optimization and repo readability. Major changes should not be expected. Any future releases will be documented on the [projects page](https://github.com/NotQuiteApex/VodBot/projects).
 
 # License and Credit
-This project's code is licensed under the MIT license, copyright Logan "NotQuiteApex" Hickok-Dickson. See [LICENSE.md](LICENSE.md) for more details. All other assets such as but not limited to images or programs are owned and their use dictated by the asset's respective owner(s).
+This project's code is licensed under the MIT license, copyright Logan "NotQuiteApex" Hickok-Dickson. See [LICENSE.md](LICENSE.md) for more details. All other assets in this repository such as but not limited to images or programs are owned and their use dictated by the asset's respective owner(s).
 
 VodBot was built on the grounds laid by the streaming group Friend Team Inc. (for the original idea and necessity of the project), the many people who research Twitch's GraphQL API (for all the API calls that the project makes), and the support from friends and family (for, y'know, the support). Without any of this, VodBot would not exist as it currently does. 🧡

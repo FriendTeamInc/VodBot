@@ -2,7 +2,7 @@ from pathlib import Path
 
 from . import gql, worker
 from vodbot import chatlog
-from vodbot.util import make_dir
+from vodbot.util import make_dir, format_size
 from vodbot.printer import cprint
 from vodbot.twitch import Vod, Clip, get_video_comments
 
@@ -112,4 +112,4 @@ def dl_clip(clip: Clip, path: str):
 	size, _existed = worker.download_file(source_url, path)
 
 	# Print progress
-	cprint(f"#fM#lClip#r `#fM{clip_slug}#r` ({clip_id}) #fB#l~{worker.format_size(size)}#r")
+	cprint(f"#fM#lClip#r `#fM{clip_slug}#r` ({clip_id}) #fB#l{format_size(size)}#r")

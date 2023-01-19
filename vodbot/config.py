@@ -4,7 +4,7 @@
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json, config
 from marshmallow import fields, validate, ValidationError
-from typing import Dict, List, Tuple, Any, Mapping
+from typing import Dict, List, Any, Mapping
 from pathlib import Path
 
 
@@ -28,15 +28,25 @@ _path_field_config = config(encoder=lambda x: str(x), decoder=lambda x: Path(x),
 @dataclass_json
 @dataclass
 class _ConfigChannel:
-	username: str
+	# Twitch username of the channel to pull (publicly available) data from.
+	username: str = field(metadata=config(mm_field=fields.Str(
+		validate=validate.Length(4, 25))))
+	# Toggle for saving VOD videos.
 	save_vods: bool = True
+	# Toggle for saving Clip videos.
 	save_clips: bool = True
+	# Toggle for saving chat logs from VOD videos.
 	save_chat: bool = True
-	#thumbnail_icon: _ConfigThumbnailIcon
 
 @dataclass_json
 @dataclass
 class _ConfigPull:
+	# Determines if VODs get pulled. Metadata will be saved if chatlogs are saved. This is a master
+	# switch for every channel, if false then no VODs get saved.
+	save_vods: bool = True
+	# Determines if Clips get pulled. This is a master switch for every channel, if false then no
+	# Clips get saved.
+	save_clips: bool = True
 	# Determines if chat logs get pulled with VODs and saved alongside metadata. This is a master
 	# switch for every channel, if false then no chat gets saved.
 	save_chat: bool = True
@@ -67,7 +77,7 @@ class _ConfigChat:
 	# Toggle for giving white names (uncolored) a random color.
 	randomize_uncolored_names: bool = True
 	
-	# YouTube Timed Text formatting options TODO
+	# TODO: YouTube Timed Text formatting options.
 	ytt_align: str = field(default="left", metadata=config(mm_field=fields.Str(
 		validate=validate.OneOf(["left", "right", "center"]))))
 	ytt_anchor: int = field(default=6, metadata=config(mm_field=fields.Int(
@@ -86,8 +96,9 @@ class _ConfigStage:
 	# A dictionary of keys and related strings to make typing descriptions for stages easier,
 	# such as adding a lot of social media links at the end of a YouTube description.
 	description_macros: Dict[str, str] = field(default_factory=lambda: {})
-
+	# Toggle for deleting stage data on successful export.
 	delete_on_export: bool = True
+	# Toggle for deleting stage data on successful upload.
 	delete_on_upload: bool = True
 
 @dataclass_json
@@ -104,53 +115,113 @@ class _ConfigExport:
 	# A simple toggle for managing whether video is exported with a stage. Useful for if you
 	# just need the chat logs.
 	video_enable: bool = True
-	# Hardware acceleration options
-	# TODO?
+	# A simple toggle for managing whether a thumbnail is generated with a stage.
+	thumbnail_enable: bool = True
+	# TODO: Hardware acceleration options
 
 @dataclass_json
 @dataclass
 class _ConfigUpload:
+	# Toggle for uploading chat logs as closed captions.
 	chat_enable: bool = True
+	# Toggle for uploading generated thumbnails with the videos.
+	thumbnail_enable: bool = True
+	# Path for client JSON, the credentials needed for using the YouTube API.
 	client_path: Path = field(default=DEFAULT_CONFIG_DIRECTORY/"yt-client.json", metadata=_path_field_config)
+	# Path for session JSON, the "cookies" for the logged-in YouTube account to upload videos to.
 	session_path: Path = field(default=DEFAULT_CONFIG_DIRECTORY/"yt-session.json", metadata=_path_field_config)
+	# Size of chunks of uploaded data in bytes, with a minimum of 262144. It's recommended that this
+	# size be a multiple of this minimum value.
+	chunk_size: int = field(default=262144, metadata=config(mm_field=fields.Int(validate=validate.Range(262144))))
 
 @dataclass_json
 @dataclass
 class _ConfigThumbnailIcon:
-	offset_x: int
-	offset_y: int
-	scale: int
+	# Offset/origin position of the image.
+	ox: int
+	oy: int
+	# Path to an image. This path is always relative to the thumbnail directory.
 	filepath: Path = field(metadata=_path_field_config)
+	# Scale of the image, for when it is put into an image. It is scaled away from the offset point.
+	# This is multiplied by the position's configured scale below.
+	s: int = 1
+
+@dataclass_json
+@dataclass
+class _ConfigThumbnailPosition:
+	# Position for an image to be placed.
+	x: int = 0
+	y: int = 0
+	# Offset/origin position of the image.
+	ox: int = 0
+	oy: int = 0
+	# Scale of the image that will be placed at this point. It is scaled away from the offset point.
+	# This is multiplied by the icon's configured scale above.
+	s: int = 1
 
 @dataclass_json
 @dataclass
 class _ConfigThumbnail:
+	# Toggle for creating thumbnails in stages.
+	# TODO: make this section optional entirely
 	enable: bool
-	thumbnail_x: int; thumbnail_y: int
-	thumbnail_width: int; thumbnail_height: int
-	thumbnail_filepath: Path
-	screenshot_x: int; screenshot_y: int
-	screenshot_width: int; screenshot_height: int
-	text_x: int; text_y: int
-	text_font: str; text_size: int; text_gravity: str
-	heads: Dict[str, _ConfigThumbnailIcon]
+
+	# Size of the thumbnail canvas.
+	canvas_width: int
+	canvas_height: int
+
+	# Position settings of the screenshot on the canvas. Screenshots are scaled to canvas resolution.
+	screenshot_position: _ConfigThumbnailPosition
+	# Position settings of the "cover art" on the canvas. Cover art is scaled to canvas resolution.
+	cover_position: _ConfigThumbnailPosition
+	# Path of the "cover art" image. This path is always relative to the thumbnail directory.
+	cover_filepath: Path = field(metadata=_path_field_config)
+
+	# Position settings of the text.
+	text_position: _ConfigThumbnailPosition
+	# The specific font to use when printing text on the thumbnail.
+	# This can be a relative or absolute path. If the path is relative, then locations are checked in this order:
+	# 1. Thumbnail directory, 2. System locations, 3. Path relative to execution (not recommended for use)
+	text_font: str
+	# The font pointsize to use when printing text on the thumbnail.
+	text_size: int
+
+	# A list of positions that heads will be placed at. Extra options such as offset and scale are
+	# accounted for as well.
+	head_positions: List[_ConfigThumbnailPosition]
+	# A list of indices dictating what positions should be filled first, also dictating the order of
+	# layering of heads. Example: a list of [0, 2, 1] will place heads at positions 0, 2, and 1 in
+	# that order with heads placed first being underneath heads placed last.
 	head_order: List[int]
-	head_positions: List[Tuple[int, int, int]]
-	games: dict[str, _ConfigThumbnailIcon]
-	game_x: int; game_y: int; game_gravity: str
+	# A dictionary of heads. The keys of each entry will be used for prompting what heads are wanted
+	# during the staging process.
+	heads: Dict[str, _ConfigThumbnailIcon]
+	
+	# Position settings of the game icon on the canvas.
+	game_position: _ConfigThumbnailPosition
+	# A dictionary of games. The keys of each entry will be used for prompting what heads are wanted
+	# during the staging process.
+	games: Dict[str, _ConfigThumbnailIcon]
 
 @dataclass_json
 @dataclass
 class _ConfigWebhookBase:
+	# Individual toggle for the webhook.
 	enable: bool = True
+	# Message of the webhook, independent of any extra embeded data sent.
 	message: str = ""
+	# URL of an image to be set as the message's icon.
 	avatar_url: str = ""
+	# Name of the message sender of the webhook message.
 	username: str = ""
+	# URL to send the webhook payload to.
 	url: str = ""
 
 @dataclass_json
 @dataclass
 class _ConfigWebhooks:
+	# Webhooks are JSON data configurations meant to be sent to Discord for monitoring VodBot.
+	# All of the webhook base configurations.
 	pull_vod: _ConfigWebhookBase = field(default_factory=lambda: _ConfigWebhookBase())
 	pull_clip: _ConfigWebhookBase = field(default_factory=lambda: _ConfigWebhookBase())
 	pull_error: _ConfigWebhookBase = field(default_factory=lambda: _ConfigWebhookBase())
@@ -163,7 +234,10 @@ class _ConfigWebhooks:
 	upload_job_done: _ConfigWebhookBase = field(default_factory=lambda: _ConfigWebhookBase())
 	vodbot_error: _ConfigWebhookBase = field(default_factory=lambda: _ConfigWebhookBase())
 
+	# Main toggle for sending webhooks.
 	enable: bool = False
+	# The default settings for a webhook, each setting below is used if an individual configuration
+	# does not set/contain the corresponding setting.
 	message: str = ""
 	avatar_url: str = "https://github.com/FriendTeamInc/VodBot/raw/main/assets/logo.png"
 	username: str = "VodBot Webhook"
@@ -185,19 +259,19 @@ class _ConfigDirectories:
 	clips: Path = field(default=DEFAULT_CONFIG_DIRECTORY/"clips", metadata=_path_field_config)
 	temp: Path = field(default=DEFAULT_CONFIG_DIRECTORY/"temp", metadata=_path_field_config)
 	stage: Path = field(default=DEFAULT_CONFIG_DIRECTORY/"stage", metadata=_path_field_config)
-	#thumbnail: Path = field(default=DEFAULT_CONFIG_DIRECTORY/"thumbnail", metadata=_path_field_config)
+	thumbnail: Path = field(default=DEFAULT_CONFIG_DIRECTORY/"thumbnail", metadata=_path_field_config)
 
 @dataclass_json
 @dataclass
 class Config:
-	# The master copy of the config, the default.
-	channels: List[_ConfigChannel] = field(default_factory=lambda: {}) # TODO: validate channels dict?
+	# The original copy of the config, the default.
+	channels: List[_ConfigChannel] = field(default_factory=lambda: {})
 	pull: _ConfigPull = field(default_factory=lambda: _ConfigPull())
 	chat: _ConfigChat = field(default_factory=lambda: _ConfigChat())
 	stage: _ConfigStage = field(default_factory=lambda: _ConfigStage())
 	export: _ConfigExport = field(default_factory=lambda: _ConfigExport())
 	upload: _ConfigUpload = field(default_factory=lambda: _ConfigUpload())
-	# thumbnail: _ConfigThumbnail = field(default_factory=lambda: _ConfigThumbnail())
+	thumbnail: _ConfigThumbnail = field(default_factory=lambda: _ConfigThumbnail())
 	webhooks: _ConfigWebhooks = field(default_factory=lambda: _ConfigWebhooks())
 	directories: _ConfigDirectories = field(default_factory=lambda: _ConfigDirectories())
 

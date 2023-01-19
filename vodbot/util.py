@@ -2,13 +2,13 @@
 
 from .printer import cprint
 from .config import Config, DEFAULT_CONFIG_SCHEMA
-from .webhook import send_error
 
 import os
 import sys
 from json.decoder import JSONDecodeError
 from marshmallow import ValidationError
 from typing import Tuple
+from shutil import which
 
 
 # time in seconds to a timestamp string
@@ -56,6 +56,32 @@ def timestring_as_seconds(time:str, default:int=0):
 	return hours * 60 * 60 + minutes * 60 + seconds
 
 
+def format_size(bytes_:int, digits:int=1, include_units:bool=True) -> str:
+	units = ["B", "KB", "MB", "GB", "PB", "EB"]
+	for u in units:
+		if bytes_ < 1000:
+			t = ""
+			if digits > 0:
+				t = f"{bytes_:.{digits}f}"
+			else:
+				t = f"{bytes_:d}"
+			return (t + " " + u) if include_units else t
+		bytes_ /= 1000
+
+	t = ""
+	if digits > 0:
+		t = f"{bytes_:.{digits}f}"
+	else:
+		t = f"{bytes_:d}"
+	
+	return (t + " ZB") if include_units else t
+
+
+_has_ffmpeg = which("ffmpeg") is not None
+def has_ffmpeg() -> bool:
+	return _has_ffmpeg
+
+
 def make_dir(directory):
 	"""
 	Creates the directory structure to house the configuration data and VODs.
@@ -97,6 +123,10 @@ def load_conf(filename) -> Config:
 		exit_prog(97, f'Failed to parse config. "{e}"')
 	except ValidationError as e:
 		exit_prog(98, f'Failed to validate config. "{e.messages}"')
+	except TypeError as e:
+		exit_prog(96, f'Failed to validate config. "{e}"')
+	except KeyError as e:
+		exit_prog(95, f'Failed to find required key in config. "{e}"')
 
 	return conf
 
@@ -108,6 +138,8 @@ def exit_prog(code=0, errmsg=None):
 	:param code: The error code to exit with. Should be unique per exit case.
 	:param errmsg: The corresponding error message to print when exiting.
 	"""
+	
+	from .webhook import send_error
 
 	# exit
 	print()

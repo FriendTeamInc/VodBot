@@ -32,14 +32,21 @@ setup(
     
 	python_requires='>=3.7',
 	install_requires=[
-		"google-api-python-client>=2.0",
-		"google-auth-httplib2>=0.1.0",
-		"google-auth-oauthlib>=0.4.4",
-		"requests>=2.20",
-		"m3u8>=0.8",
-		"dataclasses-json>=0.5.7",
+		"Pillow>=9.4.0",
+		
 		"argcomplete>=2.0.0",
-		"discord-webhook>=0.16.3"
+
+		"dataclasses-json>=0.5.7",
+
+		"discord-webhook>=1.0.0",
+
+		"google-api-python-client>=2.70.0",
+		"google-auth-httplib2>=0.1.0",
+		"google-auth-oauthlib>=0.8.0",
+
+		"m3u8>=3.3.0",
+		
+		"requests>=2.28.1",
 	],
 	entry_points={
 		'console_scripts': ['vodbot=vodbot.__main__:deffered_main'],

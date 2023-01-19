@@ -7,7 +7,6 @@ from .config import Config
 import json
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json
-from pathlib import Path
 from typing import Dict, List
 from os import listdir as os_listdir
 from os.path import isfile as os_isfile, exists as os_exists
@@ -123,7 +122,11 @@ def save_cache(conf: Config, cache: Cache) -> None:
 
 	_cached_cache = cache
 
-	make_dir(conf.directories.temp)
-
-	with open(conf.directories.temp / "cache.json", "w") as f:
-		f.write(cache.to_json())
+	try:
+    make_dir(conf.directories.temp)
+		with open(conf.directories.temp / "cache.json", "w") as f:
+			f.write(cache.to_json())
+	except FileNotFoundError as e:
+		# Failed to write the cache, parent directory structure cannot exist.
+		pass
+		#cprint(f"#fY#dWARN: Failed to write cache.")

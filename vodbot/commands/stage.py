@@ -1,24 +1,25 @@
 # Staging, where videos get staged and set up with metadata to upload
 
-from calendar import c
-from cmath import inf
 from vodbot.cache import Cache, load_cache, save_cache
 import vodbot.util as util
-from vodbot.config import DEFAULT_CONFIG_DIRECTORY, Config
+from vodbot.config import DEFAULT_CONFIG_DIRECTORY, _ConfigThumbnailIcon, Config
 from vodbot.printer import cprint, colorize
 
 import re
 import json
-import string
 import datetime
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from os import remove as os_remove, listdir as os_listdir
 from os.path import isfile, isdir
-from typing import List
+from typing import Dict, List, Optional
 from random import choice
+from dataclasses import dataclass, field
+from dataclasses_json import dataclass_json
+from string import ascii_lowercase, digits as ascii_digits
 
 
+# Python's input function allows for inputs that should not be allowed in filenames such as control characters
 DISALLOWED_CHARACTERS = [chr(x) for x in range(10)] + [chr(x) for x in range(11,32)] # just in case...
 RESERVED_NAMES = [
 	"\0", "CON", "PRN", "AUX", "NUL",
@@ -26,59 +27,42 @@ RESERVED_NAMES = [
 	"LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
 ]
 
-
+@dataclass_json
+@dataclass
 class VideoSlice():
-	def __init__(self, video_id: str, ss: str, to: str, filepath: str):
-		self.video_id = video_id
-		self.ss = ss
-		self.to = to
-		self.filepath = filepath
-	
-	def get_as_dict(self):
-		return {"id":self.video_id, "ss":self.ss, "to":self.to, "path":str(self.filepath)}
+	video_id: str
+	ss: str
+	to: str
+	filepath: str
 
 
+@dataclass_json
+@dataclass
+class ThumbnailData():
+	heads: List[str]
+	game: str
+	text: str
+	video_slice_id: int
+	timestamp: str
+
+
+@dataclass_json
+@dataclass
 class StageData():
-	def __init__(self, streamers: List[str], title: str, desc: str, slices: List[VideoSlice], datestring: str, cid=None):
-		for x in DISALLOWED_CHARACTERS:
-			title = title.replace(x, "_")
-		self.title = title
-		self.desc = desc
-		self.streamers = streamers
-		self.datestring = datestring
-		self.slices = slices
+	title: str
+	desc: str
+	streamers: List[str]
+	datestring: str
 
-		if cid is None:
-			self.gen_new_id()
-		else:
-			self.id = cid
-	
-	def __repr__(self):
-		return f"StageData(\"{self.title}\", {self.id})"
+	slices: List[VideoSlice]
+	thumbnail: Optional[ThumbnailData] = None
+
+	id: str = field(default_factory=lambda: 
+		"".join([choice(ascii_lowercase + ascii_digits) for _ in range(4)]))
 	
 	def write_stage(self, filename):
 		with open(filename, "w") as f:
-			jsondump = {
-				"streamers": self.streamers,
-				"title": self.title, "desc": self.desc,
-				"datestring": self.datestring,
-				"id": self.id, "slices": [vid.get_as_dict() for vid in self.slices]
-			}
-
-			json.dump(jsondump, f)
-	
-	def gen_new_id(self):
-		self.id = "".join([choice(string.ascii_lowercase + string.digits) for _ in range(4)])
-	
-	@staticmethod
-	def load_from_json(d: dict) -> 'StageData':
-		slices = [VideoSlice(v["id"], v["ss"], v["to"], v["path"]) for v in d["slices"]]
-		new_data = StageData(
-			streamers=d["streamers"], title=d["title"], desc=d["desc"], 
-			datestring=d["datestring"], slices=slices)
-		new_data.id = d["id"]
-
-		return new_data
+			f.write(self.to_json())
 	
 	@staticmethod
 	def load_from_id(stagedir: Path, sid: str) -> 'StageData':
@@ -91,7 +75,7 @@ class StageData():
 		except KeyError:
 			util.exit_prog(46, f'Could not parse stage "{sid}" as JSON. Is this file corrupted?')
 		
-		return StageData.load_from_json(jsonread)
+		return StageData.from_dict(jsonread)
 	
 	@staticmethod
 	def load_all_stages(stagedir: Path) -> List['StageData']:
@@ -229,6 +213,65 @@ def check_stage_id(stage_id, STAGE_DIR):
 	return stage_id in stages
 
 
+def _check_time_str(prefix:str, timestamp:str, print_:bool=True) -> str:
+	intime = timestamp.split(":")
+	timelist = []
+	seconds = None
+	minutes = None
+	hours = None
+
+	if len(intime) > 3:
+		if print_:
+			cprint(f"#fR{prefix} time: Time cannot have more than 3 units.#r")
+		return None
+	
+	if len(intime) >= 1:
+		seconds = intime[-1]
+		try:
+			seconds = int(seconds)
+		except ValueError:
+			if print_:
+				cprint(f"#fR{prefix} time: Seconds does not appear to be a number.#r")
+			return None
+		if seconds > 59 or seconds < 0:
+			if print_:
+				cprint(f"#fR{prefix} time: Seconds must be in the range of 0 to 59.#r")
+			return None
+		timelist.insert(0, str(seconds))
+	
+	if len(intime) >= 2:
+		minutes = intime[-2]
+		try:
+			minutes = int(minutes)
+		except ValueError:
+			if print_:
+				cprint(f"#fR{prefix} time: Minutes does not appear to be a number.#r")
+			return None
+		if minutes > 59 or minutes < 0:
+			if print_:
+				cprint(f"#fR{prefix} time: Minutes must be in the range of 0 to 59.#r")
+			return None
+		timelist.insert(0, str(minutes))
+	else:
+		timelist.insert(0, "0")
+	
+	if len(intime) == 3:
+		hours = intime[-3]
+		try:
+			hours = int(hours)
+		except ValueError:
+			if print_:
+				cprint(f"#fR{prefix} time: Hours does not appear to be a number.#r")
+			return None
+		timelist.insert(0, str(hours))
+	else:
+		timelist.insert(0, "0")
+	
+	output = ":".join(timelist)
+
+	return output
+
+
 def check_time(prefix, resp, default=None):
 	output = resp
 	checkedonce = False
@@ -247,61 +290,18 @@ def check_time(prefix, resp, default=None):
 			elif prefix == "End":
 				return default if default != None else "EOF"
 
-		intime = output.split(":")
-		timelist = []
-		seconds = None
-		minutes = None
-		hours = None
-
-		if len(intime) > 3:
-			cprint(f"#fR{prefix} time: Time cannot have more than 3 units.#r")
+		output = _check_time_str(prefix, output)
+		if output == None:
 			continue
-		
-		if len(intime) >= 1:
-			seconds = intime[-1]
-			try:
-				seconds = int(seconds)
-			except ValueError:
-				cprint(f"#fR{prefix} time: Seconds does not appear to be a number.#r")
-				continue
-			if seconds > 59 or seconds < 0:
-				cprint(f"#fR{prefix} time: Seconds must be in the range of 0 to 59.#r")
-				continue
-			timelist.insert(0, str(seconds))
-		
-		if len(intime) >= 2:
-			minutes = intime[-2]
-			try:
-				minutes = int(minutes)
-			except ValueError:
-				cprint(f"#fR{prefix} time: Minutes does not appear to be a number.#r")
-				continue
-			if minutes > 59 or minutes < 0:
-				cprint(f"#fR{prefix} time: Minutes must be in the range of 0 to 59.#r")
-				continue
-			timelist.insert(0, str(minutes))
 		else:
-			timelist.insert(0, "0")
-		
-		if len(intime) == 3:
-			hours = intime[-3]
-			try:
-				hours = int(hours)
-			except ValueError:
-				cprint(f"#fR{prefix} time: Hours does not appear to be a number.#r")
-				continue
-			timelist.insert(0, str(hours))
-		else:
-			timelist.insert(0, "0")
-		
-		output = ":".join(timelist)
-		break
+			break
 
 	return output
 
 
 def check_streamers(default=None) -> List[str]:
 	streamers = ""
+
 	while not streamers:
 		streamers = input(colorize(f"#fW#lWho was in the VOD#r #d(default `{', '.join(default)}`, csv)#r: "))
 
@@ -345,6 +345,10 @@ def check_title(default=None):
 				cprint("#fRTitle cannot use control characters.#r")
 				title = ""
 				continue
+
+	# probably redundant lol
+	for x in DISALLOWED_CHARACTERS:
+		title = title.replace(x, "_")
 	
 	return title
 
@@ -387,6 +391,108 @@ def check_description(formatdict, inputdefault=None):
 	return desc
 
 
+def check_thumbnail_heads(possible_heads: Dict[str, _ConfigThumbnailIcon]) -> List[str]:
+	heads = ""
+	indexed_heads = list(possible_heads.keys())
+	finalheads = []
+
+	if not possible_heads:
+		return finalheads
+
+	cprint("HEADS:", end="")
+	for i, name in enumerate(indexed_heads):
+		cprint(f" {i}.{name} |", end="")
+	cprint()
+
+	while not heads:
+		finalheads = []
+		heads = input(colorize(f"#fW#lEnter the indices of the heads you want in the thumbnail#r #d(csv)#r: "))
+		
+		heads = heads.replace(" ,", ",").split(",")
+		for head in heads:
+			try:
+				head = int(head)
+				finalheads.append(indexed_heads[head])
+			except (ValueError, IndexError) as _:
+				cprint(f"#l#fRHead index must be a number between 0 and {len(possible_heads)-1}!#r")
+				heads = ""
+				break
+	
+	return finalheads
+
+
+def check_thumbnail_game(possible_games: Dict[str, _ConfigThumbnailIcon]) -> str:
+	game = ""
+	indexed_games = list(possible_games.keys())
+
+	if not possible_games:
+		return game
+
+	cprint("GAMES:", end="")
+	for i, name in enumerate(indexed_games):
+		cprint(f" {i}. {name} |", end="")
+	cprint()
+
+	while not game:
+		game = input(colorize(f"#fW#lEnter the index of the game you want in the thumbnail#r: "))
+		
+		try:
+			game = int(game)
+			game = indexed_games[game]
+		except (ValueError, IndexError) as _:
+			cprint(f"#l#fRGame identifier must be a number between 0 and {len(possible_games)-1}!#r")
+			game = ""
+			continue
+	
+	return game
+
+
+def check_thumbnail_text() -> str:
+	text = ""
+
+	while not text:
+		text = input(colorize(f"#fW#lEnter the text you want in the thumbnail#r: "))
+		# TODO: check text?
+	
+	return text
+
+
+def check_thumbnail_vid_id(possible_slices: List[VideoSlice]) -> int:
+	vid = ""
+
+	# shortcut for single slice streams
+	if len(possible_slices) == 1:
+		return 0
+
+	cprint("VIDEOS:", end="")
+	for i, name in enumerate(possible_slices.keys()):
+		cprint(f" {i}. {name.video_id}", end="")
+	cprint()
+
+	while not vid:
+		vid = input(colorize(f"#fW#lEnter the index of the video you want to grab a screenshot from for the thumbnail#r: "))
+		
+		try:
+			vid = int(vid)
+			_ = possible_slices[vid]
+		except (ValueError, IndexError) as _:
+			cprint(f"#l#fRVideo index must be a number between 0 and {len(possible_slices)-1} (inclusive)!#r")
+			vid = ""
+			continue
+	
+	return vid
+
+
+def check_thumbnail_timestamp() -> str:
+	ts = ""
+
+	while not ts:
+		ts = input(colorize(f"#fW#lEnter the timestamp for the screenshot for the thumbnail#r: "))
+		ts = _check_time_str("Stamp", ts)
+	
+	return ts
+
+
 def _new(args, conf: Config, cache: Cache):
 	STAGE_DIR = conf.directories.stage
 
@@ -399,12 +505,13 @@ def _new(args, conf: Config, cache: Cache):
 		except CouldntFindVideo:
 			util.exit_prog(13, f'Could not find video with ID "{args.id}"')
 	
-	# Get what streamers were involved (usernames), always asked
-	default_streamers = []
-	for f in videos:
-		if f["meta"]["user_login"] not in default_streamers:
-			default_streamers.append(f["meta"]["user_login"])
-	args.streamers = check_streamers(default=default_streamers)
+	# Get what streamers were involved (usernames), only asked if args is not full
+	if not args.streamer:
+		default_streamers = args.streamer
+		for f in videos:
+			if f["meta"]["user_login"] not in default_streamers:
+				default_streamers.append(f["meta"]["user_login"])
+		args.streamers = check_streamers(default=default_streamers)
 
 	# get title
 	if not args.title:
@@ -418,6 +525,16 @@ def _new(args, conf: Config, cache: Cache):
 	for x in range(len(videos)):
 		# skip times we dont need because we already have them
 		if x < len(args.ss):
+			# lied we need to check and convert the times
+			test_ss = _check_time_str("Start", args.ss[x])
+			if not test_ss:
+				util.exit_prog(30, f"`{test_ss}` is not a valid timestamp!")
+			args.ss[x] = test_ss
+			if args.to[x] != "EOF":
+				test_to = _check_time_str("End", args.to[x])
+				if not test_to:
+					util.exit_prog(30, f"`{test_to}` is not a valid timestamp!")
+				args.to[x] = test_to if test_to else args.to[x]
 			continue
 		
 		vid = videos[x]["meta"]
@@ -440,23 +557,88 @@ def _new(args, conf: Config, cache: Cache):
 	slices = []
 	for x in range(len(videos)):
 		vid = videos[x]
-		vidslice = VideoSlice(video_id=vid["id"], ss=args.ss[x], to=args.to[x], filepath=vid["file"])
+		vidslice = VideoSlice(video_id=vid["id"], ss=args.ss[x], to=args.to[x], filepath=str(vid["file"]))
 		slices += [vidslice]
 
+	# make thumbnail data
+	tn = None
+	if conf.thumbnail.enable:
+		if not (args.tn_head and args.tn_game and args.tn_text and args.tn_video_id and args.tn_timestamp): 
+			cprint("#dEnter in details to generate the thumbnail...#r")
+		# print(args.tn_head)
+		# print(args.tn_game)
+		# print(args.tn_text)
+		# print(args.tn_video_id)
+		# print(args.tn_timestamp)
+		# get heads
+		heads = None
+		if args.tn_head:
+			heads = args.tn_head
+			# allow blanks and check heads
+			for head in heads:
+				if head != "" and head not in conf.thumbnail.heads:
+					util.exit_prog(31, f"Head `{head}` is not recognized, check your thumbnail config.")
+		else:
+			heads = check_thumbnail_heads(possible_heads=conf.thumbnail.heads)
+		
+		# get game
+		game = None
+		if args.tn_game:
+			game = args.tn_game
+			# we allow blanks here
+			if game != "" and game not in conf.thumbnail.games:
+				util.exit_prog(32, f"Game `{game}` is not recognized, check your thumbnail config.")
+		else:
+			game = check_thumbnail_game(possible_games=conf.thumbnail.games)
+		
+		# get text
+		text = None
+		if args.tn_text:
+			# we do not check raw text input
+			text = args.tn_text
+		else:
+			text = check_thumbnail_text()
+		
+		# get video slice id
+		vid_id = None
+		if args.tn_video_id:
+			vid_id = args.tn_video_id
+			if not vid_id.isnumeric():
+				util.exit_prog(33, f"`{vid_id}` is not a number.")
+			vid_id = int(vid_id)
+			if vid_id < 0 or vid_id >= len(slices):
+				util.exit_prog(34, f"`{vid_id}` must be between 0 and {len(slices)-1}")
+		else:
+			vid_id = check_thumbnail_vid_id(possible_slices=slices)
+		
+		# get timestamp
+		timestamp = None
+		if args.tn_timestamp:
+			testtimestamp = _check_time_str("Thumbnail", args.tn_timestamp)
+			if not testtimestamp:
+				util.exit_prog(35, f"`{args.tn_timestamp}` is not a valid timestamp!")
+			timestamp = testtimestamp
+		else:
+			timestamp = check_thumbnail_timestamp()
+
+		tn = ThumbnailData(heads=heads, game=game, text=text, video_slice_id=vid_id, timestamp=timestamp)
+
 	# make stage object
-	stage = StageData(streamers=args.streamers, title=args.title, desc=args.desc, datestring=datestring, slices=slices)
+	stage = StageData(streamers=args.streamers, title=args.title, desc=args.desc, datestring=datestring, slices=slices, thumbnail=tn)
 	# Check that new "id" does not collide
 	while check_stage_id(stage.id, STAGE_DIR):
-		stage.gen_new_id()
+		stage = StageData(streamers=args.streamers, title=args.title, desc=args.desc, datestring=datestring, slices=slices, thumbnail=tn)
 
 	# shorter file name
 	#shortfile = stage.filename.replace(VODS_DIR, "$vods").replace(CLIPS_DIR, "$clips")
 
-	print()
 	cprint(f"#r`#fC{stage.title}#r` #fM{' '.join(stage.streamers)}#r #d({stage.id})#r")
-	cprint(f"#d'''\n#fG{stage.desc}#r\n#d'''#r")
+	cprint(f"#d#fG{stage.desc}#r")
 	for vid in stage.slices:
 		cprint(f"#fM{vid.video_id}#r > #fY{vid.ss}#r - #fY{vid.to}#r")
+	if conf.thumbnail.enable:
+		cprint(f"#fBThumbnail: #fG{tn.game} #r`#fC{tn.text}#r` #d(vid{tn.video_slice_id} @ {tn.timestamp})#r")
+		cprint(f"#dwith...#r {', '.join([f'#fM{head}#r' for head in tn.heads])}")
 	
 	# write stage
 	stagename = str(STAGE_DIR / f"{stage.id}.stage")
