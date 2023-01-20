@@ -70,15 +70,15 @@ def _print_progress(video_id, futures):
 			if existed:
 				existing_size += size
 
-			percentage = 100 * downloaded_count // total_count
-			est_total_size = int(total_count * downloaded_size / downloaded_count)
+			percentage = 100 * downloaded_count / total_count
+			est_total_size = total_count * downloaded_size / downloaded_count
 			duration = (datetime.now() - start_time).seconds
-			speed = (downloaded_size - existing_size) // duration if duration else 0
+			speed = (downloaded_size - existing_size) / duration if duration else 0
 			remaining = (total_count - downloaded_count) * duration / downloaded_count
 
 			msg = " ".join([
 				f"#fM#lVOD#r `#fM{video_id}#r` pt#fC{downloaded_count}#r/#fB#l{total_count}#r,",
-				f"#fC{format_size(downloaded_size)}#r/#fB#l~{format_size(est_total_size)}#r #d({percentage}%)#r;",
+				f"#fC{format_size(downloaded_size, include_units=False)}#r/#fB#l{format_size(est_total_size)}#r #d({percentage:.1f}%)#r;",
 				f"at #fY~{format_size(speed)}/s#r;" if speed > 0 else "",
 				f"#fG~{format_duration(remaining)}#r left" if speed > 0 else "",
 			])
