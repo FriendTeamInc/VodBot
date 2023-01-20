@@ -1,4 +1,4 @@
-# v1.1.0 - (???)
+# v1.1.0 - The Super Mega Super Overhaul (January 20, 2023)
 ### Major Additions/Changes:
 - VodBot has changed licenses from zlib to MIT, in order to preserve crediting of work.
 - VodBot now requires Python 3.7 or later, changed from requiring 3.6.

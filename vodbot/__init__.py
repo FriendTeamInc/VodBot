@@ -1,2 +1,2 @@
-__project__ = "vodbot"
+__project__ = "VodBot"
 __version__ = "1.1.0"
