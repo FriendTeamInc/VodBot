@@ -65,7 +65,7 @@ def format_size(bytes_:int, digits:int=1, include_units:bool=True) -> str:
 				t = f"{bytes_:.{digits}f}"
 			else:
 				t = f"{bytes_:d}"
-			return (t + " " + u) if include_units else t
+			return f"{t} {u}" if include_units else t
 		bytes_ /= 1000
 
 	t = ""
@@ -74,7 +74,7 @@ def format_size(bytes_:int, digits:int=1, include_units:bool=True) -> str:
 	else:
 		t = f"{bytes_:d}"
 	
-	return (t + " ZB") if include_units else t
+	return f"{t} ZB" if include_units else t
 
 
 _has_ffmpeg = which("ffmpeg") is not None

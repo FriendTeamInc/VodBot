@@ -99,6 +99,6 @@ def run(args):
 		cprint(f"#fYChannel Created At: {r['createdAt']}#r")
 		r = r['roles']
 		cprint(f"#fBRoles: Affiliate={r['isAffiliate']} - Partner={r['isPartner']}#r")
-		#cprint(f"Site Roles: Staff={r['isStaff']} - GlobalMod={r['isGlobalMod']} - SiteAdmin={r['isSiteAdmin']}")
+		cprint(f"Site Roles: Staff={r['isStaff']} - GlobalMod={r['isGlobalMod']} - SiteAdmin={r['isSiteAdmin']}")
 
 	# Done!

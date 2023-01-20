@@ -39,7 +39,7 @@ def slice_video(TEMP_DIR: Path, LOG_LEVEL: str, vslice: VideoSlice, i: int=1, to
 		str(tmpfile), "-y", "-stats", "-loglevel", LOG_LEVEL
 	]
 	
-	result = subprocess.run(cmd)
+	result = subprocess.run(cmd, stderr=subprocess.DEVNULL, check=True)
 
 	if result.returncode != 0:
 		raise FailedToSlice(vslice.video_id)
@@ -71,7 +71,7 @@ def concat_video(TEMP_DIR: Path, LOG_LEVEL: str, stage_id: str, slice_paths: Lis
 	cwd = os.getcwd()
 	os.chdir(str(TEMP_DIR))
 
-	result = subprocess.run(cmd)
+	result = subprocess.run(cmd, stderr=subprocess.DEVNULL, check=True)
 
 	if result.returncode != 0:
 		raise FailedToConcat()

@@ -1,9 +1,39 @@
-# v1.1.0
-### Released ???
-TODO: write this.
+# v1.1.0 - (???)
+### Major Additions/Changes:
+- VodBot has changed licenses from zlib to MIT, in order to preserve crediting of work.
+- VodBot now requires Python 3.7 or later, changed from requiring 3.6.
+- New Python packages that have been added since last release: argcomplete, dataclasses-json, pillow.
+- Config files have been completely reworked for internal use and better organization. (#40)
+- VodBot will now autocomplete arguments assuming the autocompletion setup is complete. (#24)
+    - TODO: write how to setup autocomplete.
+- VodBot will now cache locally pulled videos and current stages to help with auto-complete. This cache is stored in the temp directory. If, for whatever reason, the cache gets desynced with what actually exists on the disk, it can be refreshed with the `-u` argument. (#55)
+- VodBot can now generate, export, and upload thumbnails for videos. Details are entered during the staging process and can be enabled and configured with the config. See the wiki for details. (#42)
+- VodBot can now push webhooks to Discord upon completion of certain tasks. See the wiki for details. (#35)
 
-# v1.0.0
-### Released November 16, 2021
+### Minor changes/fixes:
+- VodBot will no longer continue to prompt for things that can be provided by arguments (such as streamers when staging), and exit when an argument does not match specific criteria.
+- Vods, Clips, and Chat logs can now all be saved independently and per channel as defined in the config. Master toggles for each file can be set in the pull section of the config, disabling that download for every channel.
+- Chat member names, when uncolored (white), can be made into a random color if enabled in the chat section of the config. (#40)
+- Certain aspects of the YouTube Timed Text chat log export can be configured, such as position, anchoring, and alignment. (#40)
+- Stage files can now be optionally left undeleted after export or upload, configurable in the stage section of the config. (#40)
+- The amount of info displayed by FFMPEG (loglevel) can now be configured in the export section. Defaults to "warning". (#40)
+- Export can now selectively export chat logs, videos, and/or thumbnails (when available) with each using its own toggle in the export section of the config. All toggles default to on. (#40)
+- Upload can now selectively upload chat logs and/or thumbnails (when available) with each using its own toggle in the upload section of the config. All toggles default to on.  (#40)
+- Thumbnail generation has been added, along with its own section in the config as well as a new directory to be configured in the directories section. (#42)
+- Stream chapters (moments when the stream changes games) are now saved and displayed where relevant. (#34)
+- Users banned from Twitch that show up in chat logs will receive a fake username when detected. (#44)
+- Videos would fail to concatenate when segments of the video were muted, this has been *potentially* fixed. (#51)
+    - Note that this still does not bypass the mute itself, simply that the video will remain intact.
+- Entity codes (specifically `<`, `>`, and `&`) for YouTube Timed Text have been fixed. (#48)
+- Crashes related to permissions when creating directories has been fixed. (#50)
+- Chat parsing no longer fails when chat log is empty. (#45)
+- Video descriptions will no longer accept certain characters (`<` and `>`) due to issues when uploading to YouTube. (#46)
+- Google OAuth session information is now saved as a JSON rather than pickled. (#49)
+- VodBot will no longer crash when moving files across drives on Windows. (#52)
+- Due to Google disabling of Out-Of-Band authentication with OAuth, VodBot now uses a local server method (via localhost:8080). (#60)
+- Up to 1000 channels can be selected quickly by index rather than requiring full input when selecting channels for staging. (#41)
+
+# v1.0.0 - Initial Release! (November 16, 2021)
 VodBot is finally "finished"! This however will not be the final major release, there will be future versions with more features and fixes.
 
 - Init command: `vodbot init`
@@ -28,10 +58,8 @@ VodBot is finally "finished"! This however will not be the final major release, 
     - Allows use of macros and runtime generated strings for descriptions, defined by VodBot or in config.
     - If not authorized, a link will appear asking for a special code. Open the link and allow VodBot access to manage your YouTube videos (worry not, this is *only* for uploading). When fully authorized, a string will appear that must be copied back into VodBot to continue.
 
-# v0.9.9 - Test Pre-release.
-### Released October 22, 2021
+# v0.9.9 - Test Pre-release. (October 22, 2021)
 This is a test pre-release. VodBot is useable in this release, but incomplete and untested.
 
-# 104b8fd - Initial commit.
-### Released November 16, 2020
+# 104b8fd - Initial commit. (November 16, 2020)
 Happy Birthday, VodBot :)

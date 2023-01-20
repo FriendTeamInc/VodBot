@@ -16,6 +16,8 @@ def run(args):
 	# check if the config exists and ask if it should be overwritten
 	if exists(args.output):
 		input("It seems a file already exists here. Press enter if you wish to continue, press Ctrl+C to quit.")
+		input("Just double checking. Press enter if you wish to continue, press Ctrl+C to quit.")
+		input("Last time. Press enter if you wish to continue, press Ctrl+C to quit.")
 		print("Overwriting file...")
 
 	# test write the config.
@@ -29,10 +31,12 @@ def run(args):
 	print("Creating default config...")
 	
 	# create directories now
+	util.make_dir(config.DEFAULT_CONFIG_DIRECTORY)
 	util.make_dir(DEFAULT_CONFIG.vods)
 	util.make_dir(DEFAULT_CONFIG.clips)
 	util.make_dir(DEFAULT_CONFIG.temp)
 	util.make_dir(DEFAULT_CONFIG.stage)
+	util.make_dir(DEFAULT_CONFIG.thumbnail)
 
 	# now write the config
 	try:

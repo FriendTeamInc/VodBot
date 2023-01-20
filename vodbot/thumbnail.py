@@ -24,7 +24,7 @@ def generate_thumbnail(conf: Config, stage: StageData) -> Path:
 	subprocess.run([
 		"ffmpeg", "-hide_banner", "-ss", stage.thumbnail.timestamp, "-i", video_slice.filepath,
 		"-frames:v", "1", "-update", "1", str(ss_path), "-y", "-loglevel", conf.export.ffmpeg_loglevel
-	], check=True)
+	], stderr=subprocess.DEVNULL, check=True)
 
 	output_file = conf.directories.temp / f"thumbnail_{stage.id}.png"
 

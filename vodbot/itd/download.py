@@ -78,7 +78,7 @@ def dl_video(video: Vod, TEMP_DIR: Path, path: str, max_workers: int, LOG_LEVEL:
 		"-c", "copy", path, "-y",
 		"-stats", "-loglevel", LOG_LEVEL
 	]
-	result = subprocess.run(cmd)
+	result = subprocess.run(cmd, stderr=subprocess.DEVNULL, check=True)
 	os.chdir(cwd)
 
 	if result.returncode != 0:

@@ -305,6 +305,8 @@ def check_streamers(default=None, conf_users=[]) -> List[str]:
 	if conf_users:
 		cprint("#dUSERS:#r", end="")
 		for i, name in enumerate(conf_users):
+			if i > 999:
+				break
 			cprint(f"#d {i}.{name} |#r", end="")
 		cprint()
 		cprint("#dEnter numbers for quick adding, enter the usernames manually, or nothing for the default.#r")
@@ -416,9 +418,9 @@ def check_thumbnail_heads(possible_heads: Dict[str, _ConfigThumbnailIcon]) -> Li
 	if not possible_heads:
 		return finalheads
 
-	cprint("HEADS:", end="")
+	cprint("#dHEADS:#r", end="")
 	for i, name in enumerate(indexed_heads):
-		cprint(f" {i}.{name} |", end="")
+		cprint(f"#d {i}.{name} |#r", end="")
 	cprint()
 
 	while not heads:
@@ -445,9 +447,9 @@ def check_thumbnail_game(possible_games: Dict[str, _ConfigThumbnailIcon]) -> str
 	if not possible_games:
 		return game
 
-	cprint("GAMES:", end="")
+	cprint("#dGAMES:#r", end="")
 	for i, name in enumerate(indexed_games):
-		cprint(f" {i}. {name} |", end="")
+		cprint(f"#d {i}. {name} |#r", end="")
 	cprint()
 
 	while not game:
@@ -481,9 +483,9 @@ def check_thumbnail_vid_id(possible_slices: List[VideoSlice]) -> int:
 	if len(possible_slices) == 1:
 		return 0
 
-	cprint("VIDEOS:", end="")
+	cprint("#dVIDEOS:#r", end="")
 	for i, name in enumerate(possible_slices.keys()):
-		cprint(f" {i}. {name.video_id}", end="")
+		cprint(f"#d {i}. {name.video_id}#r", end="")
 	cprint()
 
 	while not vid:

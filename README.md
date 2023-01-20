@@ -34,7 +34,7 @@ Dependencies/Requirements:
 # Wiki
 All documentation of VodBot and its usage is managed on the repo wiki, which can be found [here](https://github.com/FriendTeamInc/VodBot/wiki)! Please consult the wiki before contributing or opening issues.
 
-## Project Status
+# Project Status
 VodBot is considered complete-enough. However, features will continue to be added and the project itself rewritten many times down the road for optimization and repo readability. Major changes to arguments and commands should not be expected. Any future releases will be documented on the [milestones page](https://github.com/FriendTeamInc/VodBot/milestones).
 
 # License and Credit
