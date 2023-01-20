@@ -171,7 +171,7 @@ def main():
 	# Check for ffmpeg
 	ffmpeg_check = which("ffmpeg")
 	if ffmpeg_check is None:
-		util.exit_prog(-11, "FFMPEG could not be found in your PATH environment variable.")
+		util.exit_prog(-11, "FFmpeg could not be found in your PATH environment variable.")
 
 	# Handle commands
 	if args.cmd == "init":

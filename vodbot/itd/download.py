@@ -66,10 +66,10 @@ def dl_video(video: Vod, TEMP_DIR: Path, path: str, max_workers: int, LOG_LEVEL:
 	
 	# Download VOD chunks to the temp folder
 	path_map = worker.download_files(video_id, base_uri, tempdir, vod_paths, max_workers)
-	# TODO: rewrite this output to look nicer and remove ffmpeg output using COLOR_CODES["F"]
-	cprint("#dDone, now to ffmpeg join...#r")
+	# TODO: rewrite this output to look nicer and remove FFmpeg output using COLOR_CODES["F"]
+	cprint("#dDone, now to FFmpeg join...#r")
 
-	# join the vods using ffmpeg at specified path
+	# join the vods using FFmpeg at specified path
 	# TODO: change this to the concat function in video?
 	cwd = os.getcwd()
 	os.chdir(str(tempdir))

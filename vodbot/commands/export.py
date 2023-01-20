@@ -72,7 +72,7 @@ def run(args):
 		tmpfile = None
 		tmpchat = None
 		tmpnail = None
-		# Export with ffmpeg
+		# Export with FFmpeg
 		if conf.export.video_enable:
 			tmpfile = handle_stage(conf, stage)
 		# Export chat

@@ -104,7 +104,7 @@ class _ConfigStage:
 @dataclass_json
 @dataclass
 class _ConfigExport:
-	# This is used to describe to FFMPEG what type of output there should be regarding when
+	# This is used to describe to FFmpeg what type of output there should be regarding when
 	# the program directs it to manage video files. "warning" is recommended as it displays very
 	# little unless otherwise necessary.
 	ffmpeg_loglevel: str = field(default="warning", metadata=config(mm_field=fields.Str(
