@@ -1,4 +1,5 @@
-# <img src="/assets/banner.png" alt="VodBot" height="100" /> [![GitHub license](https://badgen.net/github/license/FriendTeamInc/VodBot)](LICENSE.md) [![PyPI version fury.io](https://badge.fury.io/py/vodbot.svg)](https://pypi.org/project/vodbot/) [![GitHub issues](https://img.shields.io/github/issues/FriendTeamInc/VodBot.svg)](https://gitHub.com/FriendTeamInc/VodBot/issues/)
+# <img src="/assets/banner.png" alt="VodBot" height="100" />
+[![GitHub license](https://badgen.net/github/license/FriendTeamInc/VodBot)](LICENSE.md) [![PyPI version fury.io](https://badge.fury.io/py/vodbot.svg)](https://pypi.org/project/vodbot/) [![GitHub issues](https://img.shields.io/github/issues/FriendTeamInc/VodBot.svg)](https://gitHub.com/FriendTeamInc/VodBot/issues/)
 
 VodBot is command line VOD and Clip manager for Twitch. Vodbot can:
 * Grab info on any public VOD, Clip, or Channel on Twitch.
