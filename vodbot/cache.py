@@ -123,7 +123,7 @@ def save_cache(conf: Config, cache: Cache) -> None:
 	_cached_cache = cache
 
 	try:
-    make_dir(conf.directories.temp)
+		make_dir(conf.directories.temp)
 		with open(conf.directories.temp / "cache.json", "w") as f:
 			f.write(cache.to_json())
 	except FileNotFoundError as e:

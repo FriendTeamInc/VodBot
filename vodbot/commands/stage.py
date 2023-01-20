@@ -299,8 +299,15 @@ def check_time(prefix, resp, default=None):
 	return output
 
 
-def check_streamers(default=None) -> List[str]:
+def check_streamers(default=None, conf_users=[]) -> List[str]:
 	streamers = ""
+
+	if conf_users:
+		cprint("#dUSERS:#r", end="")
+		for i, name in enumerate(conf_users):
+			cprint(f"#d {i}.{name} |#r", end="")
+		cprint()
+		cprint("#dEnter numbers for quick adding, enter the usernames manually, or nothing for the default.#r")
 
 	while not streamers:
 		streamers = input(colorize(f"#fW#lWho was in the VOD#r #d(default `{', '.join(default)}`, csv)#r: "))
@@ -309,17 +316,27 @@ def check_streamers(default=None) -> List[str]:
 			streamers = default
 		else:
 			streamers = streamers.replace(" ", "").split(",")
-			for streamer in streamers:
-				if len(streamer) == 0:
+			for i, s in enumerate(streamers):
+				# cannot be empty string with other strings
+				if len(s) == 0:
 					cprint("#l#fRMissing streamer name!#r")
 					streamers = ""
 					break
 				
-				if not all((c.isalnum() or c=="_") for c in streamer):
-					if len(streamer) == 0:
-						cprint("#l#fRStreamer names must be alphanumeric with underscores!#r")
-						streamers = ""
-						break
+				# translate 0 to 999 to an index for the users
+				print(len(s))
+				print(s.isnumeric())
+				found_idx = False
+				if len(s) < 4 and s.isnumeric():
+					o = int(s)
+					streamers[i] = conf_users[o]
+					found_idx = True
+				
+				# final checks that we should get rid of the name and start over
+				if not found_idx and (len(s) < 4 or len(s) > 25 or not all((c.isalnum() or c=="_") for c in s)):
+					cprint(f"#l#fR`{s}` not valid, streamer names must be alphanumeric with underscores!#r")
+					streamers = ""
+					break
 	
 	return streamers
 
@@ -511,7 +528,7 @@ def _new(args, conf: Config, cache: Cache):
 		for f in videos:
 			if f["meta"]["user_login"] not in default_streamers:
 				default_streamers.append(f["meta"]["user_login"])
-		args.streamers = check_streamers(default=default_streamers)
+		args.streamers = check_streamers(default=default_streamers, conf_users=[chan.username for chan in conf.channels])
 
 	# get title
 	if not args.title:
@@ -638,7 +655,8 @@ def _new(args, conf: Config, cache: Cache):
 		cprint(f"#fM{vid.video_id}#r > #fY{vid.ss}#r - #fY{vid.to}#r")
 	if conf.thumbnail.enable:
 		cprint(f"#fBThumbnail: #fG{tn.game} #r`#fC{tn.text}#r` #d(vid{tn.video_slice_id} @ {tn.timestamp})#r")
-		cprint(f"#dwith...#r {', '.join([f'#fM{head}#r' for head in tn.heads])}")
+		if tn.heads:
+			cprint(f"#dwith...#r {', '.join([f'#fM{head}#r' for head in tn.heads])}")
 	
 	# write stage
 	stagename = str(STAGE_DIR / f"{stage.id}.stage")
