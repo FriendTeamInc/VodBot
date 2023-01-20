@@ -16,7 +16,8 @@
 - Chat member names, when uncolored (white), can be made into a random color if enabled in the chat section of the config. (#40)
 - Certain aspects of the YouTube Timed Text chat log export can be configured, such as position, anchoring, and alignment. (#40)
 - Stage files can now be optionally left undeleted after export or upload, configurable in the stage section of the config. (#40)
-- The amount of info displayed by FFMPEG (loglevel) can now be configured in the export section. Defaults to "warning". (#40)
+- The amount of info displayed by FFmpeg (loglevel) can now be configured in the export section. Defaults to "warning". (#40)
+- Logs from FFmpeg are now piped to `/dev/null` by default, but can be piped elsewhere with a configuration setting.
 - Export can now selectively export chat logs, videos, and/or thumbnails (when available) with each using its own toggle in the export section of the config. All toggles default to on. (#40)
 - Upload can now selectively upload chat logs and/or thumbnails (when available) with each using its own toggle in the upload section of the config. All toggles default to on.  (#40)
 - Thumbnail generation has been added, along with its own section in the config as well as a new directory to be configured in the directories section. (#42)
