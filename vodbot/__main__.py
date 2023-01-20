@@ -157,7 +157,7 @@ def main():
 			'or "logout" to remove existing YouTube credentials').completer = stage_completer
 	
 	# `vodbot export <stage_id/all>`
-	export = subparsers.add_parser("export", description="Uploads stage(s) to YouTube.")
+	export = subparsers.add_parser("export", aliases=["export", "slice"], description="Uploads stage(s) to YouTube.")
 	export.add_argument("id", type=str, help="id of the staged video data, or `all` for all stages").completer = stage_completer
 	export.add_argument("path", type=Path, help="directory to export the video(s) to").completer = DirectoriesCompleter
 
@@ -182,7 +182,7 @@ def main():
 		import_module(".commands.stage", "vodbot").run(args)
 	elif args.cmd == "push" or args.cmd == "upload":
 		import_module(".commands.upload", "vodbot").run(args)
-	elif args.cmd == "export":
+	elif args.cmd == "export" or args.cmd == "slice":
 		import_module(".commands.export", "vodbot").run(args)
 	elif args.cmd == "info":
 		import_module(".commands.info", "vodbot").run(args)
