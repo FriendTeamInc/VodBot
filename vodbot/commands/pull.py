@@ -130,7 +130,7 @@ def run(args):
 			# download video
 			if conf.pull.save_vods and channel.save_vods:
 				try:
-					itd_dl.dl_video(vod, Path(TEMP_DIR), filename, 20, LOG_LEVEL)
+					itd_dl.dl_video(vod, Path(TEMP_DIR), filename, 20, LOG_LEVEL, conf.export.ffmpeg_stderr)
 				except itd_dl.JoiningFailed:
 					cprint(f"#fR#lVOD `{vod.id}` joining failed! Skipping...#r")
 					send_pull_error(f'Failed to join VOD files for "{vod.id}". Files have been preserved and VOD has been skipped.', vod.url)

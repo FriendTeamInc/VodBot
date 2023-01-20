@@ -2,8 +2,8 @@
 ### Major Additions/Changes:
 - VodBot has changed licenses from zlib to MIT, in order to preserve crediting of work.
 - VodBot now requires Python 3.7 or later, changed from requiring 3.6.
-- New Python packages that have been added since last release: argcomplete, dataclasses-json, pillow.
-- Config files have been completely reworked for internal use and better organization. (#40)
+- New Python packages that have been added since last release: `argcomplete`, `dataclasses-json`, `pillow`.
+- Config files have been completely reworked for internal use and better organization. The new default path to the config file is `~/.vodbot/config.json`. (#40)
 - VodBot will now autocomplete arguments assuming the autocompletion setup is complete. (#24)
     - TODO: write how to setup autocomplete.
 - VodBot will now cache locally pulled videos and current stages to help with auto-complete. This cache is stored in the temp directory. If, for whatever reason, the cache gets desynced with what actually exists on the disk, it can be refreshed with the `-u` argument. (#55)

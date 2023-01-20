@@ -15,7 +15,7 @@ import os
 class JoiningFailed(Exception):
 	pass
 
-def get_playlist_uris(video_id, access_token):
+def get_playlist_uris(video_id: str, access_token: dict):
 	"""
 	Grabs the URI's for accessing each of the video chunks.
 	"""
@@ -36,7 +36,7 @@ def get_playlist_uris(video_id, access_token):
 	
 	return playlist_uris
 
-def dl_video(video: Vod, TEMP_DIR: Path, path: str, max_workers: int, LOG_LEVEL: str):
+def dl_video(video: Vod, TEMP_DIR: Path, path: str, max_workers: int, LOG_LEVEL: str, REDIRECT: Path):
 	video_id = video.id
 
 	# Grab access token
@@ -78,7 +78,10 @@ def dl_video(video: Vod, TEMP_DIR: Path, path: str, max_workers: int, LOG_LEVEL:
 		"-c", "copy", path, "-y",
 		"-stats", "-loglevel", LOG_LEVEL
 	]
-	result = subprocess.run(cmd, stderr=subprocess.DEVNULL, check=True)
+	redirect = subprocess.DEVNULL
+	if REDIRECT != Path():
+		redirect = REDIRECT
+	result = subprocess.run(cmd, stderr=redirect, check=True)
 	os.chdir(cwd)
 
 	if result.returncode != 0:

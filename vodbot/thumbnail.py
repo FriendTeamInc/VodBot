@@ -21,10 +21,13 @@ def generate_thumbnail(conf: Config, stage: StageData) -> Path:
 	ss_path = conf.directories.temp / f"thumbnail_ss_{stage.id}.png"
 	selected_video_slice = stage.thumbnail.video_slice_id
 	video_slice = stage.slices[selected_video_slice]
+	redirect = subprocess.DEVNULL
+	if conf.export.ffmpeg_stderr != Path():
+		redirect = conf.export.ffmpeg_stderr
 	subprocess.run([
 		"ffmpeg", "-hide_banner", "-ss", stage.thumbnail.timestamp, "-i", video_slice.filepath,
 		"-frames:v", "1", "-update", "1", str(ss_path), "-y", "-loglevel", conf.export.ffmpeg_loglevel
-	], stderr=subprocess.DEVNULL, check=True)
+	], stderr=redirect, check=True)
 
 	output_file = conf.directories.temp / f"thumbnail_{stage.id}.png"
 

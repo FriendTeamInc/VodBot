@@ -109,6 +109,7 @@ class _ConfigExport:
 	# little unless otherwise necessary.
 	ffmpeg_loglevel: str = field(default="warning", metadata=config(mm_field=fields.Str(
 		validate=validate.OneOf(["warning", "error", "fatal"]))))
+	ffmpeg_stderr: Path = field(default=Path(), metadata=_path_field_config)
 	# A simple toggle for managing whether chat is exported with a stage, if available. More
 	# options are available in the chat config section.
 	chat_enable: bool = True
