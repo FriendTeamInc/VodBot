@@ -32,11 +32,11 @@ def run(args):
 	
 	# create directories now
 	util.make_dir(config.DEFAULT_CONFIG_DIRECTORY)
-	util.make_dir(DEFAULT_CONFIG.vods)
-	util.make_dir(DEFAULT_CONFIG.clips)
-	util.make_dir(DEFAULT_CONFIG.temp)
-	util.make_dir(DEFAULT_CONFIG.stage)
-	util.make_dir(DEFAULT_CONFIG.thumbnail)
+	util.make_dir(DEFAULT_CONFIG.directories.vods)
+	util.make_dir(DEFAULT_CONFIG.directories.clips)
+	util.make_dir(DEFAULT_CONFIG.directories.temp)
+	util.make_dir(DEFAULT_CONFIG.directories.stage)
+	util.make_dir(DEFAULT_CONFIG.directories.thumbnail)
 
 	# now write the config
 	try:

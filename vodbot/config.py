@@ -138,6 +138,8 @@ class _ConfigUpload:
 	# Size of chunks of uploaded data in bytes, with a minimum of 262144. It's recommended that this
 	# size be a multiple of this minimum value.
 	chunk_size: int = field(default=262144, metadata=config(mm_field=fields.Int(validate=validate.Range(262144))))
+	# Port for the OAuth local server to run on, used for logging into Google's services.
+	oauth_port: int = field(default=8080, metadata=config(mm_field=fields.Int(validate=validate.Range(0, 65535))))
 
 @dataclass_json
 @dataclass

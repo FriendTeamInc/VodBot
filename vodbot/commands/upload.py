@@ -227,7 +227,6 @@ def run(args):
 	cache = load_cache(conf, args.cache_toggle)
 	init_webhooks(conf)
 
-
 	# configure variables
 	STAGE_DIR = conf.directories.stage
 	SESSION_FILE = conf.upload.session_path
@@ -281,10 +280,10 @@ def run(args):
 				creds.refresh(Request())
 			else:
 				flow = InstalledAppFlow.from_client_secrets_file(CLIENT_FILE, SCOPES)
-				creds = flow.run_local_server()
+				creds = flow.run_local_server(port=conf.upload.oauth_port)
 		except RefreshError:
 			flow = InstalledAppFlow.from_client_secrets_file(CLIENT_FILE, SCOPES)
-			creds = flow.run_local_server()
+			creds = flow.run_local_server(port=conf.upload.oauth_port)
 		
 		with open(SESSION_FILE, "w") as f:
 			f.write(creds.to_json())

@@ -1,3 +1,7 @@
+# v1.1.1 - Super Hotfix (January 21, 2023)
+* Fixed an issue with the `vodbot init` command failing.
+* Added `oauth_port` field to upload configuration section, for dictating what port the local OAuth server should use when logging into Google services.
+
 # v1.1.0 - The Super Mega Super Overhaul (January 20, 2023)
 ### Major Additions/Changes:
 - VodBot has changed licenses from zlib to MIT, in order to preserve crediting of work.
@@ -5,7 +9,8 @@
 - New Python packages that have been added since last release: `argcomplete`, `dataclasses-json`, `pillow`.
 - Config files have been completely reworked for internal use and better organization. The new default path to the config file is `~/.vodbot/config.json`. (#40)
 - VodBot will now autocomplete arguments assuming the autocompletion setup is complete. (#24)
-    - TODO: write how to setup autocomplete.
+	- Requires `eval "$(register-python-argcomplete vodbot)"` to be placed in your `~/.bashrc`. 
+	- Only fully compatible with Bash, with limited compatibility with other shells. See the [argcomplete page](https://pypi.org/project/argcomplete/) for more info.
 - VodBot will now cache locally pulled videos and current stages to help with auto-complete. This cache is stored in the temp directory. If, for whatever reason, the cache gets desynced with what actually exists on the disk, it can be refreshed with the `-u` argument. (#55)
 - VodBot can now generate, export, and upload thumbnails for videos. Details are entered during the staging process and can be enabled and configured with the config. See the wiki for details. (#42)
 - VodBot can now push webhooks to Discord upon completion of certain tasks. See the wiki for details. (#35)
@@ -24,7 +29,7 @@
 - Stream chapters (moments when the stream changes games) are now saved and displayed where relevant. (#34)
 - Users banned from Twitch that show up in chat logs will receive a fake username when detected. (#44)
 - Videos would fail to concatenate when segments of the video were muted, this has been *potentially* fixed. (#51)
-    - Note that this still does not bypass the mute itself, simply that the video will remain intact.
+	- Note that this still does not bypass the mute itself, simply that the video will remain intact.
 - Entity codes (specifically `<`, `>`, and `&`) for YouTube Timed Text have been fixed. (#48)
 - Crashes related to permissions when creating directories has been fixed. (#50)
 - Chat parsing no longer fails when chat log is empty. (#45)
@@ -38,26 +43,26 @@
 VodBot is finally "finished"! This however will not be the final major release, there will be future versions with more features and fixes.
 
 - Init command: `vodbot init`
-    - Initializes directories and config files in default/user designated locations.
-    - Running this is recommended prior to performing any other function.
+	- Initializes directories and config files in default/user designated locations.
+	- Running this is recommended prior to performing any other function.
 - Pull/Download command: `vodbot pull [vods/clips/both]` or `vodbot download ...`
-    - Pulls video data from Twitch based on channels listed in the config file.
-    - Video data can be VODs, Clips, or both; by default both will be downloaded.
-    - Chat logs are also downloaded for VODs if enabled in config (on by default).
+	- Pulls video data from Twitch based on channels listed in the config file.
+	- Video data can be VODs, Clips, or both; by default both will be downloaded.
+	- Chat logs are also downloaded for VODs if enabled in config (on by default).
 - Stage command: `vodbot stage <subcommand>`
-    - New stage: `vodbot stage new <video_id> [video_id ...]` Creates instance of staged data, specifically title, description, and video slices for use with exporting and uploading. Allows for multiple videos in one stage to be concatenated on export.
-    - List stages: `vodbot stage list [stage_id]`, will either list all stages or specific info on staged instance provided an ID.
-    - Remove stage: `vodbot stage rm <stage_id>`, removes a specific staged instance.
+	- New stage: `vodbot stage new <video_id> [video_id ...]` Creates instance of staged data, specifically title, description, and video slices for use with exporting and uploading. Allows for multiple videos in one stage to be concatenated on export.
+	- List stages: `vodbot stage list [stage_id]`, will either list all stages or specific info on staged instance provided an ID.
+	- Remove stage: `vodbot stage rm <stage_id>`, removes a specific staged instance.
 - Export command: `vodbot export <stage_id/all> <export_directory>`
-    - Exports videos from staged instances. Individual videos or all can be exported to a specific directory.
-    - Export directory will be created if non-existant.
-    - Warning: exports with matching filenames will overwrite existing files.
+	- Exports videos from staged instances. Individual videos or all can be exported to a specific directory.
+	- Export directory will be created if non-existant.
+	- Warning: exports with matching filenames will overwrite existing files.
 - Upload/Push command: `vodbot upload <stage_id/all>` or `vodbot push ...`
-    - Note: VodBot requires special files for YouTube uploading permission. These files are not included with this release and will not be given to random people, only those that I (Logan "NotQuiteApex" H-D) trust due to permissions issues with Google. This will likely change in a future release.
-    - Uploads individual or all staged instances of video data.
-    - Videos are exported identically to the export command into a temp directory (defined in config) before being uploaded.
-    - Allows use of macros and runtime generated strings for descriptions, defined by VodBot or in config.
-    - If not authorized, a link will appear asking for a special code. Open the link and allow VodBot access to manage your YouTube videos (worry not, this is *only* for uploading). When fully authorized, a string will appear that must be copied back into VodBot to continue.
+	- Note: VodBot requires special files for YouTube uploading permission. These files are not included with this release and will not be given to random people, only those that I (Logan "NotQuiteApex" H-D) trust due to permissions issues with Google. This will likely change in a future release.
+	- Uploads individual or all staged instances of video data.
+	- Videos are exported identically to the export command into a temp directory (defined in config) before being uploaded.
+	- Allows use of macros and runtime generated strings for descriptions, defined by VodBot or in config.
+	- If not authorized, a link will appear asking for a special code. Open the link and allow VodBot access to manage your YouTube videos (worry not, this is *only* for uploading). When fully authorized, a string will appear that must be copied back into VodBot to continue.
 
 # v0.9.9 - Test Pre-release. (October 22, 2021)
 This is a test pre-release. VodBot is useable in this release, but incomplete and untested.
