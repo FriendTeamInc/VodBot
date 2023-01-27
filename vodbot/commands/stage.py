@@ -326,8 +326,6 @@ def check_streamers(default=None, conf_users=[]) -> List[str]:
 					break
 				
 				# translate 0 to 999 to an index for the users
-				print(len(s))
-				print(s.isnumeric())
 				found_idx = False
 				if len(s) < 4 and s.isnumeric():
 					o = int(s)
