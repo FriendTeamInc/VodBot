@@ -38,6 +38,7 @@
 - VodBot will no longer crash when moving files across drives on Windows. (#52)
 - Due to Google disabling of Out-Of-Band authentication with OAuth, VodBot now uses a local server method (via localhost:8080). (#60)
 - Up to 1000 channels can be selected quickly by index rather than requiring full input when selecting channels for staging. (#41)
+- Color output is disabled when stdout is routed to a non-tty output.
 
 # v1.0.0 - Initial Release! (November 16, 2021)
 VodBot is finally "finished"! This however will not be the final major release, there will be future versions with more features and fixes.
