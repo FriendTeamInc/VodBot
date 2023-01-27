@@ -1,8 +1,4 @@
-# Based on https://github.com/ihabunek/twitch-dl/blob/master/twitchdl/download.py
-# Modified to fit the project a bit better, originally licensed under GPLv3.
-# Modifications include shortening some functions, removing redundant bits,
-# and changing certain printouts to be more colorful.
-
+from vodbot.config import Config
 from vodbot.printer import cprint
 from vodbot.util import format_duration, format_size
 
@@ -11,14 +7,11 @@ import requests
 
 from datetime import datetime
 from collections import OrderedDict
-from concurrent.futures import ThreadPoolExecutor, as_completed, wait
+from concurrent.futures import Future, ThreadPoolExecutor, as_completed, wait
 from functools import partial
 from requests.exceptions import RequestException
-
-
-CHUNK_SIZE = 1024
-CONNECT_TIMEOUT = 5
-RETRY_COUNT = 5
+from typing import List, Tuple
+from pathlib import Path
 
 
 class DownloadFailed(Exception):
@@ -28,12 +21,12 @@ class DownloadCancelled(Exception):
 	pass
 
 
-def _download(url, path):
+def _download(url: str, path: str, timeout:float, chunk_size:int) -> int:
 	tmp_path = path + ".tmp"
-	response = requests.get(url, stream=True, timeout=CONNECT_TIMEOUT)
+	response = requests.get(url, stream=True, timeout=timeout)
 	size = 0
 	with open(tmp_path, 'wb') as target:
-		for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
+		for chunk in response.iter_content(chunk_size=chunk_size):
 			target.write(chunk)
 			size += len(chunk)
 
@@ -41,20 +34,20 @@ def _download(url, path):
 	return size
 
 
-def download_file(url, path, retries=RETRY_COUNT):
+def download_file(url:str, path:str, retries:int, timeout:int, chunk_size:int) -> Tuple[int, bool]:
 	if os.path.exists(path):
 		return os.path.getsize(path), True
 
 	for _ in range(retries):
 		try:
-			return _download(url, path), False
+			return _download(url, path, timeout, chunk_size), False
 		except RequestException:
 			pass
 
-	raise DownloadFailed("sadge")
+	raise DownloadFailed()
 
 
-def _print_progress(video_id, futures):
+def _print_progress(video_id: str, futures: List[Future]) -> None:
 	downloaded_count = 0
 	downloaded_size = 0
 	existing_size = 0
@@ -78,7 +71,8 @@ def _print_progress(video_id, futures):
 
 			msg = " ".join([
 				f"#fM#lVOD#r `#fM{video_id}#r` pt#fC{downloaded_count}#r/#fB#l{total_count}#r,",
-				f"#fC{format_size(downloaded_size, include_units=False)}#r/#fB#l{format_size(est_total_size)}#r #d({percentage:.1f}%)#r;",
+				f"#fC{format_size(downloaded_size, include_units=False)}#r/#fB#l{format_size(est_total_size)}#r"
+				f"#d({percentage:.1f}%)#r;",
 				f"at #fY~{format_size(speed)}/s#r;" if speed > 0 else "",
 				f"#fG~{format_duration(remaining)}#r left" if speed > 0 else "",
 			])
@@ -86,19 +80,24 @@ def _print_progress(video_id, futures):
 			max_msg_size = max(len(msg), max_msg_size)
 			cprint("#c\r" + msg.ljust(max_msg_size), end="")
 	except KeyboardInterrupt:
-		done, not_done = wait(futures, timeout=0)
+		_, not_done = wait(futures, timeout=0)
 		for future in not_done:
 			future.cancel()
 		wait(not_done, timeout=None)
 		raise DownloadCancelled()
 
 
-def download_files(video_id, base_url, target_dir, vod_paths, max_workers):
+def download_files(conf:Config, video_id:str, base_url:str, target_dir:Path, vod_paths:List[str]) -> OrderedDict[str, str]:
 	urls = [base_url + path for path in vod_paths]
 	targets = [str(target_dir / path) for path in vod_paths]
-	partials = (partial(download_file, url, path) for url, path in zip(urls, targets))
+	retries = conf.pull.connection_retries
+	timeout = conf.pull.connection_timeout
+	chunk_size = conf.pull.chunk_size
+	
+	partials = (partial(download_file, url, path, retries, timeout, chunk_size)
+		for url, path in zip(urls, targets))
 
-	with ThreadPoolExecutor(max_workers=max_workers) as executor:
+	with ThreadPoolExecutor(max_workers=conf.pull.max_workers) as executor:
 		futures = [executor.submit(fn) for fn in partials]
 		_print_progress(video_id, futures)
 

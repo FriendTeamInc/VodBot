@@ -6,6 +6,7 @@ from dataclasses_json import dataclass_json, config
 from marshmallow import fields, validate, ValidationError
 from typing import Dict, List, Any, Mapping
 from pathlib import Path
+from os import cpu_count
 
 
 DEFAULT_CONFIG_DIRECTORY = Path.home() / ".vodbot"
@@ -50,11 +51,25 @@ class _ConfigPull:
 	# Determines if chat logs get pulled with VODs and saved alongside metadata. This is a master
 	# switch for every channel, if false then no chat gets saved.
 	save_chat: bool = True
+
 	# Client ID for accessing Twitch's public facing but privately documented GraphQL interface, 
 	# which is significantly more advanced than the V5 API. Do not change this to a specific user's
 	# ID unless you want to risk a ban, although it allows for accessing private info such as
 	# deleted chat messages and account info.
 	gql_client: str = "kimne78kx3ncx6brgo4mv6wki5h1ko"
+
+	# Number of threads that can concurrently work to download files from Twitch.
+	# Defaults to the number of cores on the machine (or 1 in cases where that can't be measured).
+	max_workers: int = field(default=cpu_count() or 1, metadata=config(mm_field=fields.Int(validate=validate.Range(1))))
+	# Number of bytes to stream-write to temporary video files at a time.
+	# Defaults to 1024 bytes.
+	chunk_size: int = field(default=1024, metadata=config(mm_field=fields.Int(validate=validate.Range(1024))))
+	# How many times the download connection should be retried before giving up.
+	# Defaults to 5 seconds.
+	connection_retries: int = field(default=5, metadata=config(mm_field=fields.Int(validate=validate.Range(1))))
+	# Seconds before the download connection should time out and should be tried again.
+	# Defaults to 5 retries.
+	connection_timeout: float = field(default=5, metadata=config(mm_field=fields.Float(validate=validate.Range(1))))
 
 	# Below is some flags and info for using the official V5 API over the private GQL API where
 	# possible. Currently not implemented in any form and does not affect anything. This would
@@ -113,6 +128,7 @@ class _ConfigExport:
 	# described with this path. If no path is specified, it will be piped to /dev/null (or whatever
 	# is equivalent on your system).
 	ffmpeg_stderr: Path = field(default=Path(), metadata=_path_field_config)
+
 	# A simple toggle for managing whether chat is exported with a stage, if available. More
 	# options are available in the chat config section.
 	chat_enable: bool = True

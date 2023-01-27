@@ -5,6 +5,7 @@ from vodbot import chatlog
 from vodbot.util import make_dir, format_size
 from vodbot.printer import cprint
 from vodbot.twitch import Vod, Clip, get_video_comments
+from vodbot.config import Config
 
 import subprocess
 import requests
@@ -36,7 +37,12 @@ def get_playlist_uris(video_id: str, access_token: dict):
 	
 	return playlist_uris
 
-def dl_video(video: Vod, TEMP_DIR: Path, path: str, max_workers: int, LOG_LEVEL: str, REDIRECT: Path):
+def dl_video(conf: Config, video: Vod, path: str):
+	TEMP_DIR = conf.directories.temp
+	LOG_LEVEL = conf.export.ffmpeg_loglevel
+	REDIRECT = conf.export.ffmpeg_stderr
+	MAX_WORKERS = conf.pull.MAX_WORKERS
+
 	video_id = video.id
 
 	# Grab access token
@@ -65,12 +71,10 @@ def dl_video(video: Vod, TEMP_DIR: Path, path: str, max_workers: int, LOG_LEVEL:
 	vod_paths = [segment.uri for segment in playlist.segments]
 	
 	# Download VOD chunks to the temp folder
-	path_map = worker.download_files(video_id, base_uri, tempdir, vod_paths, max_workers)
-	# TODO: rewrite this output to look nicer and remove FFmpeg output using COLOR_CODES["F"]
+	path_map = worker.download_files(conf, video_id, base_uri, tempdir, vod_paths)
 	cprint("#dDone, now to FFmpeg join...#r")
 
 	# join the vods using FFmpeg at specified path
-	# TODO: change this to the concat function in video?
 	cwd = os.getcwd()
 	os.chdir(str(tempdir))
 	cmd = [
