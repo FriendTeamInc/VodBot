@@ -15,12 +15,12 @@ VodBot is command line VOD and Clip manager for Twitch. Vodbot can:
 ...with more features to come!
 
 # Installation
-VodBot can be installed with `pip install vodbot`. You can also install by cloning the repo and running `pip install .` for the latest commits and changes, although this isn't recommended. This will not install FFmpeg.
+VodBot can be installed with `pip install vodbot`. You can also install by cloning the repo and running `pip install .` for the latest commits and changes, although this isn't recommended. FFmpeg must be installed separately.
 
 Dependencies/Requirements:
 * [FFmpeg](https://ffmpeg.org/)
-    * Must be in your PATH environment variable
-    * [Recommended quick install.](https://github.com/BtbN/FFmpeg-Builds)
+    * Must be in your PATH environment variable.
+    * Latest builds available [here](https://github.com/BtbN/FFmpeg-Builds).
 * [Python 3.7+](https://python.org/)
     * [argcomplete](https://pypi.org/project/argcomplete/)
     * [dataclasses-json](https://pypi.org/project/dataclasses-json/)

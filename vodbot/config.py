@@ -85,20 +85,31 @@ class _ConfigPull:
 class _ConfigChat:
 	# Dictates what closed caption format the chat logs should be exported to when exporting. This
 	# is ignored when uploading as uploading to YouTube will always use the YTT format.
+	# Defaults to "YTT".
 	export_format: str = field(default="YTT", metadata=config(mm_field=fields.Str(
 		validate=validate.OneOf(["raw", "YTT"])))) # ["raw", "RealText", "SAMI", "YTT"]
-	# Dictates how long a single message should appear in the closed caption export.
+	# Dictates how long a single message should appear in the closed caption export in seconds.
+	# Defaults to 10 seconds.
 	message_display_time: int = 10
-	# Toggle for giving white names (uncolored) a random color.
+	# Toggle for giving white chat member names (uncolored) a random color.
+	# On is true, off is false. Defaults to true.
 	randomize_uncolored_names: bool = True
 	
 	# https://github.com/arcusmaximus/YTSubConverter/blob/master/ytt.ytt
+	# Caption alignment within its box in the YouTube player.
+	# Possible values are "left", "right", and "center". Defaults to "left".
 	ytt_align: str = field(default="left", metadata=config(mm_field=fields.Str(
 		validate=validate.OneOf(["left", "right", "center"]))))
+	# Caption anchor point, or its origin point. Can be any integer from 0 to 8.
+	# For example, 0 is top left, 4 is dead center, 8 is bottom right. Defaults to 6 (aka bottom left).
 	ytt_anchor: int = field(default=6, metadata=config(mm_field=fields.Int(
 		validate=validate.Range(0, 8))))
+	# Position in the YouTube player that the captions appear, horizontally.
+	# Can be any integer from 0 (left) to 100 (right). Defaults to 0.
 	ytt_position_x: int = field(default=0, metadata=config(mm_field=fields.Int(
 		validate=validate.Range(0, 100))))
+	# Position in the YouTube player that the captions appear, vertically.
+	# Can be any integer from 0 (top) to 100 (bottom). Defaults to 100.
 	ytt_position_y: int = field(default=100, metadata=config(mm_field=fields.Int(
 		validate=validate.Range(0, 100))))
 
