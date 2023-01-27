@@ -66,8 +66,7 @@ def concat_video(TEMP_DIR: Path, LOG_LEVEL: str, stage_id: str, slice_paths: Lis
 		"-y", "-stats", "-loglevel", LOG_LEVEL
 	]
 	
-	print()
-	cprint(f"#rConcatentating videos for `#fM{stage_id}#r`")
+	cprint(f"#rConcatenating videos for `#fM{stage_id}#r`")
 	
 	# we need to hop directories real fast to perform this function.
 	# we'll come back when we're done.

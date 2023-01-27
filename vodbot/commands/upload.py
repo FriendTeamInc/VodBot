@@ -42,14 +42,14 @@ def sort_stagedata(stagedata):
 	return (date - EPOCH).total_seconds()
 
 
-def _upload_artifact(upload_string, response_upload, getting_video=False):
+def _upload_artifact(upload_string, response_upload, getting_video=False, file_size=0):
 	video_id = "" # youtube video id
 	resp = None
 	errn = 0
 	errn_max = 10
 
 	uploaded = 0
-	totalbit = 0
+	totalbit = file_size
 
 	def print_error(f:List, secs:int = 5):
 		nonlocal errn, errn_max
@@ -139,7 +139,7 @@ def upload_video(conf: Config, service, stagedata: StageData) -> str:
 	)
 
 	cprint(f"#c#fCUploading stage video #r`#fM{stagedata.id}#r`: #fC0#fY%#r #d(0/{format_size(media_file.size())})...#r", end="\r")
-	uploaded = _upload_artifact(f"stage video #r`#fM{stagedata.id}#r`", response_upload, getting_video=True)
+	uploaded = _upload_artifact(f"stage video #r`#fM{stagedata.id}#r`", response_upload, getting_video=True, file_size=media_file._size)
 
 	try:
 		# delete vars to release the files
@@ -177,7 +177,7 @@ def upload_captions(conf: Config, service, stagedata: StageData, vid_id: str) ->
 	)
 
 	cprint(f"#c#fCUploading stage chatlog #r`#fM{stagedata.id}#r`: #fC0#fY%#r #d(0/{format_size(media_file.size())})...#r", end="\r")
-	uploaded = _upload_artifact(f"stage chatlog #r`#fM{stagedata.id}#r`", response_upload)
+	uploaded = _upload_artifact(f"stage chatlog #r`#fM{stagedata.id}#r`", response_upload, file_size=media_file._size)
 	
 	try:
 		# delete vars to release the files
@@ -207,7 +207,7 @@ def upload_thumbnail(conf: Config, service, stagedata: StageData, vid_id: str) -
 	)
 
 	cprint(f"#c#fCUploading stage thumbnail #r`#fM{stagedata.id}#r`: #fC0#fY%#r #d(0/{format_size(media_file.size())})...#r", end="\r")
-	uploaded = _upload_artifact(f"stage thumbnail #r`#fM{stagedata.id}#r`", response_upload)
+	uploaded = _upload_artifact(f"stage thumbnail #r`#fM{stagedata.id}#r`", response_upload, file_size=media_file._size)
 
 	try:
 		# delete vars to release the files
