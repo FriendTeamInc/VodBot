@@ -51,7 +51,6 @@ def _print_progress(video_id: str, futures: List[Future]) -> None:
 	downloaded_count = 0
 	downloaded_size = 0
 	existing_size = 0
-	max_msg_size = 0
 	start_time = datetime.now()
 	total_count = len(futures)
 
@@ -71,14 +70,13 @@ def _print_progress(video_id: str, futures: List[Future]) -> None:
 
 			msg = " ".join([
 				f"#fM#lVOD#r `#fM{video_id}#r` pt#fC{downloaded_count}#r/#fB#l{total_count}#r,",
-				f"#fC{format_size(downloaded_size, include_units=False)}#r/#fB#l{format_size(est_total_size)}#r"
+				f"#fC{format_size(downloaded_size, units=False)}#r/#fB#l{format_size(est_total_size)}#r"
 				f"#d({percentage:.1f}%)#r;",
 				f"at #fY~{format_size(speed)}/s#r;" if speed > 0 else "",
 				f"#fG~{format_duration(remaining)}#r left" if speed > 0 else "",
 			])
 
-			max_msg_size = max(len(msg), max_msg_size)
-			cprint("#c\r" + msg.ljust(max_msg_size), end="")
+			cprint(f"#c\r{msg}", end="")
 	except KeyboardInterrupt:
 		_, not_done = wait(futures, timeout=0)
 		for future in not_done:

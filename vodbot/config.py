@@ -65,10 +65,10 @@ class _ConfigPull:
 	# Defaults to 1024 bytes.
 	chunk_size: int = field(default=1024, metadata=config(mm_field=fields.Int(validate=validate.Range(1024))))
 	# How many times the download connection should be retried before giving up.
-	# Defaults to 5 seconds.
+	# Defaults to 5 retries.
 	connection_retries: int = field(default=5, metadata=config(mm_field=fields.Int(validate=validate.Range(1))))
 	# Seconds before the download connection should time out and should be tried again.
-	# Defaults to 5 retries.
+	# Defaults to 5 seconds.
 	connection_timeout: float = field(default=5, metadata=config(mm_field=fields.Float(validate=validate.Range(1))))
 
 	# Below is some flags and info for using the official V5 API over the private GQL API where

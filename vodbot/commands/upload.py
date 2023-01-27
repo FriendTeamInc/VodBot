@@ -25,7 +25,7 @@ from typing import List
 from httplib2.error import HttpLib2Error, HttpLib2ErrorWithResponse
 
 from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import build
+from googleapiclient.discovery import build, Resource
 from googleapiclient.http import MediaFileUpload
 from googleapiclient.errors import HttpError, ResumableUploadError
 from google.auth.transport.requests import Request
@@ -42,14 +42,13 @@ def sort_stagedata(stagedata):
 	return (date - EPOCH).total_seconds()
 
 
-def _upload_artifact(upload_string, response_upload, getting_video=False, file_size=0):
+def _upload_artifact(upload_string, response_upload, getting_video=False, filesize=0):
 	video_id = "" # youtube video id
 	resp = None
 	errn = 0
 	errn_max = 10
 
 	uploaded = 0
-	totalbit = file_size
 
 	def print_error(f:List, secs:int = 5):
 		nonlocal errn, errn_max
@@ -63,12 +62,12 @@ def _upload_artifact(upload_string, response_upload, getting_video=False, file_s
 
 			progress = status.progress()*100 if status else 100
 			uploaded = status.resumable_progress if status else uploaded
-			totalbit = status.total_size if status else totalbit
+			# filesize = status.total_size if status else filesize
 			if not status:
-				uploaded = totalbit
+				uploaded = filesize
 			
-			su = format_size(uploaded, include_units=False)
-			st = format_size(totalbit)
+			su = format_size(uploaded, units=False)
+			st = format_size(filesize)
 			sp = f"#d({su}/{st})...#r"
 			cprint(f"#c#fCUploading {upload_string}: #fC{progress:.1f}#fY%#r {sp}", end='\r')
 
@@ -103,7 +102,7 @@ def _upload_artifact(upload_string, response_upload, getting_video=False, file_s
 		return True
 
 
-def upload_video(conf: Config, service, stagedata: StageData) -> str:
+def upload_video(conf: Config, service: Resource, stagedata: StageData) -> str:
 	tmpfile = None
 	try:
 		tmpfile = vbvid.process_stage(conf, stagedata)
@@ -138,8 +137,10 @@ def upload_video(conf: Config, service, stagedata: StageData) -> str:
 		media_body=media_file
 	)
 
-	cprint(f"#c#fCUploading stage video #r`#fM{stagedata.id}#r`: #fC0#fY%#r #d(0/{format_size(media_file.size())})...#r", end="\r")
-	uploaded = _upload_artifact(f"stage video #r`#fM{stagedata.id}#r`", response_upload, getting_video=True, file_size=media_file._size)
+	filesize = media_file.size()
+
+	cprint(f"#c#fCUploading stage video #r`#fM{stagedata.id}#r`: #fC0#fY%#r #d(0/{format_size(filesize)})...#r", end="\r")
+	uploaded = _upload_artifact(f"stage video #r`#fM{stagedata.id}#r`", response_upload, getting_video=True, filesize=filesize)
 
 	try:
 		# delete vars to release the files
@@ -153,7 +154,7 @@ def upload_video(conf: Config, service, stagedata: StageData) -> str:
 	return uploaded
 
 
-def upload_captions(conf: Config, service, stagedata: StageData, vid_id: str) -> bool:
+def upload_captions(conf: Config, service: Resource, stagedata: StageData, vid_id: str) -> bool:
 	tmpfile = vbchat.process_stage(conf, stagedata, "upload")
 
 	if not tmpfile:
@@ -176,8 +177,10 @@ def upload_captions(conf: Config, service, stagedata: StageData, vid_id: str) ->
 		media_body=media_file
 	)
 
-	cprint(f"#c#fCUploading stage chatlog #r`#fM{stagedata.id}#r`: #fC0#fY%#r #d(0/{format_size(media_file.size())})...#r", end="\r")
-	uploaded = _upload_artifact(f"stage chatlog #r`#fM{stagedata.id}#r`", response_upload, file_size=media_file._size)
+	filesize = media_file.size()
+
+	cprint(f"#c#fCUploading stage chatlog #r`#fM{stagedata.id}#r`: #fC0#fY%#r #d(0/{format_size(filesize)})...#r", end="\r")
+	uploaded = _upload_artifact(f"stage chatlog #r`#fM{stagedata.id}#r`", response_upload, filesize=filesize)
 	
 	try:
 		# delete vars to release the files
@@ -191,7 +194,7 @@ def upload_captions(conf: Config, service, stagedata: StageData, vid_id: str) ->
 	return uploaded
 
 
-def upload_thumbnail(conf: Config, service, stagedata: StageData, vid_id: str) -> bool:
+def upload_thumbnail(conf: Config, service: Resource, stagedata: StageData, vid_id: str) -> bool:
 	tmpfile = vbthumbnail.generate_thumbnail(conf, stagedata)
 
 	if not tmpfile:
@@ -206,8 +209,10 @@ def upload_thumbnail(conf: Config, service, stagedata: StageData, vid_id: str) -
 		media_body=media_file
 	)
 
-	cprint(f"#c#fCUploading stage thumbnail #r`#fM{stagedata.id}#r`: #fC0#fY%#r #d(0/{format_size(media_file.size())})...#r", end="\r")
-	uploaded = _upload_artifact(f"stage thumbnail #r`#fM{stagedata.id}#r`", response_upload, file_size=media_file._size)
+	filesize = media_file.size()
+
+	cprint(f"#c#fCUploading stage thumbnail #r`#fM{stagedata.id}#r`: #fC0#fY%#r #d(0/{format_size(filesize)})...#r", end="\r")
+	uploaded = _upload_artifact(f"stage thumbnail #r`#fM{stagedata.id}#r`", response_upload, filesize=filesize)
 
 	try:
 		# delete vars to release the files
@@ -268,7 +273,7 @@ def run(args):
 
 	cprint("Authenticating with Google...", end=" ")
 
-	service = None
+	service: Resource = None
 	creds = None
 
 	if os_exists(SESSION_FILE):
