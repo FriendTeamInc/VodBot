@@ -27,7 +27,7 @@ class FailedToCleanUp(VideoFailure):
 
 def slice_video(TEMP_DIR: Path, LOG_LEVEL: str, vslice: VideoSlice, REDIRECT: Path, i: int, total: int) -> Path:
 	tmpfile = TEMP_DIR / f"{vslice.video_id}={i}.mp4"
-	cprint(f"#rSlicing stage part ({i}/{total}) `#fM{vslice.video_id}#r` #d({vslice.ss} - {vslice.to})#r")
+	cprint(f"#rSlicing stage part ({i+1}/{total}) `#fM{vslice.video_id}#r` #d({vslice.ss} - {vslice.to})#r")
 
 	cmd = [ "ffmpeg", "-hide_banner", "-ss", vslice.ss ]
 
