@@ -142,6 +142,7 @@ def exit_prog(code=0, errmsg=None):
 	from .webhook import send_error
 
 	# exit
+	# extra print necessary if we're in the middle of something with no newline
 	print()
 	if code != 0:
 		msg = f"#r#fR#lERROR! #fY#l({code})#r"

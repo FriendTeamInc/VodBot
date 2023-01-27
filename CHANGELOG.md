@@ -1,3 +1,13 @@
+# v1.1.2 - Printing Press (January 27, 2023) - WORK IN PROGRESS
+* Fixed an issue with thumbnail video ID selection crashing.
+* Fixed an issue with thumbnail video ID selection not exiting when it should with certain values.
+* Added a shortcut to skip thumbnail video ID selection if all video IDs match the first one.
+* Fixed head order and position in thumbnails not being properly accounted for.
+* Optimized the processing of heads in thumbnails.
+* Added a warning for out-of-bounds head orders.
+* Fixed an issue where upload sizes would not display if chunk_size was set larger than the uploaded file's size.
+* Removed some outdated/unnecessary print statements.
+
 # v1.1.1 - Super Hotfix (January 21, 2023)
 * Fixed an issue with the `vodbot init` command failing.
 * Added `oauth_port` field to upload configuration section, for dictating what port the local OAuth server should use when logging into Google services.

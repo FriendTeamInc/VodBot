@@ -308,8 +308,7 @@ def check_streamers(default=None, conf_users=[]) -> List[str]:
 			if i > 999:
 				break
 			cprint(f"#d {i}.{name} |#r", end="")
-		cprint()
-		cprint("#dEnter numbers for quick adding, enter the usernames manually, or nothing for the default.#r")
+		cprint("\n#dEnter numbers for quick adding, enter the usernames manually, or nothing for the default.#r")
 
 	while not streamers:
 		streamers = input(colorize(f"#fW#lWho was in the VOD#r #d(default `{', '.join(default)}`, csv)#r: "))
@@ -419,7 +418,7 @@ def check_thumbnail_heads(possible_heads: Dict[str, _ConfigThumbnailIcon]) -> Li
 	cprint("#dHEADS:#r", end="")
 	for i, name in enumerate(indexed_heads):
 		cprint(f"#d {i}.{name} |#r", end="")
-	cprint()
+	print()
 
 	while not heads:
 		finalheads = []
@@ -448,7 +447,7 @@ def check_thumbnail_game(possible_games: Dict[str, _ConfigThumbnailIcon]) -> str
 	cprint("#dGAMES:#r", end="")
 	for i, name in enumerate(indexed_games):
 		cprint(f"#d {i}. {name} |#r", end="")
-	cprint()
+	print()
 
 	while not game:
 		game = input(colorize(f"#fW#lEnter the index of the game you want in the thumbnail#r: "))
@@ -479,13 +478,13 @@ def check_thumbnail_vid_id(possible_slices: List[VideoSlice]) -> int:
 
 	# shortcut for single slice streams
 	if (len(possible_slices) == 1 or
-	   any(x.video_id == possible_slices[0].video_id for x in possible_slices)):
+	   all(x.video_id == possible_slices[0].video_id for x in possible_slices)):
 		return 0
 
 	cprint("#dVIDEOS:#r", end="")
 	for i, name in enumerate(possible_slices):
 		cprint(f"#d {i}. {name.video_id}#r", end="")
-	cprint()
+	print()
 
 	while not vid:
 		vid = input(colorize(f"#fW#lEnter the index of the video you want to grab a screenshot from for the thumbnail#r: "))

@@ -95,7 +95,7 @@ def _upload_artifact(upload_string, response_upload, getting_video=False, file_s
 			return None
 	
 	# extra newline when done
-	cprint()
+	print()
 	
 	if getting_video:
 		return video_id
