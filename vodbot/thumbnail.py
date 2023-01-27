@@ -70,11 +70,10 @@ def generate_thumbnail(conf: Config, stage: StageData) -> Path:
 	# heads
 	# only produce heads if heads are configured correctly and data for it exists in the stage
 	if conf.thumbnail.heads and conf.thumbnail.head_positions and stage.thumbnail.heads and conf.thumbnail.head_order:
-		for i in conf.thumbnail.head_order:
-			if i >= len(stage.thumbnail.heads):
-				continue
-			head = conf.thumbnail.heads[stage.thumbnail.heads[i]]
-			head_pos = conf.thumbnail.head_positions[i]
+		for i, h in enumerate(stage.thumbnail.heads):
+			head = conf.thumbnail.heads[h]
+			# TODO: check this value
+			head_pos = conf.thumbnail.head_positions[conf.thumbnail.head_order[i]]
 			head_path = conf.directories.thumbnail / head.filepath
 			hs = head.s * head_pos.s
 			hx = int(head_pos.x - ((head_pos.ox + head.ox) * hs))
@@ -85,7 +84,7 @@ def generate_thumbnail(conf: Config, stage: StageData) -> Path:
 			tn.alpha_composite(hi, (hx, hy))
 			hi.close()
 			# TODO: remove this debug print later
-			print(stage.thumbnail.heads[i], hx, hy, hs, head_pos.x, head_pos.ox, head.ox,  head_pos.y, head_pos.oy, head.oy)
+			print(i, stage.thumbnail.heads[i], conf.thumbnail.head_order[i], hx, hy, hs, head_pos.x, head_pos.ox, head.ox,  head_pos.y, head_pos.oy, head.oy)
 
 	# game
 	# only produce game if games are configured and data for it exists in the stage
