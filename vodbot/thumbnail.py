@@ -84,6 +84,8 @@ def generate_thumbnail(conf: Config, stage: StageData) -> Path:
 			hi = hi.resize((int(hi.size[0]*hs), int(hi.size[1]*hs)), Image.BICUBIC)
 			tn.alpha_composite(hi, (hx, hy))
 			hi.close()
+			# TODO: remove this debug print later
+			print(stage.thumbnail.heads[i], hx, hy, hs, head_pos.x, head_pos.ox, head.ox,  head_pos.y, head_pos.oy, head.oy)
 
 	# game
 	# only produce game if games are configured and data for it exists in the stage
