@@ -482,7 +482,7 @@ def check_thumbnail_vid_id(possible_slices: List[VideoSlice]) -> int:
 		return 0
 
 	cprint("#dVIDEOS:#r", end="")
-	for i, name in enumerate(possible_slices.keys()):
+	for i, name in enumerate(possible_slices):
 		cprint(f"#d {i}. {name.video_id}#r", end="")
 	cprint()
 
