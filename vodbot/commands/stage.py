@@ -478,7 +478,8 @@ def check_thumbnail_vid_id(possible_slices: List[VideoSlice]) -> int:
 	vid = ""
 
 	# shortcut for single slice streams
-	if len(possible_slices) == 1:
+	if (len(possible_slices) == 1 or
+	   any(x.video_id == possible_slices[0].video_id for x in possible_slices)):
 		return 0
 
 	cprint("#dVIDEOS:#r", end="")
@@ -492,6 +493,7 @@ def check_thumbnail_vid_id(possible_slices: List[VideoSlice]) -> int:
 		try:
 			vid = int(vid)
 			_ = possible_slices[vid]
+			break
 		except (ValueError, IndexError) as _:
 			cprint(f"#l#fRVideo index must be a number between 0 and {len(possible_slices)-1} (inclusive)!#r")
 			vid = ""
