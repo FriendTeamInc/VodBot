@@ -236,11 +236,13 @@ def _download_credentials(conf: Config) -> None:
 	try:
 		r = requests.get(CLIENT_FILE_URL)
 		r.raise_for_status()
-		decoded = base64.b64decode(r.content)
+		decoded = base64.b64decode(r.content, validate=True)
 		with open(CLIENT_FILE, "wb") as f:
 			f.write(decoded)
 	except (requests.HTTPError, requests.ConnectionError, requests.Timeout, requests.TooManyRedirects) as e:
 		exit_prog(13, f"Failed to GET credentials from url `{conf.upload.client_url}`, error: \n{e}")
+	except base64.binascii.Error as e:
+		exit_prog(13, f"Failed to decode downloaded credentials, error: \n{e}")
 	except IOError as e:
 		exit_prog(13, f"Failed to write credentials to path `{conf.upload.client_path}`, error: \n{e}")
 	except Exception as e:
@@ -260,6 +262,9 @@ def get_credentials(conf:Config, SCOPES:List[str]) -> Credentials:
 
 	flow = InstalledAppFlow.from_client_secrets_file(CLIENT_FILE, SCOPES)
 	creds = flow.run_local_server(port=conf.upload.oauth_port)
+
+	# add a check to the above functions for if the credentials are invalid.
+	# should also add a flag for if they were already downloaded so we can shortcut to an error that the new credentials are already bad and delete them
 
 	return creds
 
