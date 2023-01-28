@@ -15,6 +15,8 @@ from vodbot.printer import cprint
 from vodbot.config import Config
 from vodbot.webhook import init_webhooks, send_upload_error, send_upload_video, send_upload_job_done
 
+import base64
+import requests
 import json
 from datetime import datetime
 from os import remove as os_remove
@@ -226,6 +228,41 @@ def upload_thumbnail(conf: Config, service: Resource, stagedata: StageData, vid_
 	return uploaded
 
 
+def _download_credentials(conf: Config) -> None:
+	CLIENT_FILE = conf.upload.client_path
+	CLIENT_FILE_URL = conf.upload.client_url
+
+	# download the credentials
+	try:
+		r = requests.get(CLIENT_FILE_URL)
+		r.raise_for_status()
+		decoded = base64.b64decode(r.content)
+		with open(CLIENT_FILE, "wb") as f:
+			f.write(decoded)
+	except (requests.HTTPError, requests.ConnectionError, requests.Timeout, requests.TooManyRedirects) as e:
+		exit_prog(13, f"Failed to GET credentials from url `{conf.upload.client_url}`, error: \n{e}")
+	except IOError as e:
+		exit_prog(13, f"Failed to write credentials to path `{conf.upload.client_path}`, error: \n{e}")
+	except Exception as e:
+		exit_prog(13, f"Unknown exception occurred, error: \n{e}")
+
+
+def get_credentials(conf:Config, SCOPES:List[str]) -> Credentials:
+	CLIENT_FILE = conf.upload.client_path
+
+	if not CLIENT_FILE.is_file():
+		if CLIENT_FILE.exists():
+			exit_prog(12, f"Something that isn't a file exists at `{CLIENT_FILE}` and should be removed.")
+		else:
+			_download_credentials(conf)
+
+	creds = None
+
+	flow = InstalledAppFlow.from_client_secrets_file(CLIENT_FILE, SCOPES)
+	creds = flow.run_local_server(port=conf.upload.oauth_port)
+
+	return creds
+
 def run(args):
 	# load config
 	conf = load_conf(args.config)
@@ -284,11 +321,9 @@ def run(args):
 			if creds and creds.expired and creds.refresh_token:
 				creds.refresh(Request())
 			else:
-				flow = InstalledAppFlow.from_client_secrets_file(CLIENT_FILE, SCOPES)
-				creds = flow.run_local_server(port=conf.upload.oauth_port)
+				creds = get_credentials(conf, SCOPES)
 		except RefreshError:
-			flow = InstalledAppFlow.from_client_secrets_file(CLIENT_FILE, SCOPES)
-			creds = flow.run_local_server(port=conf.upload.oauth_port)
+			creds = get_credentials(conf, SCOPES)
 		
 		with open(SESSION_FILE, "w") as f:
 			f.write(creds.to_json())
