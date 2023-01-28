@@ -1,11 +1,11 @@
-# v1.1.2 - Printing Press (January 27, 2023) - WORK IN PROGRESS
+# v1.1.2 - Printing Press (January 27, 2023)
 * Fixed an issue with thumbnail video ID selection crashing.
 * Fixed an issue with thumbnail video ID selection not exiting when it should with certain values.
 * Added a shortcut to skip thumbnail video ID selection if all video IDs match the first one.
 * Fixed head order and position in thumbnails not being properly accounted for.
 * Optimized the processing of heads in thumbnails.
 * Added a warning for out-of-bounds head orders.
-* Fixed an issue where upload sizes would not display if upload chunk_size was set larger than the uploaded file's size.
+* Fixed an issue where upload sizes would not display if upload chunk_size was set larger than the uploaded file's size, and removed some unnecessary extra variables for the process.
 * Removed some outdated/unnecessary print statements.
 * Added fields `max_workers`, `chunk_size`, `connection_retries`, and `connection_timeout` to the pull configuration section, for dictating how the worker threads pull VOD segments.
 
