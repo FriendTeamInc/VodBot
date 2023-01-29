@@ -1,3 +1,7 @@
+# v1.1.5 - Untitled Update (Date Unknown) (Work In Progress)
+* Fixed an issue with chat log display duration moving chat messages backward in time.
+* Fixed an issue with video exports crashing VodBot when videos were not present.
+
 # v1.1.4 - Quick Fix 3 (January 28, 2023)
 * Fixed an issue with exporting individual staged data.
 	* Note: this was also stupid.
