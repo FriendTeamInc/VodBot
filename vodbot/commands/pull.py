@@ -162,7 +162,7 @@ def run(args):
 			# download clip
 			if conf.pull.save_clips and channel.save_clips:
 				try:
-					itd_dl.dl_clip(clip, filename)
+					itd_dl.dl_clip(conf, clip, filename)
 				except itd_work.DownloadFailed:
 					cprint(f"#fR#lClip `{clip.slug}` ({clip.id}) download failed! Skipping...#r")
 					send_pull_error(f'Failed to download Clip file for `{clip.slug}` ({clip.id}). Clip has been skipped.', clip.url)

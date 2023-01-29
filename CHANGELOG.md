@@ -1,3 +1,7 @@
+# v1.1.3 - Quick Fix Team Fortress 2 (January 28, 2023)
+* Fixed an issue with clip downloading crashing VodBot due to missing function arguments.
+	* Note: this was stupid.
+
 # v1.1.2 - Printing Press (January 27, 2023)
 * Fixed an issue with thumbnail video ID selection crashing.
 * Fixed an issue with thumbnail video ID selection not exiting when it should with certain values.

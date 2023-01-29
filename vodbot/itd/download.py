@@ -108,7 +108,7 @@ def dl_video_chat(video: Vod, path: str):
 	cprint(f"\r#fM#lVOD Chat#r `#fM{video_id}#r` (100%); Done, now to write... Done")
 
 
-def dl_clip(clip: Clip, path: str):
+def dl_clip(conf: Config, clip: Clip, path: str):
 	clip_slug = clip.slug
 	clip_id = clip.id
 
@@ -116,7 +116,7 @@ def dl_clip(clip: Clip, path: str):
 	source_url = gql.get_clip_source(clip_slug)
 
 	# Download file to path
-	size, _existed = worker.download_file(source_url, path)
+	size, _ = worker.download_file(source_url, path, conf.pull.connection_retries, conf.pull.connection_timeout, conf.pull.chunk_size)
 
 	# Print progress
 	cprint(f"#fM#lClip#r `#fM{clip_slug}#r` ({clip_id}) #fB#l{format_size(size)}#r")
