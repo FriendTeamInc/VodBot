@@ -13,7 +13,7 @@ from typing import List
 class VideoFailure(Exception):
 	def __init__(self, video_id:str="unknown") -> None:
 		self.video_id = video_id
-		super().__init__(self.vid)
+		super().__init__(self.video_id)
 
 class FailedToSlice(VideoFailure):
 	pass
