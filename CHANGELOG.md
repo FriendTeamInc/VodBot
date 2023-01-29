@@ -1,3 +1,7 @@
+# v1.1.4 - Quick Fix 3 (January 28, 2023)
+* Fixed an issue with exporting individual staged data.
+	* Note: this was also stupid.
+
 # v1.1.3 - Quick Fix Team Fortress 2 (January 28, 2023)
 * Fixed an issue with clip downloading crashing VodBot due to missing function arguments.
 	* Note: this was stupid.

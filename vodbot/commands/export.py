@@ -65,7 +65,7 @@ def run(args):
 		stagedatas = StageData.load_all_stages(STAGE_DIR)
 		stagedatas.sort(key=sort_stagedata)
 	else:
-		stagedatas = [StageData.load_from_id(args.id)]
+		stagedatas = [StageData.load_from_id(STAGE_DIR, args.id)]
 	
 	fin_vids = 0
 	for stage in stagedatas:
