@@ -2,6 +2,7 @@
 * Fixed an issue with chat log display duration moving chat messages backward in time.
 * Fixed an issue with video exports crashing VodBot when videos were not present.
 * Fixed a crash with downloading videos due to an old variable.
+* Fixed a crash when declaring streamers in stage arguments.
 
 # v1.1.4 - Quick Fix 3 (January 28, 2023)
 * Fixed an issue with exporting individual staged data.
