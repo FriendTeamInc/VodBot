@@ -41,7 +41,6 @@ def dl_video(conf: Config, video: Vod, path: str):
 	TEMP_DIR = conf.directories.temp
 	LOG_LEVEL = conf.export.ffmpeg_loglevel
 	REDIRECT = conf.export.ffmpeg_stderr
-	MAX_WORKERS = conf.pull.MAX_WORKERS
 
 	video_id = video.id
 
