@@ -298,11 +298,11 @@ def run(args):
 	except Exception as err:
 		exit_prog(50, f"Failed to connect to YouTube API, \"{err}\".")
 	
-	cprint("Authenticated.", end=" ")
+	cprint("done.", end=" ")
 	
 	# begin to upload
 	finished_jobs = 0
-	cprint(f"About to upload {len(stagedatas)} stage(s).#r")
+	cprint(f"About to upload {len(stagedatas)} stage(s)...#r")
 	for stage in stagedatas:
 		video_id = upload_video(conf, service, stage)
 		if video_id is not None:
