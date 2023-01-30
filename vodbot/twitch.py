@@ -198,10 +198,12 @@ def get_channel_vods(channel: Channel) -> List[Vod]:
 	vods = []
 	pagination = ""
 	while True:
+		# get videos of multiple types
+		# past streams = ARCHIVE, segments = HIGHLIGHT, upload = UPLOAD, premiere = PAST_PREMIERE
 		query = gql.GET_CHANNEL_VIDEOS_QUERY.format(
 			channel_id=channel.login,
 			after=pagination, first=100,
-			type="ARCHIVE", sort="TIME"
+			type="[ARCHIVE,HIGHLIGHT,UPLOAD,PAST_PREMIERE]", sort="TIME"
 		)
 		resp = gql.gql_query(query=query).json()["data"]["user"]["videos"]
 
@@ -214,8 +216,9 @@ def get_channel_vods(channel: Channel) -> List[Vod]:
 			v = vod["node"]
 			c, g, b, s = v["creator"], v["game"], v["broadcastType"], v["status"]
 
-			if b == "ARCHIVE" and s == "RECORDING":
-				# This broadcast is currently live, we need to skip it.
+			# This video is still be processed (or is live) and it must be skipped.
+			# if b == "ARCHIVE" and s == "RECORDING":
+			if s != "RECORDED":
 				continue
 
 			game_id = game_name = ""
