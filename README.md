@@ -7,7 +7,6 @@ VodBot is command line VOD and Clip manager for Twitch. Vodbot can:
 * Slice and splice videos downloaded into instances of staged data.
 * Export staged data, one at a time or all at once, with chat logs as subtitles synced with the video and programmatically generated thumbnails.
 * Upload staged data, one at a time or all at once, to YouTube with chat logs as subtitles synced with the video and programmatically generated thumbnails.
-	* NOTE: Requires approval and credentials from Google, for now just use export and upload the video manually.
 * Bash tab completion, for quickly putting in commands and referencing saved videos or staged data.
     * NOTE: Available through the argcomplete package, see its repo for more details. Requires `eval "$(register-python-argcomplete vodbot)"` to be placed in an appropriate location such as `~/.bashrc` after installation.
 * Send webhooks to Discord to help you keep tabs on what VodBot is up to.

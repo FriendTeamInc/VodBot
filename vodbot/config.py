@@ -160,6 +160,8 @@ class _ConfigUpload:
 	thumbnail_enable: bool = True
 	# Path for client JSON, the credentials needed for using the YouTube API.
 	client_path: Path = field(default=DEFAULT_CONFIG_DIRECTORY/"yt-client.json", metadata=_path_field_config)
+	# URL for getting the YouTube credentials for uploading.
+	client_url: str = field(default="https://www.friendteam.biz/assets/vodbot-youtube-credentials")
 	# Path for session JSON, the "cookies" for the logged-in YouTube account to upload videos to.
 	session_path: Path = field(default=DEFAULT_CONFIG_DIRECTORY/"yt-session.json", metadata=_path_field_config)
 	# Size of chunks of uploaded data in bytes, with a minimum of 262144. It's recommended that this
