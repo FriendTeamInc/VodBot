@@ -1,9 +1,12 @@
 # v1.1.5 - Untitled Update (Date Unknown) (Work In Progress)
+* Allow videos of all types beyond just archived streams to be downloaded as VODs.
+	* This will be separated out into different types in a later update, but for now videos such as highlights, uploads, and premieres are treated as VODs.
 * Fixed an issue with chat log display duration moving chat messages backward in time.
+* Fixed an issue with chat logs not appearing if they were too close (relative to display duration) to the end of the video.
 * Fixed an issue with video exports crashing VodBot when videos were not present.
 * Fixed a crash with downloading videos due to an old variable.
 * Fixed a crash when declaring streamers in stage arguments.
-* Allow videos of all types beyond just archived streams to be downloaded as VODs.
+* Fixed a rare crash when attempting to locate videos not in the cache.
 
 # v1.1.4 - Quick Fix 3 (January 28, 2023)
 * Fixed an issue with exporting individual staged data.
