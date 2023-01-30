@@ -352,6 +352,7 @@ def run(args):
 	# begin to upload
 	finished_jobs = 0
 	cprint(f"#dAbout to upload {len(stagedatas)} stage(s).#r")
+  
 	for stage in stagedatas:
 		video_id = upload_video(conf, service, stage)
 		if video_id is not None:

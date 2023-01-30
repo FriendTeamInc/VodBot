@@ -45,7 +45,7 @@ def gql_query(query=None, data=None):
 # Channel VODs query
 GET_CHANNEL_VIDEOS_QUERY = """
 {{  user(login: "{channel_id}") {{
-		videos( first: {first}, type: {type}, sort: {sort}, after: "{after}" ) {{
+		videos( first: {first}, sort: {sort}, after: "{after}" ) {{
 			totalCount
 			edges {{ cursor
 				node {{ id title

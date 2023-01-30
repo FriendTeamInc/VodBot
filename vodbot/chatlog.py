@@ -94,15 +94,20 @@ def chat_to_listwithbounds(msgs: List[ChatMessage], vid_duration:int, msg_durati
 	# First we run through all the messages and see what needs showing and what doesn't
 	chat_lists = []
 	# this is so cursed
+	# we walk through each second and check if a message should be displayed during its duration on screen
 	last_msgs: List[ChatMessage] = []
 	for t in range(vid_duration):
 		current_msgs: List[ChatMessage] = []
 		for m in msgs:
-			if t <= m.offset < t+msg_duration:
+			if t < m.offset or m.offset+msg_duration < t:
+				# time is before the offset OR
+				# time is after the offset plus its screen duration
+				continue
+			# elif m.offset <= t <= m.offset+msg_duration:
+			else:
 				current_msgs.append(m)
-			elif m.offset >= t+msg_duration:
-				break
 		
+		# check if the messages we need to display has changed
 		if current_msgs != last_msgs:
 			# write line and overwrite last_msgs
 			last_msgs = current_msgs
@@ -192,7 +197,6 @@ def chat_to_ytt(conf: Config, msgs: List[ChatMessage], path: str, vid_duration:i
 def process_stage(conf: Config, stage: StageData, mode:str) -> Path:
 	tempdir = Path(conf.directories.temp)
 
-	#cprint(f"#rLoading all chat messages for `#fM{stage.id}#r`.", end="")
 	total_offset = 0
 	chat_list = []
 	for slc in stage.slices:
@@ -223,15 +227,12 @@ def process_stage(conf: Config, stage: StageData, mode:str) -> Path:
 
 	# determine how to export, then return the resultant path
 	if mode != "upload" and mode != "export":
-		util.exit_prog(94, f"Cannot export chat with export mode {mode}")
+		util.exit_prog(94, f"Cannot export chat with export mode {mode}.")
 	
 	export_type = conf.chat.export_format if mode != "upload" else "YTT"
 
 	if len(chat_list) == 0:
-		#cprint(f" No chat found in `#fM{stage.id}#r` stage. Skipping...")
 		return None
-
-	#cprint(f" Exporting as format `#fY{export_type}#r`.")
 
 	returnpath = None
 	if export_type == "raw":

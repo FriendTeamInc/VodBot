@@ -196,7 +196,7 @@ def find_video_by_id(vid_id, conf: Config, cache: Cache):
 					with open(folder / f"{vid_id}.meta") as f:
 						metajson = json.load(f)
 					filename = folder / f"{metajson['created_at']}_{metajson['id']}.mkv".replace(":", ";")
-					return (filename, metajson, "VOD" if dir_t[1] == voddir else "Clip")
+					return (filename, metajson) #, "VOD" if dir_t[1] == voddir else "Clip")
 				except FileNotFoundError:
 					pass
 				except ValueError:
@@ -529,14 +529,14 @@ def _new(args, conf: Config, cache: Cache):
 		for f in videos:
 			if f["meta"]["user_login"] not in default_streamers:
 				default_streamers.append(f["meta"]["user_login"])
-		args.streamers = check_streamers(default=default_streamers, conf_users=[chan.username for chan in conf.channels])
+		args.streamer = check_streamers(default=default_streamers, conf_users=[chan.username for chan in conf.channels])
 
 	# get title
 	if not args.title:
 		args.title = check_title(default=None)
 
 	# get description
-	formatdict, datestring = create_format_dict(conf, args.streamers, utcdate=metadata["created_at"])
+	formatdict, datestring = create_format_dict(conf, args.streamer, utcdate=metadata["created_at"])
 	args.desc = check_description(formatdict, inputdefault=args.desc)
 
 	# get timestamps for each video through input
@@ -642,10 +642,10 @@ def _new(args, conf: Config, cache: Cache):
 		tn = ThumbnailData(heads=heads, game=game, text=text, video_slice_id=vid_id, timestamp=timestamp)
 
 	# make stage object
-	stage = StageData(streamers=args.streamers, title=args.title, desc=args.desc, datestring=datestring, slices=slices, thumbnail=tn)
+	stage = StageData(streamers=args.streamer, title=args.title, desc=args.desc, datestring=datestring, slices=slices, thumbnail=tn)
 	# Check that new "id" does not collide
 	while check_stage_id(stage.id, STAGE_DIR):
-		stage = StageData(streamers=args.streamers, title=args.title, desc=args.desc, datestring=datestring, slices=slices, thumbnail=tn)
+		stage = StageData(streamers=args.streamer, title=args.title, desc=args.desc, datestring=datestring, slices=slices, thumbnail=tn)
 
 	# shorter file name
 	#shortfile = stage.filename.replace(VODS_DIR, "$vods").replace(CLIPS_DIR, "$clips")

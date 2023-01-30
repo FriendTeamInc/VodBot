@@ -19,7 +19,7 @@ from shutil import move as shutil_move
 
 DISALLOWED_CHARACTERS = [
 	"/", "\\", "<", ">", ":",
-	"\"", "|", "?", "*"
+	"\"", "\'", "|", "?", "*"
 ]
 
 
@@ -30,20 +30,27 @@ def sort_stagedata(stagedata):
 
 
 def handle_stage(conf: Config, stage: StageData) -> Path:
+	# handle not having videos to process
+	if not all(Path(x.filepath).is_file() for x in stage.slices):
+		lost_vids = [x.video_id for x in stage.slices if Path(x.filepath).is_file()]
+		cprint(f"#d#fYWARN: Skipping stage video `{stage.id}`, failed to find video(s) with ID(s) of `{lost_vids}`.#r")
+		send_export_error(f'For stage video "{stage.id}", failed to find video(s) with ID(s) "{lost_vids}".')
+		return None
+
 	tmpfile = None
 	try:
 		tmpfile = vbvid.process_stage(conf, stage)
 	except vbvid.FailedToSlice as e:
-		cprint(f"#r#fRSkipping stage `{stage.id}`, failed to slice video with ID of `{e.video_id}`.#r\n")
-		send_export_error(f'For stage "{stage.id}", failed to slice video with ID "{e.video_id}".')
+		cprint(f"#d#fYWARN: Skipping stage video `{stage.id}`, failed to slice video with ID of `{e.video_id}`.#r")
+		send_export_error(f'For stage video "{stage.id}", failed to slice video with ID "{e.video_id}".')
 		return None
 	except vbvid.FailedToConcat:
-		cprint(f"#r#fRSkipping stage `{stage.id}`, failed to concatenate videos.#r\n")
-		send_export_error(f'For stage "{stage.id}", failed to concatenate videos.')
+		cprint(f"#d#fYWARN: Skipping stage video `{stage.id}`, failed to concatenate videos.#r")
+		send_export_error(f'For stage video "{stage.id}", failed to concatenate videos.')
 		return None
 	except vbvid.FailedToCleanUp as e:
-		cprint(f"#r#fRSkipping stage `{stage.id}`, failed to clean up temporary files.#r\n\n{e.vid}")
-		send_export_error(f'For stage "{stage.id}", failed to clean up temporary files.')
+		cprint(f"#d#fYWARN: Skipping stage video `{stage.id}`, failed to clean up temporary files.#r\n{e.video_id}")
+		send_export_error(f'For stage video "{stage.id}", failed to clean up temporary files.')
 		return None
 	
 	return tmpfile
@@ -65,7 +72,7 @@ def run(args):
 		stagedatas = StageData.load_all_stages(STAGE_DIR)
 		stagedatas.sort(key=sort_stagedata)
 	else:
-		stagedatas = [StageData.load_from_id(args.id)]
+		stagedatas = [StageData.load_from_id(STAGE_DIR, args.id)]
 	
 	fin_vids = 0
 	for stage in stagedatas:
