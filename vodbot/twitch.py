@@ -251,6 +251,7 @@ def get_channel_vods(channel: Channel) -> List[Vod]:
 							type=n["type"], description=n["description"],
 							position=int(n["positionMilliseconds"]/1000),
 							duration=int(n["durationMilliseconds"]/1000)
+							# its fine to do the above because twitch's precision of message timings isnt greater than seconds
 						)
 					)
 				

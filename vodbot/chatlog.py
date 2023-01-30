@@ -99,14 +99,13 @@ def chat_to_listwithbounds(msgs: List[ChatMessage], vid_duration:int, msg_durati
 	for t in range(vid_duration):
 		current_msgs: List[ChatMessage] = []
 		for m in msgs:
-			if t < m.offset:
-				# time is before the offset
-				continue
-			elif m.offset <= t <= m.offset+msg_duration:
-				current_msgs.append(m)
-			elif m.offset+msg_duration < t:
+			if t < m.offset or m.offset+msg_duration < t:
+				# time is before the offset OR
 				# time is after the offset plus its screen duration
-				break
+				continue
+			# elif m.offset <= t <= m.offset+msg_duration:
+			else:
+				current_msgs.append(m)
 		
 		# check if the messages we need to display has changed
 		if current_msgs != last_msgs:
