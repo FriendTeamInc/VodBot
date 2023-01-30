@@ -1,4 +1,7 @@
 # v1.1.5 - Untitled Update (Date Unknown) (Work In Progress)
+* YouTube credentials can now be downloaded from a remote source to allow any user to upload videos with VodBot.
+	* URL must be pointing to a file accessible with HTTP/S, and be a base64 encoded JSON provided by a Google Developer Account. Default URL points to such a file provided by Friend Team Inc.
+	* As of the release of this update, VodBot is still not a Google-approved app, causing a popup during the authentication process about how VodBot is not trusted by Google. User discretion is advised.
 * Allow videos of all types beyond just archived streams to be downloaded as VODs.
 	* This will be separated out into different types in a later update, but for now videos such as highlights, uploads, and premieres are treated as VODs.
 * Fixed an issue with chat log display duration moving chat messages backward in time.
