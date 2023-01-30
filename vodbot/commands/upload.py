@@ -246,22 +246,35 @@ def _download_credentials(conf: Config) -> None:
 	except IOError as e:
 		exit_prog(13, f"Failed to write credentials to path `{conf.upload.client_path}`, error: \n{e}")
 	except Exception as e:
-		exit_prog(13, f"Unknown exception occurred, error: \n{e}")
+		exit_prog(13, f"Unknown exception occurred when pulling YouTube credentials, error: \n{e}")
 
 
 def get_credentials(conf:Config, SCOPES:List[str]) -> Credentials:
 	CLIENT_FILE = conf.upload.client_path
+	got_new_creds = False
 
 	if not CLIENT_FILE.is_file():
 		if CLIENT_FILE.exists():
 			exit_prog(12, f"Something that isn't a file exists at `{CLIENT_FILE}` and should be removed.")
 		else:
+			cprint("#dDownloading new credentials...")
 			_download_credentials(conf)
+			got_new_creds = True
+	else:
+		cprint()
 
 	creds = None
 
-	flow = InstalledAppFlow.from_client_secrets_file(CLIENT_FILE, SCOPES)
-	creds = flow.run_local_server(port=conf.upload.oauth_port)
+	cprint("#dNOTE: If Google gives an error, you will need to exit and check `client_url` in your configuration.")
+	try:
+		flow = InstalledAppFlow.from_client_secrets_file(CLIENT_FILE, SCOPES)
+		creds = flow.run_local_server(port=conf.upload.oauth_port)
+	except KeyboardInterrupt as e:
+		# credentials were trash, we need to reset them
+		if got_new_creds:
+			cprint("#d#fYWARN: Exited during OAuth authentication with brand new credentials, deleting credentials assuming they are bad.")
+			os_remove(CLIENT_FILE)
+		raise e
 
 	# add a check to the above functions for if the credentials are invalid.
 	# should also add a flag for if they were already downloaded so we can shortcut to an error that the new credentials are already bad and delete them
@@ -309,10 +322,6 @@ def run(args):
 		# check if stage exists, and prep it for upload
 		stagedatas = [StageData.load_from_id(STAGE_DIR, args.id)]
 
-	# authenticate youtube service
-	if not os_exists(CLIENT_FILE):
-		exit_prog(19, "Missing YouTube Client ID/Secret file.")
-
 	cprint("Authenticating with Google...", end=" ")
 
 	service: Resource = None
@@ -338,11 +347,11 @@ def run(args):
 	except Exception as err:
 		exit_prog(50, f"Failed to connect to YouTube API, \"{err}\".")
 	
-	cprint("Authenticated.", end=" ")
+	cprint("done.#r")
 	
 	# begin to upload
 	finished_jobs = 0
-	cprint(f"About to upload {len(stagedatas)} stage(s).#r")
+	cprint(f"#dAbout to upload {len(stagedatas)} stage(s).#r")
 	for stage in stagedatas:
 		video_id = upload_video(conf, service, stage)
 		if video_id is not None:
