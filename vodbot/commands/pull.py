@@ -110,7 +110,8 @@ def run(args):
 	cprint("#r#dPulling videos...#r", flush=True)
 	fin_vods = fin_clips = all_vods = all_clips = 0
 	for channel in channels:
-		if len(channel.new_vods) > 0 or len(channel.new_clips) > 0:
+		if ((hasattr(channel, "new_vods") and len(channel.new_vods) > 0) or
+			(hasattr(channel, "new_clips") and len(channel.new_clips) > 0)):
 			cprint(f"Pulling videos for #fY#l{channel.display_name}#r...")
 		else:
 			continue
