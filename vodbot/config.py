@@ -138,6 +138,7 @@ class _ConfigExport:
 	# This is used to tell FFmpeg where to output the logs. It goes from FFmpeg's stderr to wherever
 	# described with this path. If no path is specified, it will be piped to /dev/null (or whatever
 	# is equivalent on your system).
+	# TODO: change this to a toggle for just silencing the output
 	ffmpeg_stderr: Path = field(default=Path(), metadata=_path_field_config)
 
 	# A simple toggle for managing whether chat is exported with a stage, if available. More

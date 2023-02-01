@@ -107,7 +107,8 @@ def run(args):
 		cprint(f"Total #fMClips#r to pull: #fC#l{totalclips}#r")
 
 	# Download all the videos we need.
-	cprint("#r#dPulling videos...#r", flush=True)
+	if totalvods > 0 or totalclips > 0:
+		cprint("#r#dPulling videos...#r", flush=True)
 	fin_vods = fin_clips = all_vods = all_clips = 0
 	for channel in channels:
 		if len(channel.new_vods) > 0 or len(channel.new_clips) > 0:

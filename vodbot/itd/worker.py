@@ -83,7 +83,8 @@ def _print_progress(video_id: str, futures: List[Future]) -> None:
 			future.cancel()
 		wait(not_done, timeout=None)
 		raise DownloadCancelled()
-
+	
+	cprint() # to go to the next line after all the printing is done.
 
 def download_files(conf:Config, video_id:str, base_url:str, target_dir:Path, vod_paths:List[str]) -> OrderedDict[str, str]:
 	urls = [base_url + path for path in vod_paths]
