@@ -151,6 +151,19 @@ class _ConfigExport:
 	thumbnail_enable: bool = True
 
 	# TODO: Hardware acceleration options
+	# Format that videos should be saved as when pulled, exported, or uploaded.
+	hwaccel_format: str = field(default="h264", metadata=config(mm_field=fields.Str(
+		validate=validate.OneOf(["h264", "hevc", "av1"]))))
+	# What kind of encoder should be used when interacting with video. Software
+	# is CPU only, the rest attempt to use available hardware. FFmpeg will fail
+	# if the encoder can't be used. AMD attempts to use AMF, Intel attempts to
+	# use QSV, and Nvidia uses NVENC and NVDEC.
+	hwaccel_encoder: str = field(default="software", metadata=config(mm_field=fields.Str(
+		validate=validate.OneOf(["software", "amd", "intel", "nvidia"]))))
+	# What kind of decoder should be used when interacting with video. Options
+	# work the same as the above field.
+	hwaccel_decoder: str = field(default="software", metadata=config(mm_field=fields.Str(
+		validate=validate.OneOf(["software", "amd", "intel", "nvidia"]))))
 
 @dataclass_json
 @dataclass
