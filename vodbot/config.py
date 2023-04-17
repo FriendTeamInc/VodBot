@@ -170,6 +170,8 @@ class _ConfigUpload:
 	chunk_size: int = field(default=262144, metadata=config(mm_field=fields.Int(validate=validate.Range(262144))))
 	# Port for the OAuth local server to run on, used for logging into Google's services.
 	oauth_port: int = field(default=8080, metadata=config(mm_field=fields.Int(validate=validate.Range(0, 65535))))
+	# Toggle for if uploaded videos should be pushed to subscription feeds and notify users of new uploads (if they have the notification bell enabled)
+	notify_subscribers: bool = True
 
 @dataclass_json
 @dataclass
