@@ -464,11 +464,10 @@ def check_thumbnail_game(possible_games: Dict[str, _ConfigThumbnailIcon]) -> str
 
 
 def check_thumbnail_text() -> str:
-	text = ""
-
-	while not text:
-		text = input(colorize(f"#fW#lEnter the text you want in the thumbnail#r: "))
-		# TODO: check text?
+	# text = ""
+	# while not text:
+	# 	# TODO: check text?
+	text = input(colorize(f"#fW#lEnter the text you want in the thumbnail#r: "))
 	
 	return text
 

@@ -101,7 +101,7 @@ class _ConfigChat:
 	ytt_align: str = field(default="left", metadata=config(mm_field=fields.Str(
 		validate=validate.OneOf(["left", "right", "center"]))))
 	# Caption anchor point, or its origin point. Can be any integer from 0 to 8.
-	# For example, 0 is top left, 4 is dead center, 8 is bottom right. Defaults to 6 (aka bottom left).
+	# For example, 0 is top left, 4 is dead center, 8 is bottom right. Defaults to 6 (bottom left).
 	ytt_anchor: int = field(default=6, metadata=config(mm_field=fields.Int(
 		validate=validate.Range(0, 8))))
 	# Position in the YouTube player that the captions appear, horizontally.
@@ -170,7 +170,8 @@ class _ConfigUpload:
 	chunk_size: int = field(default=262144, metadata=config(mm_field=fields.Int(validate=validate.Range(262144))))
 	# Port for the OAuth local server to run on, used for logging into Google's services.
 	oauth_port: int = field(default=8080, metadata=config(mm_field=fields.Int(validate=validate.Range(0, 65535))))
-	# Toggle for if uploaded videos should be pushed to subscription feeds and notify users of new uploads (if they have the notification bell enabled)
+	# Toggle for if uploaded videos should be pushed to subscription feeds and notify users of new
+	# uploads (if they have the notification bell enabled)
 	notify_subscribers: bool = True
 
 @dataclass_json
@@ -218,8 +219,9 @@ class _ConfigThumbnail:
 	# Position settings of the text.
 	text_position: _ConfigThumbnailPosition = field(default_factory=lambda: _ConfigThumbnailPosition())
 	# The specific font to use when printing text on the thumbnail.
-	# This can be a relative or absolute path. If the path is relative, then locations are checked in this order:
-	# 1. Thumbnail directory, 2. System locations, 3. Path relative to execution (not recommended for use)
+	# This can be a relative or absolute path. If the path is relative, then locations are checked
+	# in this order: 1. Thumbnail directory, 2. System locations, 3. Path relative to execution
+	# (not recommended for use)
 	text_font: str = ""
 	# The font pointsize to use when printing text on the thumbnail.
 	text_size: int = 48
