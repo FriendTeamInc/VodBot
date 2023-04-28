@@ -135,7 +135,7 @@ def upload_video(conf: Config, service: Resource, stagedata: StageData) -> str:
 	response_upload = service.videos().insert(
 		part="snippet,status",
 		body=request_body,
-		notifySubscribers=Config.upload.notify_subscribers,
+		notifySubscribers=conf.upload.notify_subscribers,
 		media_body=media_file
 	)
 
