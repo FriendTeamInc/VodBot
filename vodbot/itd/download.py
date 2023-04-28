@@ -20,9 +20,9 @@ def get_playlist_uris(video_id: str, access_token: dict):
 	"""
 	Grabs the URI's for accessing each of the video chunks.
 	"""
-	url = f"http://usher.twitch.tv/vod/{video_id}"
+	url = f"http://usher.ttvnw.net/vod/{video_id}"
 
-	resp = requests.get(url, params={
+	resp = requests.get(url, timeout=5, params={
 		"nauth": access_token['value'],
 		"nauthsig": access_token['signature'],
 		"allow_source": "true",
