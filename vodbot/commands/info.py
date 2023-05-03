@@ -7,6 +7,10 @@ from vodbot import util
 from vodbot.itd import gql
 
 PATTERNS = {
+	"channel": [
+		r"^(?P<id>[a-zA-Z0-9][\w]{0,24})$",
+		r"^(https?://)?(www\.)?twitch\.tv/(?P<id>[a-zA-Z0-9][\w]{0,24})(\?.*)?$"
+	],
 	"vod": [
 		r"^(?P<id>\d+)?$",
 		r"^(https?://)?(www\.)?twitch.tv/videos/(?P<id>\d+)(\?.*)?$"
@@ -16,10 +20,6 @@ PATTERNS = {
 		r"^(https?://)?(www\.)?twitch.tv/\w+/clip/(?P<id>[A-Za-z0-9]+(?:-[A-Za-z0-9_-]{16})?)(\?.*)?$",
 		r"^(https?://)?clips\.twitch.tv/(?P<id>[A-Za-z0-9]+(?:-[A-Za-z0-9_-]{16})?)(\?.*)?$"
 	],
-	"channel": [
-		r"^[a-zA-Z0-9][\w]{0,24}$",
-		r"^(https?://)?(www\.)?twitch\.tv/(?P<id>[a-zA-Z0-9][\w]{0,24})(\?.*)?$"
-	]
 }
 
 KEYTRANS = {
@@ -73,6 +73,7 @@ def run(args):
 		util.exit_prog(93, f"Could not query info on {cword} content from input.")
 	
 	# Read the data back and out to the terminal
+	# print(resp)
 	if ctype == "vod":
 		r = resp['video']
 		c = r['creator']
@@ -99,6 +100,6 @@ def run(args):
 		cprint(f"#fYChannel Created At: {r['createdAt']}#r")
 		r = r['roles']
 		cprint(f"#fBRoles: Affiliate={r['isAffiliate']} - Partner={r['isPartner']}#r")
-		cprint(f"Site Roles: Staff={r['isStaff']} - GlobalMod={r['isGlobalMod']} - SiteAdmin={r['isSiteAdmin']}")
+		# cprint(f"Site Roles: Staff={r['isStaff']} - GlobalMod={r['isGlobalMod']} - SiteAdmin={r['isSiteAdmin']}")
 
 	# Done!

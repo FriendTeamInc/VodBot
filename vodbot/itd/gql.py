@@ -86,6 +86,13 @@ GET_VIDEO_QUERY = """
 GET_CLIP_QUERY = """
 {{  clip(slug: "{clip_slug}") {{
 		videoQualities {{ frameRate quality sourceURL }}
+		id slug title
+		createdAt viewCount
+		durationSeconds url videoOffsetSeconds
+		video {{ id }}
+		game {{ id name }}
+		broadcaster {{ id displayName login }}
+		curator {{ id displayName login }}
 }}  }}
 """
 # Single Channel info query

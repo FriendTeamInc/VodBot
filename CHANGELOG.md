@@ -1,3 +1,9 @@
+# v1.1.6 - Finals Week (May 2, 2023)
+* Fix video usher URL. Old URL has been deprecated and stalled video downloads.
+* Added timeout for usher HTTP request to prevent future stalls.
+* Fix issue regarding viewing clips with the `info` command.
+* Fix issue regarding viewing channels with the `info` command.
+
 # v1.1.5 - Upload Update (April 17, 2023)
 * YouTube credentials can now be downloaded from a remote source to allow any user to upload videos with VodBot.
 	* Added pull configuration field `client_url`, a URL to the credentials. URL must be pointing to a file accessible with HTTP/S, and be a base64 encoded JSON provided by a Google Developer Account. Default URL points to such a file provided by Friend Team Inc.
