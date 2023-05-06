@@ -29,23 +29,24 @@ def gql_get(params={}):
 	return resp
 
 
-def gql_post(data=None, json=None):
-	resp = requests.post(GQL_URL, data=data, json=json, headers=GQL_HEADERS)
+def gql_post(json=None, data=None):
+	resp = requests.post(GQL_URL, json=json, data=data, headers=GQL_HEADERS)
 	_process_query_errors(resp)
 	return resp
 
 
 def gql_query(query=None, data=None):
-	resp = requests.post(GQL_URL, json={"query":query}, data=data, headers=GQL_HEADERS)
-	_process_query_errors(resp)
-	return resp
+	return gql_post(json={"query":query}, data=data)
+	# resp = requests.post(GQL_URL, json={"query":query}, data=data, headers=GQL_HEADERS)
+	# _process_query_errors(resp)
+	# return resp
 
 
 # GQL Query forms
 # Channel VODs query
 GET_CHANNEL_VIDEOS_QUERY = """
 {{  user(login: "{channel_id}") {{
-		videos( first: {first}, sort: {sort}, after: "{after}" ) {{
+		videos( first: {first}, sort: {sort}, after: {after} ) {{
 			totalCount
 			edges {{ cursor
 				node {{ id title
@@ -60,7 +61,7 @@ GET_CHANNEL_VIDEOS_QUERY = """
 GET_CHANNEL_CLIPS_QUERY = """
 {{  user(login: "{channel_id}") {{
 		clips(
-			first: {first}, after: "{after}",
+			first: {first}, after: {after},
 			criteria: {{ period: ALL_TIME, sort: VIEWS_DESC }}
 		) {{
 			edges {{ cursor
@@ -110,7 +111,7 @@ GET_CHANNEL_QUERY = """
 # IRC Chat query
 GET_VIDEO_COMMENTS_QUERY = """
 {{ video(id: "{video_id}") {{
-	comments(contentOffsetSeconds: 0, after: "{after}") {{
+	comments(contentOffsetSeconds: 0, after: {after}) {{
 		edges {{ cursor node {{
 			contentOffsetSeconds
 			commenter {{ displayName }}
@@ -121,7 +122,7 @@ GET_VIDEO_COMMENTS_QUERY = """
 # VOD chapters query
 GET_VIDEO_CHAPTERS = """{{
 video(id: {id}) {{
-    moments(first:100, momentRequestType: VIDEO_CHAPTER_MARKERS, after: "{after}") {{
+    moments(first:100, momentRequestType: VIDEO_CHAPTER_MARKERS, after: {after}) {{
         edges {{ cursor node {{
             description type
             positionMilliseconds

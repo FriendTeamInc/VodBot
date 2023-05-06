@@ -196,7 +196,7 @@ def get_channel_vods(channel: Channel) -> List[Vod]:
 	"""
 
 	vods = []
-	pagination = ""
+	pagination = "null"
 	while True:
 		# get videos of multiple types
 		# past streams = ARCHIVE, segment of stream = HIGHLIGHT, upload = UPLOAD, premiere = PAST_PREMIERE
@@ -210,7 +210,7 @@ def get_channel_vods(channel: Channel) -> List[Vod]:
 		if not resp or not resp["edges"]:
 			break
 
-		pagination = resp["edges"][-1]["cursor"]
+		pagination = f'"{resp["edges"][-1]["cursor"]}"'
 		
 		for vod in resp["edges"]:
 			v = vod["node"]
@@ -232,7 +232,7 @@ def get_channel_vods(channel: Channel) -> List[Vod]:
 			
 			# Get stream chapter info now
 			chapters = []
-			chapter_page = ""
+			chapter_page = "null"
 			while True:
 				query = gql.GET_VIDEO_CHAPTERS.format(
 					id=v["id"], after=chapter_page
@@ -242,7 +242,8 @@ def get_channel_vods(channel: Channel) -> List[Vod]:
 				
 				if not resp or not resp["edges"]:
 					break
-				chapter_page = resp["edges"][-1]["cursor"]
+
+				chapter_page = f'"{resp["edges"][-1]["cursor"]}"'
 
 				for chap in resp["edges"]:
 					n = chap["node"]
@@ -283,7 +284,7 @@ def get_channel_clips(channel: Channel) -> List[Clip]:
 	"""
 
 	clips = []
-	pagination = ""
+	pagination = "null"
 	while True:
 		query = gql.GET_CHANNEL_CLIPS_QUERY.format(
 			channel_id=channel.login,
@@ -294,7 +295,7 @@ def get_channel_clips(channel: Channel) -> List[Clip]:
 		if not resp or not resp["edges"]:
 			break
 
-		pagination = resp["edges"][-1]["cursor"]
+		pagination = f'"{resp["edges"][-1]["cursor"]}"'
 		
 		for clip in resp["edges"]:
 			c = clip["node"]
@@ -338,7 +339,7 @@ def get_video_comments(video_id: str) -> List[ChatMessage]:
 	"""
 
 	messages = []
-	pagination = ""
+	pagination = "null"
 	while True:
 		query = gql.GET_VIDEO_COMMENTS_QUERY.format(
 			video_id=video_id, first=100, after=pagination
@@ -348,7 +349,8 @@ def get_video_comments(video_id: str) -> List[ChatMessage]:
 		if not resp or not resp["edges"]:
 			break
 
-		pagination = resp["edges"][-1]["cursor"]
+		pagination = f'"{resp["edges"][-1]["cursor"]}"'
+
 		for comment in resp["edges"]:
 			c = comment["node"]
 			

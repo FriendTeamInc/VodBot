@@ -1,3 +1,7 @@
+# v1.1.7 - Lack of Integrity (May 5, 2023)
+* Fix errors from GQL not being reported properly.
+* Fix the pagination "after" argument using empty strings instead of null when appropriate.
+
 # v1.1.6 - Finals Week (May 2, 2023)
 * Fix video usher URL. Old URL has been deprecated and stalled video downloads.
 * Added timeout for usher HTTP request to prevent future stalls.
