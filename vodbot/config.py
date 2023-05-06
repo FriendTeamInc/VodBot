@@ -55,8 +55,9 @@ class _ConfigPull:
 	# Client ID for accessing Twitch's public facing but privately documented GraphQL interface, 
 	# which is significantly more advanced than the V5 API. Do not change this to a specific user's
 	# ID unless you want to risk a ban, although it allows for accessing private info such as
-	# deleted chat messages and account info.
-	gql_client: str = "kimne78kx3ncx6brgo4mv6wki5h1ko"
+	# deleted chat messages and account info. Recommended values (public client ID's) are
+	# "kimne78kx3ncx6brgo4mv6wki5h1ko" or "kd1unb4b3q4t58fwlpcbzcbnm76a8fp".
+	gql_client: str = "kd1unb4b3q4t58fwlpcbzcbnm76a8fp"
 
 	# Number of threads that can concurrently work to download files from Twitch.
 	# Defaults to the number of cores on the machine (or 1 in cases where that can't be measured).

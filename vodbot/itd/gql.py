@@ -8,28 +8,24 @@ GQL_URL = "https://gql.twitch.tv/gql"
 GQL_HEADERS = {"Client-ID": ""}
 
 
+class GQLException(Exception):
+	pass
+
+
 # We use Twitch's private client ID for GQL calls
 def set_client_id(client_id: str):
 	global GQL_HEADERS
 	GQL_HEADERS["Client-ID"] = client_id
 
+
 def _process_query_errors(resp):
-	if 400 <= resp.status_code < 500:
-		data = resp.json()
-		raise Exception(data["message"]) # TODO: make exceptions?
-	resp.raise_for_status()
-
-	if "errors" in resp:
-		raise Exception(resp["errors"])
-
-
-def gql_get(params={}):
-	resp = requests.get(GQL_URL, params=params, headers=GQL_HEADERS)
-	_process_query_errors(resp)
-	return resp
+	j = resp.json()
+	if 400 <= resp.status_code < 500 or "errors" in j:
+		raise GQLException(j)
 
 
 def gql_post(json=None, data=None):
+	global GQL_URL, GQL_HEADERS
 	resp = requests.post(GQL_URL, json=json, data=data, headers=GQL_HEADERS)
 	_process_query_errors(resp)
 	return resp
@@ -37,9 +33,6 @@ def gql_post(json=None, data=None):
 
 def gql_query(query=None, data=None):
 	return gql_post(json={"query":query}, data=data)
-	# resp = requests.post(GQL_URL, json={"query":query}, data=data, headers=GQL_HEADERS)
-	# _process_query_errors(resp)
-	# return resp
 
 
 # GQL Query forms
@@ -49,9 +42,8 @@ GET_CHANNEL_VIDEOS_QUERY = """
 		videos( first: {first}, sort: {sort}, after: {after} ) {{
 			totalCount
 			edges {{ cursor
-				node {{ id title
-					publishedAt broadcastType status
-					lengthSeconds thumbnailURLs
+				node {{
+					id title publishedAt broadcastType status lengthSeconds
 					game {{ id name }}
 					creator {{ id login displayName }}
 }}  }}  }}  }}  }}
@@ -62,12 +54,11 @@ GET_CHANNEL_CLIPS_QUERY = """
 {{  user(login: "{channel_id}") {{
 		clips(
 			first: {first}, after: {after},
-			criteria: {{ period: ALL_TIME, sort: VIEWS_DESC }}
+			criteria: {{ period: ALL_TIME, sort: CREATED_AT_DESC }}
 		) {{
 			edges {{ cursor
-				node {{ id slug title
-					createdAt viewCount
-					durationSeconds url videoOffsetSeconds
+				node {{ id slug title createdAt viewCount
+					durationSeconds videoOffsetSeconds
 					video {{ id }}
 					game {{ id name }}
 					broadcaster {{ id displayName login }}
@@ -76,22 +67,18 @@ GET_CHANNEL_CLIPS_QUERY = """
 """
 # Single VOD query
 GET_VIDEO_QUERY = """
-{{ video(id: "{video_id}") {{
+{{  video(id: "{video_id}") {{
 		id title publishedAt
 		broadcastType lengthSeconds
-		game {{ id name }}
-		creator {{ id login displayName }}
+		game {{ id name }} creator {{ id login displayName }}
 }}  }}
 """
 # Single Clip query
 GET_CLIP_QUERY = """
 {{  clip(slug: "{clip_slug}") {{
+		id slug title createdAt viewCount durationSeconds videoOffsetSeconds
+		game {{ id name }} video {{ id }}
 		videoQualities {{ frameRate quality sourceURL }}
-		id slug title
-		createdAt viewCount
-		durationSeconds url videoOffsetSeconds
-		video {{ id }}
-		game {{ id name }}
 		broadcaster {{ id displayName login }}
 		curator {{ id displayName login }}
 }}  }}
@@ -103,9 +90,7 @@ GET_CHANNEL_QUERY = """
 		description createdAt
 		roles {{ isAffiliate isPartner }}
 		stream {{
-			id title type
-			viewersCount createdAt
-			game {{ id name }}
+			id title type viewersCount createdAt game {{ id name }}
 }}  }}  }}
 """
 # IRC Chat query
@@ -115,18 +100,15 @@ GET_VIDEO_COMMENTS_QUERY = """
 		edges {{ cursor node {{
 			contentOffsetSeconds
 			commenter {{ displayName }}
-			message {{ userColor 
-				fragments {{ mention {{ displayName }} text }}
-}}  }}  }}  }}  }} }}
+			message {{ userColor fragments {{ mention {{ displayName }} text }} }}
+}}  }}  }}  }} }}
 """
 # VOD chapters query
 GET_VIDEO_CHAPTERS = """{{
 video(id: {id}) {{
     moments(first:100, momentRequestType: VIDEO_CHAPTER_MARKERS, after: {after}) {{
         edges {{ cursor node {{
-            description type
-            positionMilliseconds
-			durationMilliseconds
+            description type positionMilliseconds durationMilliseconds
 }}  }}  }}  }}  }}
 """
 
@@ -134,11 +116,7 @@ video(id: {id}) {{
 VIDEO_ACCESS_QUERY = """
 {{  videoPlaybackAccessToken(
 		id: {video_id},
-		params: {{
-			platform: "web",
-			playerBackend: "mediaplayer",
-			playerType: "site"
-		}}
+		params: {{ platform:"web", playerBackend:"mediaplayer", playerType:"site" }}
 	) {{ signature value }}
 }}
 """
