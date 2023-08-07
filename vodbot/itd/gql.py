@@ -39,7 +39,7 @@ def gql_query(query=None, data=None):
 # Channel VODs query
 GET_CHANNEL_VIDEOS_QUERY = """
 {{  user(login: "{channel_id}") {{
-		videos( first: {first}, sort: {sort}, after: {after} ) {{
+		videos( first: {first}, sort: {sort}, after: "{after}" ) {{
 			totalCount
 			edges {{ cursor
 				node {{
@@ -53,7 +53,7 @@ GET_CHANNEL_VIDEOS_QUERY = """
 GET_CHANNEL_CLIPS_QUERY = """
 {{  user(login: "{channel_id}") {{
 		clips(
-			first: {first}, after: {after},
+			first: {first}, after: "{after}",
 			criteria: {{ period: ALL_TIME, sort: CREATED_AT_DESC }}
 		) {{
 			edges {{ cursor
@@ -96,7 +96,7 @@ GET_CHANNEL_QUERY = """
 # IRC Chat query
 GET_VIDEO_COMMENTS_QUERY = """
 {{ video(id: "{video_id}") {{
-	comments(contentOffsetSeconds: 0, after: {after}) {{
+	comments(contentOffsetSeconds: 0, after: "{after}") {{
 		edges {{ cursor node {{
 			contentOffsetSeconds
 			commenter {{ displayName }}

@@ -196,7 +196,7 @@ def get_channel_vods(channel: Channel) -> List[Vod]:
 	"""
 
 	vods = []
-	pagination = "null"
+	pagination = ""
 	while True:
 		# get videos of multiple types
 		# past streams = ARCHIVE, segment of stream = HIGHLIGHT, upload = UPLOAD, premiere = PAST_PREMIERE
@@ -205,12 +205,13 @@ def get_channel_vods(channel: Channel) -> List[Vod]:
 			after=pagination, first=100,
 			sort="TIME"
 		)
-		resp = gql.gql_query(query=query).json()["data"]["user"]["videos"]
+		resp = gql.gql_query(query=query).json()
+		resp = resp["data"]["user"]["videos"]
 
 		if not resp or not resp["edges"]:
 			break
 
-		pagination = f'"{resp["edges"][-1]["cursor"]}"'
+		pagination = resp["edges"][-1]["cursor"]
 		
 		for vod in resp["edges"]:
 			v = vod["node"]
@@ -240,7 +241,7 @@ def get_channel_vods(channel: Channel) -> List[Vod]:
 				resp = gql.gql_query(query=query).json()
 				resp = resp["data"]["video"]["moments"]
 				
-				if not resp or not resp["edges"]:
+				if not resp or not resp["edges"] or not resp["edges"][-1]["cursor"]:
 					break
 
 				chapter_page = f'"{resp["edges"][-1]["cursor"]}"'
@@ -284,7 +285,8 @@ def get_channel_clips(channel: Channel) -> List[Clip]:
 	"""
 
 	clips = []
-	pagination = "null"
+	pagination = ""
+	
 	while True:
 		query = gql.GET_CHANNEL_CLIPS_QUERY.format(
 			channel_id=channel.login,
@@ -295,7 +297,7 @@ def get_channel_clips(channel: Channel) -> List[Clip]:
 		if not resp or not resp["edges"]:
 			break
 
-		pagination = f'"{resp["edges"][-1]["cursor"]}"'
+		pagination = {resp["edges"][-1]["cursor"]}
 		
 		for clip in resp["edges"]:
 			c = clip["node"]
@@ -339,17 +341,19 @@ def get_video_comments(video_id: str) -> List[ChatMessage]:
 	"""
 
 	messages = []
-	pagination = "null"
+	pagination = ""
+
 	while True:
 		query = gql.GET_VIDEO_COMMENTS_QUERY.format(
 			video_id=video_id, first=100, after=pagination
 		)
-		resp = gql.gql_query(query=query).json()["data"]["video"]["comments"]
+		resp = gql.gql_query(query=query).json()
+		resp = resp["data"]["video"]["comments"]
 
 		if not resp or not resp["edges"]:
 			break
 
-		pagination = f'"{resp["edges"][-1]["cursor"]}"'
+		pagination = {resp["edges"][-1]["cursor"]}
 
 		for comment in resp["edges"]:
 			c = comment["node"]
