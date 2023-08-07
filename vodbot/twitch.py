@@ -175,7 +175,7 @@ def get_channels(channel_logins: List[str]) -> List[Channel]:
 		c = resp["data"]["user"]
 
 		if c == None:
-			raise Exception(f"Channel `{channel_login}` does not exist!")
+			raise gql.GQLItemError(f"Channel `{channel_login}` does not exist!")
 		
 		channels.append(
 			Channel(
@@ -196,7 +196,8 @@ def get_channel_vods(channel: Channel) -> List[Vod]:
 	"""
 
 	vods = []
-	pagination = ""
+	pagination = "null"
+
 	while True:
 		# get videos of multiple types
 		# past streams = ARCHIVE, segment of stream = HIGHLIGHT, upload = UPLOAD, premiere = PAST_PREMIERE
@@ -206,12 +207,16 @@ def get_channel_vods(channel: Channel) -> List[Vod]:
 			sort="TIME"
 		)
 		resp = gql.gql_query(query=query).json()
+
+		if not resp["data"]["user"]:
+			raise gql.GQLItemError(f"Failed to find channel videos for `{channel.login}`.")
+
 		resp = resp["data"]["user"]["videos"]
 
 		if not resp or not resp["edges"]:
 			break
 
-		pagination = resp["edges"][-1]["cursor"]
+		tempcursor = resp["edges"][-1]["cursor"]
 		
 		for vod in resp["edges"]:
 			v = vod["node"]
@@ -234,17 +239,20 @@ def get_channel_vods(channel: Channel) -> List[Vod]:
 			# Get stream chapter info now
 			chapters = []
 			chapter_page = "null"
+
 			while True:
 				query = gql.GET_VIDEO_CHAPTERS.format(
 					id=v["id"], after=chapter_page
 				)
 				resp = gql.gql_query(query=query).json()
+				
+				if not resp["data"]["video"]:
+					raise gql.GQLItemError(f"Failed to find moments for video `{v['id']}`.")
+				
 				resp = resp["data"]["video"]["moments"]
 				
-				if not resp or not resp["edges"] or not resp["edges"][-1]["cursor"]:
+				if not resp or not resp["edges"]:
 					break
-
-				chapter_page = f'"{resp["edges"][-1]["cursor"]}"'
 
 				for chap in resp["edges"]:
 					n = chap["node"]
@@ -259,6 +267,11 @@ def get_channel_vods(channel: Channel) -> List[Vod]:
 				
 				if chapter_page == "" or chapter_page == None:
 					break
+				
+				if not resp["edges"][-1]["cursor"]:
+					break
+
+				chapter_page = '"' + resp["edges"][-1]["cursor"] + '"'
 
 			vods.append(
 				Vod(
@@ -269,8 +282,10 @@ def get_channel_vods(channel: Channel) -> List[Vod]:
 				)
 			)
 
-		if pagination == "" or pagination == None:
+		if not tempcursor:
 			break
+
+		pagination = '"' + tempcursor + '"'
 
 
 	return vods
@@ -285,19 +300,22 @@ def get_channel_clips(channel: Channel) -> List[Clip]:
 	"""
 
 	clips = []
-	pagination = ""
+	pagination = "null"
 	
 	while True:
 		query = gql.GET_CHANNEL_CLIPS_QUERY.format(
 			channel_id=channel.login,
 			after=pagination, first=100
 		)
-		resp = gql.gql_query(query=query).json()["data"]["user"]["clips"]
+		resp = gql.gql_query(query=query).json()
+
+		if not resp["data"]["user"]:
+			raise gql.GQLItemError(f"Failed to find channel clips for `{channel.login}`.")
+		
+		resp = resp["data"]["user"]["clips"]
 
 		if not resp or not resp["edges"]:
 			break
-
-		pagination = {resp["edges"][-1]["cursor"]}
 		
 		for clip in resp["edges"]:
 			c = clip["node"]
@@ -326,8 +344,10 @@ def get_channel_clips(channel: Channel) -> List[Clip]:
 				)
 			)
 
-		if pagination == "" or pagination == None:
+		if not resp["edges"][-1]["cursor"]:
 			break
+
+		pagination = '"' + resp["edges"][-1]["cursor"] + '"'
 
 	return clips
 
@@ -341,19 +361,21 @@ def get_video_comments(video_id: str) -> List[ChatMessage]:
 	"""
 
 	messages = []
-	pagination = ""
+	pagination = "null"
 
 	while True:
 		query = gql.GET_VIDEO_COMMENTS_QUERY.format(
 			video_id=video_id, first=100, after=pagination
 		)
 		resp = gql.gql_query(query=query).json()
+		
+		if not resp["data"]["video"]:
+			raise gql.GQLItemError(f"Failed to find comments for video `{video_id}`.")
+		
 		resp = resp["data"]["video"]["comments"]
 
 		if not resp or not resp["edges"]:
 			break
-
-		pagination = {resp["edges"][-1]["cursor"]}
 
 		for comment in resp["edges"]:
 			c = comment["node"]
@@ -379,7 +401,9 @@ def get_video_comments(video_id: str) -> List[ChatMessage]:
 				)
 			)
 		
-		if pagination == "" or pagination == None:
+		if not resp["edges"][-1]["cursor"]:
 			break
+
+		pagination = '"' + resp["edges"][-1]["cursor"] + '"'
 	
 	return messages

@@ -1,3 +1,9 @@
+# v1.1.9 - Versus Python Exceptions (August 7, 2023)
+* Heavily discourage use of the old GQL Client ID. A message will pop up stating if you are using the old GQL Client ID, known to cause issues, and direct you to the GitHub wiki.
+* Fix unexpected crash when attempting to report errors on an upload. (#69)
+* Fix unexpected crash when VodBot is given a username that does not exist on Twitch. (#68)
+* Further improvements to overall system stability and other minor adjustments have been made to enhance the user experience.
+
 # v1.1.8 - The Summer Update (Auguest 6, 2023)
 * Change the default Twitch GQL API key to the alternative one, for better compatibility.
 * Various updates to GQL queries for better resilience against errors and infinite loops.

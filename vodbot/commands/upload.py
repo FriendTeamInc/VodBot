@@ -52,8 +52,9 @@ def _upload_artifact(upload_string, response_upload, getting_video=False, filesi
 
 	uploaded = 0
 
-	def print_error(f:List, secs:int = 5):
+	def print_error(f:List, secs:int=5):
 		nonlocal errn, errn_max
+		f = [str(x) for x in f]
 		cprint(f"#fY#dWARN: An HTTP error has occurred ({errn}/{errn_max}), retyring in {secs} seconds... ({', '.join(f)})#r")
 		errn += 1
 		sleep(secs)

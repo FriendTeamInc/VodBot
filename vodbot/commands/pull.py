@@ -8,7 +8,6 @@ from vodbot.itd.gql import set_client_id
 from vodbot.cache import Cache, load_cache, save_cache, _CacheChannel
 from vodbot.webhook import init_webhooks, send_pull_clip, send_pull_error, send_pull_job_done, send_pull_vod
 
-from pathlib import Path
 from os import listdir
 from os.path import isfile
 
@@ -17,12 +16,20 @@ def run(args):
 	# Load the config and set up the access token
 	cprint("#r#dLoading config...#r", end=" ", flush=True)
 	conf = util.load_conf(args.config)
+	if conf.pull.gql_client == "kimne78kx3ncx6brgo4mv6wki5h1ko":
+		cprint("""#r#fY
+WARNING: You appear to be using the old Twitch GQL Client ID,
+"kimne78kx3ncx6brgo4mv6wki5h1ko". This specific client ID has been recently
+known to cause issues and be generally unreliable. It is highly reocmmended you
+switch to a different one such as "kd1unb4b3q4t58fwlpcbzcbnm76a8fp". This can
+be changed in your configuration file, read more on the wiki page on GitHub.
+#r""")
+
 	cache: Cache = load_cache(conf, args.cache_toggle)
 	init_webhooks(conf)
 	VODS_DIR = conf.directories.vods
 	CLIPS_DIR = conf.directories.clips
 	TEMP_DIR = conf.directories.temp
-	LOG_LEVEL = conf.export.ffmpeg_loglevel
 	PULL_CHAT = conf.pull.save_chat
 	set_client_id(conf.pull.gql_client)
 	

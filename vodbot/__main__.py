@@ -2,6 +2,7 @@ from . import util, __project__, __version__
 from .config import DEFAULT_CONFIG_PATH
 from .printer import colorize
 from .cache import load_cache
+from .itd import gql
 
 import argparse
 import argcomplete
@@ -177,7 +178,12 @@ def main():
 	if args.cmd == "init":
 		import_module(".commands.init", "vodbot").run(args)
 	elif args.cmd == "pull" or args.cmd == "download":
-		import_module(".commands.pull", "vodbot").run(args)
+		try:
+			import_module(".commands.pull", "vodbot").run(args)
+		except gql.GQLItemError as e:
+			util.exit_prog(53, f"Failed to query a specific item using GQL: {e}")
+		except gql.GQLException as e:
+			util.exit_prog(54, f"Generic GQL Exception: {e}")
 	elif args.cmd == "stage":
 		import_module(".commands.stage", "vodbot").run(args)
 	elif args.cmd == "push" or args.cmd == "upload":
