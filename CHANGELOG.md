@@ -1,3 +1,8 @@
+# v1.1.8 - The Summer Update (Auguest 6, 2023)
+* Change the default Twitch GQL API key to the alternative one, for better compatibility.
+* Various updates to GQL queries for better resilience against errors and infinite loops.
+* Fix missing GQL exception, for better error reporting.
+
 # v1.1.7 - Lack of Integrity (May 5, 2023)
 * Fix errors from GQL not being reported properly.
 * Fix the pagination "after" argument using empty strings instead of null when appropriate.
