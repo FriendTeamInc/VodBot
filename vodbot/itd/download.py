@@ -83,8 +83,10 @@ def dl_video(conf: Config, video: Vod, path: str):
 	]
 	redirect = subprocess.DEVNULL
 	if REDIRECT != Path():
-		redirect = REDIRECT
-	result = subprocess.run(cmd, stderr=redirect, check=True)
+		redirect = open(REDIRECT, "w")
+	result = subprocess.run(cmd, stderr=redirect)
+	if REDIRECT != Path():
+		redirect.close()
 	os.chdir(cwd)
 
 	if result.returncode != 0:
