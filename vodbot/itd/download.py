@@ -77,7 +77,8 @@ def dl_video(conf: Config, video: Vod, path: str):
 	cwd = os.getcwd()
 	os.chdir(str(tempdir))
 	cmd = [
-		"ffmpeg", "-i", str(playlist_path),
+		"ffmpeg", "-allowed_extensions", "ALL",
+		"-i", str(playlist_path),
 		"-c", "copy", path, "-y",
 		"-stats", "-loglevel", LOG_LEVEL
 	]
