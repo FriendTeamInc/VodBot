@@ -148,6 +148,10 @@ be changed in your configuration file, read more on the wiki page on GitHub.
 					cprint(f"#fR#lVOD `{vod.id}` download failed! Skipping...#r")
 					send_pull_error(f'Failed to download VOD files for "{vod.id}". VOD has been skipped.', vod.url)
 					continue
+				except itd_work.TwitchAccessDenied:
+					cprint(f"#fR#lVOD `{vod.id}` download failed! Twitch is denying access to a public video, contact Twitch Support. Skipping...#r")
+					send_pull_error(f'Failed to download VOD files for "{vod.id}", due to Twitch denying access to a public video. VOD has been skipped.', vod.url)
+					continue
 				except (itd_work.DownloadCancelled, KeyboardInterrupt):
 					cprint(f"\n#fR#lVOD `{vod.id}` download cancelled. Exiting...#r")
 					save_cache(conf, cache)
@@ -175,6 +179,10 @@ be changed in your configuration file, read more on the wiki page on GitHub.
 				except itd_work.DownloadFailed:
 					cprint(f"#fR#lClip `{clip.slug}` ({clip.id}) download failed! Skipping...#r")
 					send_pull_error(f'Failed to download Clip file for `{clip.slug}` ({clip.id}). Clip has been skipped.', clip.url)
+				except itd_work.TwitchAccessDenied:
+					cprint(f"#fR#lClip `{clip.slug}` ({clip.id}) download failed! Twitch is denying access to a public video, contact Twitch Support. Skipping...#r")
+					send_pull_error(f'Failed to download Clip file for `{clip.slug}` ({clip.id}), due to Twitch denying access to a public video. Clip has been skipped.', clip.url)
+					continue
 				except (itd_work.DownloadCancelled, KeyboardInterrupt):
 					cprint(f"\n#fR#lClip `{clip.slug}` ({clip.id}) download cancelled. Exiting...#r")
 					save_cache(conf, cache)
