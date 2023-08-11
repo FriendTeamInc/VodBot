@@ -1,5 +1,6 @@
-# v1.1.10 - Super Variety Super Fixes (TBD)
-* Fix FFMPEG stderr redirection not working for downloads and uploads.
+# v1.1.10 - Super Variety Super Fixes (August 11, 2023)
+* Fix FFMPEG stderr redirection not working for downloads, uploads and thumbnails.
+* Add some messaging for a failed thumbnail generation.
 * Fix FFMPEG exit codes being checked by the subprocess library instead of by VodBot.
 * Fix FFMPEG failing to join video segments when their filenames contain URL query parameters. (#70)
 * Fix VodBot not recognizing access denial from Twitch for certain videos/segments, causing odd FFMPEG errors. (#71)

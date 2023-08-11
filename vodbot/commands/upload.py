@@ -198,7 +198,13 @@ def upload_captions(conf: Config, service: Resource, stagedata: StageData, vid_i
 
 
 def upload_thumbnail(conf: Config, service: Resource, stagedata: StageData, vid_id: str) -> bool:
-	tmpfile = vbthumbnail.generate_thumbnail(conf, stagedata)
+	tmpfile = False
+
+	try:
+		tmpfile = vbthumbnail.generate_thumbnail(conf, stagedata)
+	except vbthumbnail.ScreengrabFailed:
+		cprint("#d#fYWARN: Failed to get screenshot from video with FFMPEG for thumbnail. Skipping...#r")
+		return False
 
 	if not tmpfile:
 		return False

@@ -10,6 +10,10 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
 
+class ScreengrabFailed(Exception):
+	pass
+
+
 # take in a StageData, process the data given the config, spit out the path to the image
 def generate_thumbnail(conf: Config, stage: StageData) -> Path:
 	if not stage.thumbnail:
@@ -21,13 +25,19 @@ def generate_thumbnail(conf: Config, stage: StageData) -> Path:
 	ss_path = conf.directories.temp / f"thumbnail_ss_{stage.id}.png"
 	selected_video_slice = stage.thumbnail.video_slice_id
 	video_slice = stage.slices[selected_video_slice]
+
 	redirect = subprocess.DEVNULL
 	if conf.export.ffmpeg_stderr != Path():
-		redirect = conf.export.ffmpeg_stderr
-	subprocess.run([
+		redirect = open(conf.export.ffmpeg_stderr, "w")
+	result = subprocess.run([
 		"ffmpeg", "-hide_banner", "-ss", stage.thumbnail.timestamp, "-i", video_slice.filepath,
 		"-frames:v", "1", "-update", "1", str(ss_path), "-y", "-loglevel", conf.export.ffmpeg_loglevel
-	], stderr=redirect, check=True)
+	], stderr=redirect)
+	if conf.export.ffmpeg_stderr != Path():
+		redirect.close()
+
+	if result.returncode != 0:
+		raise ScreengrabFailed()
 
 	output_file = conf.directories.temp / f"thumbnail_{stage.id}.png"
 

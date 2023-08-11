@@ -87,7 +87,10 @@ def run(args):
 			tmpchat = vbchat.process_stage(conf, stage, "export")
 		# Export thumbnail
 		if conf.export.thumbnail_enable:
-			tmpnail = vbthumbnail.generate_thumbnail(conf, stage)
+			try:
+				tmpnail = vbthumbnail.generate_thumbnail(conf, stage)
+			except vbthumbnail.ScreengrabFailed:
+				cprint("#d#fYWARN: Failed to get screenshot from video with FFMPEG for thumbnail. Skipping...#r")
 
 		title = stage.title.strip()
 		for x in DISALLOWED_CHARACTERS:
