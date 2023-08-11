@@ -2,6 +2,7 @@
 * Fix FFMPEG stderr redirection not working for downloads and uploads.
 * Fix FFMPEG exit codes being checked by the subprocess library instead of by VodBot.
 * Fix FFMPEG failing to join video segments when their filenames contain URL query parameters. (#70)
+* Fix VodBot not recognizing access denial from Twitch for certain videos/segments, causing odd FFMPEG errors. (#71)
 
 # v1.1.9 - Versus Python Exceptions (August 7, 2023)
 * Heavily discourage use of the old GQL Client ID. A message will pop up stating if you are using the old GQL Client ID, known to cause issues, and direct you to the GitHub wiki.
