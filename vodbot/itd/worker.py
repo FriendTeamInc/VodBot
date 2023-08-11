@@ -17,7 +17,12 @@ from pathlib import Path
 class DownloadFailed(Exception):
 	pass
 
+
 class DownloadCancelled(Exception):
+	pass
+
+
+class TwitchAccessDenied(Exception):
 	pass
 
 
@@ -27,6 +32,8 @@ def _download(url: str, path: str, timeout:float, chunk_size:int) -> int:
 	size = 0
 	with open(tmp_path, 'wb') as target:
 		for chunk in response.iter_content(chunk_size=chunk_size):
+			if b'<?xml version="1.0" encoding="UTF-8"?>\n<Error><Code>AccessDenied</Code><Message>Access Denied</Message>' in chunk:
+				raise TwitchAccessDenied()
 			target.write(chunk)
 			size += len(chunk)
 
