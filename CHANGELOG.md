@@ -1,3 +1,7 @@
+# v1.1.10 - Super Variety Super Fixes (TBD)
+* Fix FFMPEG stderr redirection not working for downloads and uploads.
+* Fix FFMPEG exit codes being checked by the subprocess library instead of by VodBot.
+
 # v1.1.9 - Versus Python Exceptions (August 7, 2023)
 * Heavily discourage use of the old GQL Client ID. A message will pop up stating if you are using the old GQL Client ID, known to cause issues, and direct you to the GitHub wiki.
 * Fix unexpected crash when attempting to report errors on an upload. (#69)
