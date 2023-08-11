@@ -41,8 +41,10 @@ def slice_video(TEMP_DIR: Path, LOG_LEVEL: str, vslice: VideoSlice, REDIRECT: Pa
 	
 	redirect = subprocess.DEVNULL
 	if REDIRECT != Path():
-		redirect = REDIRECT
-	result = subprocess.run(cmd, stderr=redirect, check=True)
+		redirect = open(REDIRECT, "w")
+	result = subprocess.run(cmd, stderr=redirect)
+	if REDIRECT != Path():
+		redirect.close()
 
 	if result.returncode != 0:
 		raise FailedToSlice(vslice.video_id)
@@ -75,13 +77,14 @@ def concat_video(TEMP_DIR: Path, LOG_LEVEL: str, stage_id: str, slice_paths: Lis
 
 	redirect = subprocess.DEVNULL
 	if REDIRECT != Path():
-		redirect = REDIRECT
+		redirect = open(REDIRECT, "w")
 	result = subprocess.run(cmd, stderr=redirect, check=True)
+	if REDIRECT != Path():
+		redirect.close()
+	os.chdir(cwd)
 
 	if result.returncode != 0:
 		raise FailedToConcat()
-
-	os.chdir(cwd)
 
 	cprint(f"Cleaning up after stage `#fM{stage_id}#r`...")
 
