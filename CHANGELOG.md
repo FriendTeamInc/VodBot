@@ -1,3 +1,6 @@
+# v1.1.11 - New Year New Fix (January 6, 2024)
+* Fix video usher URL arguments. Twitch appears to be gearing up support for AV1 codec and deprecated some old parameters. (#72)
+
 # v1.1.10 - Super Variety Super Fixes (August 11, 2023)
 * Fix FFMPEG stderr redirection not working for downloads, uploads and thumbnails.
 * Add some messaging for a failed thumbnail generation.

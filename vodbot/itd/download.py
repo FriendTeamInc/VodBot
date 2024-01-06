@@ -13,20 +13,25 @@ import shutil
 import m3u8
 import os
 
+
 class JoiningFailed(Exception):
 	pass
+
 
 def get_playlist_uris(video_id: str, access_token: dict):
 	"""
 	Grabs the URI's for accessing each of the video chunks.
 	"""
-	url = f"http://usher.ttvnw.net/vod/{video_id}"
+	url = f"https://usher.ttvnw.net/vod/{video_id}"
 
 	resp = requests.get(url, timeout=5, params={
-		"nauth": access_token['value'],
-		"nauthsig": access_token['signature'],
+		"token": access_token['value'],
+		"sig": access_token['signature'],
 		"allow_source": "true",
-		"player": "twitchweb",
+		"platform": "web",
+		"player_backend": "mediaplayer",
+		"supported_codecs": "av1,h264",
+		"playlist_include_framerate": "true"
 	})
 	resp.raise_for_status()
 
