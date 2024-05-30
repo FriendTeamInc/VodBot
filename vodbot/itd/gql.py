@@ -110,7 +110,7 @@ GET_VIDEO_COMMENTS_QUERY = """
 """
 # VOD chapters query
 GET_VIDEO_CHAPTERS = """{{
-video(id: {id}) {{
+video(id: "{id}") {{
     moments(first:100, momentRequestType: VIDEO_CHAPTER_MARKERS, after: {after}) {{
         edges {{ cursor node {{
             description type positionMilliseconds durationMilliseconds
@@ -120,7 +120,7 @@ video(id: {id}) {{
 
 VIDEO_ACCESS_QUERY = """
 {{  videoPlaybackAccessToken(
-		id: {video_id},
+		id: "{video_id}",
 		params: {{ platform:"web", playerBackend:"mediaplayer", playerType:"site" }}
 	) {{ signature value }}
 }}
