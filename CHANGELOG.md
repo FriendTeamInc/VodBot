@@ -1,3 +1,6 @@
+# v1.1.12 - Overflowing (May 30, 2024)
+* Fix video ID argument causing failures for newer videos. Twitch video ID's have surpassed the 32-bit unsigned integer limit, which caused newer videos to be un-query-able.
+
 # v1.1.11 - New Year New Fix (January 6, 2024)
 * Fix video usher URL arguments. Twitch appears to be gearing up support for AV1 codec and deprecated some old parameters. (#72)
 
